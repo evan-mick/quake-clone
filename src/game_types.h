@@ -3,7 +3,7 @@
 
 #include "glm/glm.hpp"
 #include <string>
-#include "ecs.h"
+#include "core/ecs.h"
 
 
 // COMPONENT FLAG NUMBERS
