@@ -6,7 +6,7 @@
 #include <QSettings>
 #include <iostream>
 
-#include "ecs.h"
+#include "core/ecs.h"
 #include "game_types.h"
 #include <random>
 
