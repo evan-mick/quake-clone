@@ -46,7 +46,7 @@ public:
 
     // Gets a reference to the component data
     // Pass in the type of struct
-    // OF NOTE: tried to avoid "void*" and to use templates, but had issues
+    // OF NOTE: tried to avoid "void*" and to use templates, but had a 2 hour time sink issue trying to make it work
     // Just static cast pls :'), we know what it'll be b/c of the flag num
     void* getComponentData(int entity_id, int flag_num);
 //    template <typename T> T* getComponentData(int entity_id, int flag_num);

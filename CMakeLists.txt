@@ -26,9 +26,9 @@ include_directories(src)
 # Specifies .cpp and .h files to be passed to the compiler
 add_executable(${PROJECT_NAME}
     src/main.cpp
-    src/ecs.cpp
+    src/core/ecs.cpp
 
-    src/ecs.h
+    src/core/ecs.h
     src/game_types.h
 )
 
@@ -37,8 +37,6 @@ add_subdirectory(glm)
 
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
 add_library(StaticGLEW STATIC glew/src/glew.c
-    src/ecs.h src/ecs.cpp
-    src/game_types.h
 )
 include_directories(${PROJECT_NAME} PRIVATE glew/include)
 
