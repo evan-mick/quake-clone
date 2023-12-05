@@ -15,7 +15,7 @@
 int main(int argc, char *argv[]) {
     //    QApplication a(argc, argv);
 
-    //    QCoreApplication::setApplicationName("Projects 5 & 6: Lights, Camera & Action!");
+    //    QCoreApplication::setApplicationName("Nifty Quake Clone);
     //    QCoreApplication::setOrganizationName("CS 1230");
     //    QCoreApplication::setApplicationVersion(QT_VERSION_STR);
 
@@ -37,24 +37,14 @@ int main(int argc, char *argv[]) {
 
 //    int flag = FL_PHYSICS | FL_TRANSFORM | FL_TEST;
     int test_ent = ecs.createEntity({FLN_TEST, FLN_TRANSFORM, FLN_TESTKILL});
-    int test_ent2 = ecs.createEntityWithBitFlags((1 << FLN_TEST) | (1 << FLN_TRANSFORM) | (1 << FLN_TESTKILL));
-
-    std::cout << std::to_string(ecs.getEntityBitMask(test_ent2)) << " " << std::to_string(ecs.getEntityBitMask(test_ent)) << " " << std::to_string(ecs.getEntityBitMask(test_ent) == ecs.getEntityBitMask(test_ent2)) << std::endl;
-
-//    int test_ent2 = ecs.createEntity(FL_TRANSFORM);
+//    int test_ent2 = ecs.createEntityWithBitFlags((1 << FLN_TEST) | (1 << FLN_TRANSFORM) | (1 << FLN_TESTKILL));
 
     Test* tst = static_cast<Test*>(ecs.getComponentData(test_ent, FLN_TEST));
-    std::cout << std::to_string((long)tst) << std::endl;
-
     tst->timer = 1.f;
     tst->ticks = 10;
 
-    std::cout << std::to_string(ecs.getEntityBitMask(test_ent2)) << " " << std::to_string(ecs.getEntityBitMask(test_ent)) << " " << std::to_string(ecs.getEntityBitMask(test_ent) == ecs.getEntityBitMask(test_ent2)) << std::endl;
-
-
 
     system_t test = [](ECS* e, int ent, float delta) {
-        std::cout << std::to_string(e->getEntityBitMask(ent)) << " " << std::endl;
 
         Test* test = static_cast<Test*>(e->getComponentData(ent, FLN_TEST));
 

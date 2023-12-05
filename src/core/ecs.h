@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <chrono>
+#include <array>
 
 const int MAX_ENTITY = 256;
 const int MAX_COMPONENTS = 32;
@@ -62,6 +63,12 @@ public:
 //    template <typename T> T* getComponentData(int entity_id, int flag_num);
 
 
+    char* deserializeIntoData();
+
+    // ASSUMPTIONS serialized_data is a well-formed, serialization of game state
+    // ignore is an MAX_ENTITY sized array
+    void deserializeIntoData(char* serialized_data, int ignore[]);
+
 
 private:
 
@@ -70,11 +77,11 @@ private:
         int req_flags;
     };
 
-    int m_entities[MAX_ENTITY] = {};
+    std::array<int, MAX_ENTITY> m_entities{};
 
-    void* m_components[MAX_COMPONENTS] = {};
-    bool m_component_registered[MAX_COMPONENTS] = {};
-    size_t m_component_num_to_size[MAX_COMPONENTS] = {};
+    std::array<void*, MAX_COMPONENTS> m_components{};
+    std::array<bool, MAX_COMPONENTS> m_component_registered{};
+    std::array<size_t, MAX_COMPONENTS> m_component_num_to_size{};
 
     std::vector<SystemData> m_systems = {};
 

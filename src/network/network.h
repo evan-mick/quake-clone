@@ -32,9 +32,9 @@ private:
     bool m_isServer = false;
 
     // To store what entities they have authority over
-    int m_hasAuthority[MAX_ENTITY] = {};
+    std::array<int, MAX_ENTITY> m_hasAuthority{};
 
-    Connection m_connections[MAX_PLAYERS] = {};
+    std::array<Connection, MAX_PLAYERS> m_connections{};
 };
 
 #endif // NETWORK_H

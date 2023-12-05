@@ -119,15 +119,13 @@ int ECS::registerComponent(int flag_num, size_t data_size) {
 void* ECS::getComponentData(int entity_id, int flag_num) {
 
     int flag = (1 << (flag_num));
-    int equal = ((m_entities[entity_id] & flag) == flag);
+    bool equal = ((m_entities[entity_id] & flag) == flag);
+    bool ent_in_bounds = (entity_id < MAX_ENTITY && entity_id >= 0);
+    bool flag_in_bounds = (flag_num >= 0 || flag_num < MAX_COMPONENTS);
 
-    // TODO: make these readable functions
-    if (flag_num < 0 || flag_num >= MAX_COMPONENTS
-        || !m_component_registered[flag_num]
-        || !equal
-        || entity_id >= MAX_ENTITY || entity_id < 0)
+    if (!flag_in_bounds || !m_component_registered[flag_num]
+        || !equal || !ent_in_bounds)
         return nullptr;
 
-//    std::cout << (long long)((char*)(m_components[flag_num])) + (m_component_num_to_size[flag_num] * entity_id) << std::endl;
     return ((char*)(m_components[flag_num])) + (m_component_num_to_size[flag_num] * entity_id);
 }
