@@ -1,4 +1,5 @@
 #include "ecs.h"
+#include <cstring>
 #include <iostream>
 #include <array>
 
@@ -8,8 +9,6 @@ ECS::ECS()
 
 }
 
-
-
 void ECS::update() {
     // TODO: delta
     std::chrono::time_point<std::chrono::steady_clock>  now = std::chrono::steady_clock::now();
@@ -18,10 +17,10 @@ void ECS::update() {
 
     for (SystemData& data : m_systems) {
         // POTENTIAL OPTIMIZATION: Only cycle up to furthest entity
-        for (int ent = 0; ent < MAX_ENTITY; ent++) {
-            int flags = m_entities[ent];
+        for (size_t ent = 0; ent < MAX_ENTITY; ent++) {
+            flags_t flags = m_entities[ent];
             if ((flags & data.req_flags) == data.req_flags)
-                data.func(this, ent, deltaTime);
+                data.func(this, (entity_t)ent, deltaTime);
         }
     }
     destroyQueuedEntities();
@@ -43,12 +42,12 @@ entity_t ECS::createEntityWithBitFlags(flags_t flags) {
         return -1;
 
     // Register entity
-    int ent_id = m_nextUnallocEntity;
+    entity_t ent_id = m_nextUnallocEntity;
     m_entities[ent_id] = flags;
 
     // Add used data
     for (int flag = 0; flag < MAX_COMPONENTS; flag++) {
-        if ((m_entities[ent_id] & flag) && m_component_registered[flag]) {
+        if ((m_entities[ent_id] & (1 << flag)) && m_component_registered[flag]) {
             m_usedDataSize += m_component_num_to_size[flag];
         }
     }
@@ -77,7 +76,7 @@ void ECS::destroyEntity(entity_t id) {
 
     // Take away used data
     for (int flag = 0; flag < MAX_COMPONENTS; flag++) {
-        if ((m_entities[id] & flag) && m_component_registered[flag]) {
+        if ((m_entities[id] & (1 << flag)) && m_component_registered[flag]) {
             m_usedDataSize -= m_component_num_to_size[flag];
         }
     }
@@ -102,7 +101,7 @@ void ECS::registerSystemWithBitFlags(system_t system_function, flags_t required_
 }
 
 void ECS::registerSystem(system_t system_function, std::initializer_list<int> flag_numbers) {
-    int input_flag = 0;
+    flags_t input_flag = 0;
     for (int flag : flag_numbers) {
         input_flag = input_flag | (1 << flag);
     }
@@ -135,7 +134,7 @@ int ECS::registerComponent(int flag_num, size_t data_size) {
 //template <typename T>
 void* ECS::getComponentData(entity_t entity_id, int flag_num) {
 
-    int flag = (1 << (flag_num));
+    flags_t flag = (1 << (flag_num));
     bool equal = ((m_entities[entity_id] & flag) == flag);
 //    bool ent_in_bounds = (entity_id < MAX_ENTITY && entity_id >= 0); this already checked by virtue of entity_t
     bool flag_in_bounds = (flag_num >= 0 || flag_num < MAX_COMPONENTS);

@@ -10,14 +10,15 @@
 
 // COMPONENT FLAG NUMBERS
 // represents where in the bitmask they are
-constexpr u_int32_t FLN_TYPE = 0;
-constexpr u_int32_t FLN_INPUT = 1;
-constexpr u_int32_t FLN_TRANSFORM = 2;
-constexpr u_int32_t FLN_RENDER = 3;
-constexpr u_int32_t FLN_PHYSICS = 4;
 
-constexpr u_int32_t FLN_TESTKILL = 29;
-constexpr u_int32_t FLN_TEST = 30;
+constexpr uint32_t FLN_TYPE = 0;
+constexpr uint32_t FLN_INPUT = 1;
+constexpr uint32_t FLN_TRANSFORM = 2;
+constexpr uint32_t FLN_RENDER = 3;
+constexpr uint32_t FLN_PHYSICS = 4;
+
+constexpr uint32_t FLN_TESTKILL = 29;
+constexpr uint32_t FLN_TEST = 30;
 
 
 // COMPONENT BIT FLAGS
@@ -32,12 +33,12 @@ constexpr u_int32_t FLN_TEST = 30;
 
 // COMPONENT STRUCTS
 struct TypeData {
-    u_int8_t type;
+    uint8_t type;
 };
 
 
 struct InputData {
-    u_int8_t dat;
+    uint8_t dat;
     // float x_rot
     // float y_rot
 };
@@ -61,6 +62,7 @@ struct Renderable {
     glm::mat4 ctm;
     GLuint vbo;
     GLuint vao;
+
 };
 
 struct Test {

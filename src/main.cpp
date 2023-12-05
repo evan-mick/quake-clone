@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     std::cout << "hi" << std::endl;
 
 //    int flag = FL_PHYSICS | FL_TRANSFORM | FL_TEST;
-    int test_ent = ecs.createEntity({FLN_TEST, FLN_TRANSFORM, FLN_TESTKILL});
+    entity_t test_ent = ecs.createEntity({FLN_TEST, FLN_TRANSFORM, FLN_TESTKILL});
     std::cout << std::to_string(ecs.getEntityBitMask(test_ent)) << std::endl;
 //    int test_ent2 = ecs.createEntityWithBitFlags((1 << FLN_TEST) | (1 << FLN_TRANSFORM) | (1 << FLN_TESTKILL));
 
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     tst->ticks = 10;
 
 
-    system_t test = [](ECS* e, int ent, float delta) {
+    system_t test = [](ECS* e, entity_t ent, float delta) {
 
         Test* test = static_cast<Test*>(e->getComponentData(ent, FLN_TEST));
 
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     };
     ecs.registerSystem(test, {FLN_TEST});
 
-    ecs.registerSystem([](ECS* e, int ent, float delta) {
+    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
         std::cout << std::to_string(e->getEntityBitMask(ent)) << " physics" << std::endl;
 
         Physics* phys = static_cast<Physics*>(e->getComponentData(ent, FLN_PHYSICS));
