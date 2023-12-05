@@ -15,14 +15,12 @@ void ECS::update() {
     float deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(now - m_lastUpdate).count() / 1000000.0f;
     m_lastUpdate = now;
 
-    std::cout << std::to_string(deltaTime) << std::endl;
-
     for (SystemData& data : m_systems) {
         // POTENTIAL OPTIMIZATION: Only cycle up to furthest entity
-        for (int ent = 0; ent < MAX_ENTITY; ent++) {
-            int flags = m_entities[ent];
+        for (size_t ent = 0; ent < MAX_ENTITY; ent++) {
+            flags_t flags = m_entities[ent];
             if ((flags & data.req_flags) == data.req_flags)
-                data.func(this, ent, deltaTime);
+                data.func(this, (entity_t)ent, deltaTime);
         }
     }
     destroyQueuedEntities();
@@ -44,12 +42,12 @@ entity_t ECS::createEntityWithBitFlags(flags_t flags) {
         return -1;
 
     // Register entity
-    int ent_id = m_nextUnallocEntity;
+    entity_t ent_id = m_nextUnallocEntity;
     m_entities[ent_id] = flags;
 
     // Add used data
     for (int flag = 0; flag < MAX_COMPONENTS; flag++) {
-        if ((m_entities[ent_id] & flag) && m_component_registered[flag]) {
+        if ((m_entities[ent_id] & (1 << flag)) && m_component_registered[flag]) {
             m_usedDataSize += m_component_num_to_size[flag];
         }
     }
@@ -78,7 +76,7 @@ void ECS::destroyEntity(entity_t id) {
 
     // Take away used data
     for (int flag = 0; flag < MAX_COMPONENTS; flag++) {
-        if ((m_entities[id] & flag) && m_component_registered[flag]) {
+        if ((m_entities[id] & (1 << flag)) && m_component_registered[flag]) {
             m_usedDataSize -= m_component_num_to_size[flag];
         }
     }

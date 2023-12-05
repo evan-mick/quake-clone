@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     std::cout << "hi" << std::endl;
 
 //    int flag = FL_PHYSICS | FL_TRANSFORM | FL_TEST;
-    int test_ent = ecs.createEntity({FLN_TEST, FLN_TRANSFORM, FLN_TESTKILL});
+    entity_t test_ent = ecs.createEntity({FLN_TEST, FLN_TRANSFORM, FLN_TESTKILL});
     std::cout << std::to_string(ecs.getEntityBitMask(test_ent)) << std::endl;
 //    int test_ent2 = ecs.createEntityWithBitFlags((1 << FLN_TEST) | (1 << FLN_TRANSFORM) | (1 << FLN_TESTKILL));
 
