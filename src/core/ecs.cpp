@@ -101,7 +101,7 @@ void ECS::registerSystemWithBitFlags(system_t system_function, flags_t required_
 }
 
 void ECS::registerSystem(system_t system_function, std::initializer_list<int> flag_numbers) {
-    int input_flag = 0;
+    flags_t input_flag = 0;
     for (int flag : flag_numbers) {
         input_flag = input_flag | (1 << flag);
     }
@@ -134,7 +134,7 @@ int ECS::registerComponent(int flag_num, size_t data_size) {
 //template <typename T>
 void* ECS::getComponentData(entity_t entity_id, int flag_num) {
 
-    int flag = (1 << (flag_num));
+    flags_t flag = (1 << (flag_num));
     bool equal = ((m_entities[entity_id] & flag) == flag);
 //    bool ent_in_bounds = (entity_id < MAX_ENTITY && entity_id >= 0); this already checked by virtue of entity_t
     bool flag_in_bounds = (flag_num >= 0 || flag_num < MAX_COMPONENTS);
