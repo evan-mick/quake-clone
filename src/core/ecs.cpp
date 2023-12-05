@@ -1,6 +1,6 @@
 #include "ecs.h"
 #include <iostream>
-
+#include <array>
 
 ECS::ECS()
 {
@@ -152,12 +152,26 @@ int ECS::serializeData(char** buff_ptr) {
     *buff_ptr = new char[m_usedDataSize];
 
     size_t ob_ptr = 0;
-    for (int i = 0; i < MAX_ENTITY; i++) {
-        *((entity_t*)(*buff_ptr + ob_ptr)) = m_entities[i];
+    for (int ent = 0; ent < MAX_ENTITY; ent++) {
+
+        if (m_entities[ent] == 0)
+            continue;
+
+        // Copy entity id and flags
+        *((entity_t*)(*buff_ptr + ob_ptr)) = ent;
         ob_ptr += sizeof(entity_t);
 
-        for (int i = 0; i < MAX_COMPONENTS; i++) {
+        *((flags_t*)(*buff_ptr + ob_ptr)) = m_entities[ent];
+        ob_ptr += sizeof(flags_t);
 
+        // Copy component data
+        for (int com = 0; com < MAX_COMPONENTS; com++) {
+            bool has_flag = m_entities[ent] & (1 << com);
+            if (!m_component_registered[com] || !has_flag)
+                continue;
+
+            memcpy((*buff_ptr + ob_ptr), getComponentData(ent, com), m_component_num_to_size[com]);
+            ob_ptr += m_component_num_to_size[com];
         }
     }
 
@@ -165,7 +179,42 @@ int ECS::serializeData(char** buff_ptr) {
     return m_usedDataSize;
 }
 
-void ECS::deserializeIntoData(char* serialized_data, int ignore[]) {
+void ECS::deserializeIntoData(char* serialized_data, size_t max_size, const bool* ignore) {
     // IMPORTANT: what happens to used data size when a new object is deserialized in?
+    // ALSO, ensure that tip of data isn't full if flags are empty/object is destroyed
 
+    size_t ob_ptr = 0;
+
+    entity_t ent;
+    flags_t flags;
+
+    while (ob_ptr < max_size) {
+
+        // get initial entity data
+        memcpy(&ent, &serialized_data[ob_ptr], sizeof(entity_t));
+        ob_ptr += sizeof(entity_t);
+        memcpy(&flags, &serialized_data[ob_ptr], sizeof(flags_t));
+        ob_ptr += sizeof(flags_t);
+
+        // ignore entities on the ignore list
+        if (ignore != nullptr && ignore[ent])
+            continue;
+
+        // end early if empty entity / end of data
+        if (ent == 0 && flags == 0)
+            break;
+
+
+        // Copy over all component data
+        // IMPORTANT: what if entity doesn't exist before?
+        m_entities[ent] = flags;
+        for (int com = 0; com < MAX_COMPONENTS; com++) {
+            bool has_flag = m_entities[ent] & (1 << com);
+            if (!m_component_registered[com] || !has_flag)
+                continue;
+
+            memcpy(getComponentData(ent, com), (serialized_data + ob_ptr), m_component_num_to_size[com]);
+            ob_ptr += m_component_num_to_size[com];
+        }
+    }
 }

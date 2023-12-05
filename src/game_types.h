@@ -8,10 +8,11 @@
 
 // COMPONENT FLAG NUMBERS
 // represents where in the bitmask they are
-constexpr u_int32_t FLN_INPUT = 0;
-constexpr u_int32_t FLN_TRANSFORM = 1;
-constexpr u_int32_t FLN_RENDER = 2;
-constexpr u_int32_t FLN_PHYSICS = 3;
+constexpr u_int32_t FLN_TYPE = 0;
+constexpr u_int32_t FLN_INPUT = 1;
+constexpr u_int32_t FLN_TRANSFORM = 2;
+constexpr u_int32_t FLN_RENDER = 3;
+constexpr u_int32_t FLN_PHYSICS = 4;
 
 constexpr u_int32_t FLN_TESTKILL = 29;
 constexpr u_int32_t FLN_TEST = 30;
@@ -28,6 +29,11 @@ constexpr u_int32_t FLN_TEST = 30;
 
 
 // COMPONENT STRUCTS
+struct TypeData {
+    u_int8_t type;
+};
+
+
 struct InputData {
     u_int8_t dat;
     // float x_rot

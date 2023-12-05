@@ -8,13 +8,16 @@
 
 typedef unsigned int flags_t;
 typedef unsigned char entity_t;
+typedef unsigned char entityType_t;
 typedef void (*system_t)(struct ECS*, int entity_id, float delta_seconds);
 template <typename T> T* getComponentData(int entity_id, int flag_num);
 
+// IN THEORY, these expressions, and any of the functions, should not have to be edited
+// if you need more space for components or entity ID's, just change the underlying typedef above
 constexpr entity_t MAX_ENT_VAL = -1;
 constexpr size_t MAX_ENTITY = MAX_ENT_VAL + 1; // MAX VALUE OF ENTITY_T
 constexpr int MAX_COMPONENTS = sizeof(flags_t) * 8;
-// In theory, infinite systems should be possible, but leaving it fixed
+// Infinite systems should be possible, but leaving it fixed
 constexpr int MAX_SYSTEMS = 32;
 
 
@@ -39,6 +42,7 @@ public:
     // Creates an entity
     // Input a bunch of flag numbers
     entity_t createEntity(std::initializer_list<int> flag_numbers);
+//    entity_t createEntity(entityType_t type, std::initializer_list<int> flag_numbers);
 
     // Returns the raw bitmask of the inputted entity
     flags_t getEntityBitMask(entity_t entity_id);
@@ -50,7 +54,6 @@ public:
     // Registers a system in the ECS
     // Will run the function [system function] on all entities with the given flag numbers
     void registerSystem(system_t system_function, std::initializer_list<int> flag_numbers);
-
 
     // Registers a component with the given type
     // The flag num is a number 0 <= flag_num < sizeof(flags_t)
@@ -66,44 +69,47 @@ public:
     void* getComponentData(entity_t entity_id, int flag_num);
 //    template <typename T> T* getComponentData(int entity_id, int flag_num);
 
-
     // Returns the # of bytes written to the char* array
     // Sets the buff_ptr to a heap allocated pointer to the buffer
     int serializeData(char** buff_ptr);
 
     // ASSUMPTIONS serialized_data is a well-formed, serialization of game state
-    // ignore is an MAX_ENTITY sized array
-    void deserializeIntoData(char* serialized_data, int ignore[]);
-
+    // ignore is an MAX_ENTITY sized array of entity -> bool to not add to the data
+    // IMPORTANT: some functionality incomplete, especially for objects that didn't exist before or got destroyed
+    void deserializeIntoData(char* serialized_data, size_t max_size, const bool* ignore);
 
 private:
 
     struct SystemData {
         system_t func;
-        int req_flags;
+        flags_t req_flags;
     };
 
+    // Entity id -> bitmask flags
     std::array<flags_t, MAX_ENTITY> m_entities{};
 
+    // Component id -> component data buffer
     std::array<void*, MAX_COMPONENTS> m_components{};
+    // Component id -> bool is the component registered
     std::array<bool, MAX_COMPONENTS> m_component_registered{};
+    // Component id -> component struct size
     std::array<size_t, MAX_COMPONENTS> m_component_num_to_size{};
 
     std::vector<SystemData> m_systems = {};
 
+    // Amount of data stored, needed for serialization and deserialization
+    // BE ON THE LOOKOUT FOR BUGS RELATED TO THIS
     size_t m_usedDataSize = 0;
 
-
-
-//    int m_oneAfterLastEntity = 0;
     size_t m_nextUnallocEntity = 0;
 
+    // Destruction
     std::vector<int> m_destroyQueue = {};
-
     void destroyQueuedEntities();
     void destroyEntity(entity_t entity_id);
 
 
+    // For delta time calculation
     std::chrono::time_point<std::chrono::steady_clock> m_lastUpdate;
 
 
