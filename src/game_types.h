@@ -18,13 +18,13 @@ constexpr u_int32_t FLN_TEST = 30;
 
 
 // COMPONENT BIT FLAGS
-constexpr u_int32_t FL_INPUT = 1;
-constexpr u_int32_t FL_TRANSFORM = 1 << (FLN_TRANSFORM);
-constexpr u_int32_t FL_RENDER = 1 << (FLN_RENDER);
-constexpr u_int32_t FL_PHYSICS = 1 << (FLN_PHYSICS);
+//constexpr u_int32_t FL_INPUT = 1;
+//constexpr u_int32_t FL_TRANSFORM = 1 << (FLN_TRANSFORM);
+//constexpr u_int32_t FL_RENDER = 1 << (FLN_RENDER);
+//constexpr u_int32_t FL_PHYSICS = 1 << (FLN_PHYSICS);
 
-constexpr u_int32_t FL_TESTKILL = 1 << (FLN_TESTKILL);
-constexpr u_int32_t FL_TEST = 1 << (FLN_TEST);
+//constexpr u_int32_t FL_TESTKILL = 1 << (FLN_TESTKILL);
+//constexpr u_int32_t FL_TEST = 1 << (FLN_TEST);
 
 
 // COMPONENT STRUCTS
@@ -53,6 +53,8 @@ struct Renderable {
 
 struct Test {
     std::string to_print;
+    float timer = 0.0f;
+    int ticks = 0;
 };
 
 

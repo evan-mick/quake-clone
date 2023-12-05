@@ -4,10 +4,10 @@
 #include <vector>
 #include <chrono>
 
-#define MAX_ENTITY 256
-#define MAX_COMPONENTS 32
+const int MAX_ENTITY = 256;
+const int MAX_COMPONENTS = 32;
 // In theory, infinite systems should be possible, but leaving it fixed
-#define MAX_SYSTEMS 32
+const int MAX_SYSTEMS = 32;
 
 
 typedef int flags_t;
@@ -29,12 +29,22 @@ public:
     // Creates an entity
     // Input a bitwise or representation of the component flags
     // Returns the id on success, -1 on failure
-    int createEntity(int flags);
+    int createEntityWithBitFlags(int flags);
 
+    // Creates an entity
+    // Input a bunch of flag numbers
+    int createEntity(std::initializer_list<int> flag_numbers);
+
+    // Returns the raw bitmask of the inputted entity
+    int getEntityBitMask(int entity_id);
 
     // Registers a system in the ECS
     // Will run the function [system_function] on all entities with [required_flags]
-    void registerSystem(system_t system_function, int required_flags);
+    void registerSystemWithBitFlags(system_t system_function, int required_flags);
+
+    // Registers a system in the ECS
+    // Will run the function [system function] on all entities with the given flag numbers
+    void registerSystem(system_t system_function, std::initializer_list<int> flag_numbers);
 
 
     // Registers a component with the given type
