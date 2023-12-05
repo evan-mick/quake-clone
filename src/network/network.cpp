@@ -1,6 +1,7 @@
-#include "network.h"
+#include "Network.h"
 
-network::network()
+Network::Network(bool server)
 {
+    m_isServer = server;
 
 }

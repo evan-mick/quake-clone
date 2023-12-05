@@ -32,6 +32,8 @@ add_executable(${PROJECT_NAME}
     src/core/ecs.h
     src/game_types.h
     src/network/network.h
+    src/game.h src/game.cpp
+    src/renderer/renderer.h src/renderer/renderer.cpp
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
@@ -39,7 +41,6 @@ add_subdirectory(glm)
 
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
 add_library(StaticGLEW STATIC glew/src/glew.c
-    src/network/network.h src/network/network.cpp
 )
 include_directories(${PROJECT_NAME} PRIVATE glew/include)
 
