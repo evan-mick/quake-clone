@@ -9,13 +9,13 @@ ECS::ECS()
 
 }
 
-
-
 void ECS::update() {
     // TODO: delta
     std::chrono::time_point<std::chrono::steady_clock>  now = std::chrono::steady_clock::now();
     float deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(now - m_lastUpdate).count() / 1000000.0f;
     m_lastUpdate = now;
+
+    std::cout << std::to_string(deltaTime) << std::endl;
 
     for (SystemData& data : m_systems) {
         // POTENTIAL OPTIMIZATION: Only cycle up to furthest entity

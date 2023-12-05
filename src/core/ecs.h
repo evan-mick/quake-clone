@@ -9,8 +9,8 @@
 typedef unsigned int flags_t;
 typedef unsigned char entity_t;
 typedef unsigned char entityType_t;
-typedef void (*system_t)(struct ECS*, int entity_id, float delta_seconds);
-template <typename T> T* getComponentData(int entity_id, int flag_num);
+typedef void (*system_t)(struct ECS*, entity_t entity_id, float delta_seconds);
+//template <typename T> T* getComponentData(int entity_id, int flag_num);
 
 // IN THEORY, these expressions, and any of the functions, should not have to be edited
 // if you need more space for components or entity ID's, just change the underlying typedef above

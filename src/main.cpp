@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     tst->ticks = 10;
 
 
-    system_t test = [](ECS* e, int ent, float delta) {
+    system_t test = [](ECS* e, entity_t ent, float delta) {
 
         Test* test = static_cast<Test*>(e->getComponentData(ent, FLN_TEST));
 
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     };
     ecs.registerSystem(test, {FLN_TEST});
 
-    ecs.registerSystem([](ECS* e, int ent, float delta) {
+    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
         std::cout << std::to_string(e->getEntityBitMask(ent)) << " physics" << std::endl;
 
         Physics* phys = static_cast<Physics*>(e->getComponentData(ent, FLN_PHYSICS));
