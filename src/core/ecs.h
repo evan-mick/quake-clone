@@ -5,16 +5,20 @@
 #include <chrono>
 #include <array>
 
-const int MAX_ENTITY = 256;
-const int MAX_COMPONENTS = 32;
-// In theory, infinite systems should be possible, but leaving it fixed
-const int MAX_SYSTEMS = 32;
 
-
-typedef int flags_t;
-typedef char entity_t;
+typedef unsigned int flags_t;
+typedef unsigned char entity_t;
 typedef void (*system_t)(struct ECS*, int entity_id, float delta_seconds);
 template <typename T> T* getComponentData(int entity_id, int flag_num);
+
+constexpr entity_t MAX_ENT_VAL = -1;
+constexpr size_t MAX_ENTITY = MAX_ENT_VAL + 1; // MAX VALUE OF ENTITY_T
+constexpr int MAX_COMPONENTS = sizeof(flags_t) * 8;
+// In theory, infinite systems should be possible, but leaving it fixed
+constexpr int MAX_SYSTEMS = 32;
+
+
+
 
 class ECS
 {
@@ -25,23 +29,23 @@ public:
     void update();
 
     // Queues an entity with id [entity_id] to be destroyed at the end of the current update
-    void queueDestroyEntity(int entity_id);
+    void queueDestroyEntity(entity_t entity_id);
 
     // Creates an entity
     // Input a bitwise or representation of the component flags
     // Returns the id on success, -1 on failure
-    int createEntityWithBitFlags(int flags);
+    entity_t createEntityWithBitFlags(flags_t bitwise_flags);
 
     // Creates an entity
     // Input a bunch of flag numbers
-    int createEntity(std::initializer_list<int> flag_numbers);
+    entity_t createEntity(std::initializer_list<int> flag_numbers);
 
     // Returns the raw bitmask of the inputted entity
-    int getEntityBitMask(int entity_id);
+    flags_t getEntityBitMask(entity_t entity_id);
 
     // Registers a system in the ECS
     // Will run the function [system_function] on all entities with [required_flags]
-    void registerSystemWithBitFlags(system_t system_function, int required_flags);
+    void registerSystemWithBitFlags(system_t system_function, flags_t required_flags);
 
     // Registers a system in the ECS
     // Will run the function [system function] on all entities with the given flag numbers
@@ -59,11 +63,13 @@ public:
     // Pass in the type of struct
     // OF NOTE: tried to avoid "void*" and to use templates, but had a 2 hour time sink issue trying to make it work
     // Just static cast pls :'), we know what it'll be b/c of the flag num
-    void* getComponentData(int entity_id, int flag_num);
+    void* getComponentData(entity_t entity_id, int flag_num);
 //    template <typename T> T* getComponentData(int entity_id, int flag_num);
 
 
-    char* deserializeIntoData();
+    // Returns the # of bytes written to the char* array
+    // Sets the buff_ptr to a heap allocated pointer to the buffer
+    int serializeData(char** buff_ptr);
 
     // ASSUMPTIONS serialized_data is a well-formed, serialization of game state
     // ignore is an MAX_ENTITY sized array
@@ -77,7 +83,7 @@ private:
         int req_flags;
     };
 
-    std::array<int, MAX_ENTITY> m_entities{};
+    std::array<flags_t, MAX_ENTITY> m_entities{};
 
     std::array<void*, MAX_COMPONENTS> m_components{};
     std::array<bool, MAX_COMPONENTS> m_component_registered{};
@@ -85,15 +91,17 @@ private:
 
     std::vector<SystemData> m_systems = {};
 
+    size_t m_usedDataSize = 0;
+
 
 
 //    int m_oneAfterLastEntity = 0;
-    int m_nextUnallocEntity = 0;
+    size_t m_nextUnallocEntity = 0;
 
     std::vector<int> m_destroyQueue = {};
 
     void destroyQueuedEntities();
-    void destroyEntity(int entity_id);
+    void destroyEntity(entity_t entity_id);
 
 
     std::chrono::time_point<std::chrono::steady_clock> m_lastUpdate;

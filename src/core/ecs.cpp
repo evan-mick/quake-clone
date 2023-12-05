@@ -27,24 +27,33 @@ void ECS::update() {
     destroyQueuedEntities();
 }
 
-void ECS::queueDestroyEntity(int entity_id) {
+void ECS::queueDestroyEntity(entity_t entity_id) {
     m_destroyQueue.push_back(entity_id);
 }
 
-int ECS::getEntityBitMask(int entity_id) {
-    if (entity_id < 0 || entity_id >= MAX_ENTITY)
-        return 0;
+flags_t ECS::getEntityBitMask(entity_t entity_id) {
+//    if (entity_id < 0 || entity_id >= MAX_ENTITY)
+//        return 0;
     return m_entities[entity_id];
 }
 
-int ECS::createEntityWithBitFlags(int flags) {
+entity_t ECS::createEntityWithBitFlags(flags_t flags) {
 
     if (m_nextUnallocEntity >= MAX_ENTITY)
         return -1;
 
+    // Register entity
     int ent_id = m_nextUnallocEntity;
     m_entities[ent_id] = flags;
 
+    // Add used data
+    for (int flag = 0; flag < MAX_COMPONENTS; flag++) {
+        if ((m_entities[ent_id] & flag) && m_component_registered[flag]) {
+            m_usedDataSize += m_component_num_to_size[flag];
+        }
+    }
+
+    // Setup next entity to allocate
     do {
         m_nextUnallocEntity++;
     }
@@ -53,7 +62,7 @@ int ECS::createEntityWithBitFlags(int flags) {
     return ent_id;
 }
 
-int ECS::createEntity(std::initializer_list<int> flag_numbers) {
+entity_t ECS::createEntity(std::initializer_list<int> flag_numbers) {
     int input_flag = 0;
 
     for (int flag : flag_numbers) {
@@ -64,9 +73,17 @@ int ECS::createEntity(std::initializer_list<int> flag_numbers) {
 
 }
 
-void ECS::destroyEntity(int id) {
+void ECS::destroyEntity(entity_t id) {
+
+    // Take away used data
+    for (int flag = 0; flag < MAX_COMPONENTS; flag++) {
+        if ((m_entities[id] & flag) && m_component_registered[flag]) {
+            m_usedDataSize -= m_component_num_to_size[flag];
+        }
+    }
+
     m_entities[id] = 0;
-    m_nextUnallocEntity = std::min(id, m_nextUnallocEntity);
+    m_nextUnallocEntity = std::min((size_t)id, m_nextUnallocEntity);
 }
 
 void ECS::destroyQueuedEntities() {
@@ -76,7 +93,7 @@ void ECS::destroyQueuedEntities() {
     m_destroyQueue.clear();
 }
 
-void ECS::registerSystemWithBitFlags(system_t system_function, int required_flags) {
+void ECS::registerSystemWithBitFlags(system_t system_function, flags_t required_flags) {
     SystemData dat = {};
     dat.func = system_function;
     dat.req_flags = required_flags;
@@ -116,16 +133,39 @@ int ECS::registerComponent(int flag_num, size_t data_size) {
 
 
 //template <typename T>
-void* ECS::getComponentData(int entity_id, int flag_num) {
+void* ECS::getComponentData(entity_t entity_id, int flag_num) {
 
     int flag = (1 << (flag_num));
     bool equal = ((m_entities[entity_id] & flag) == flag);
-    bool ent_in_bounds = (entity_id < MAX_ENTITY && entity_id >= 0);
+//    bool ent_in_bounds = (entity_id < MAX_ENTITY && entity_id >= 0); this already checked by virtue of entity_t
     bool flag_in_bounds = (flag_num >= 0 || flag_num < MAX_COMPONENTS);
 
     if (!flag_in_bounds || !m_component_registered[flag_num]
-        || !equal || !ent_in_bounds)
+        || !equal /*|| !ent_in_bounds*/)
         return nullptr;
 
     return ((char*)(m_components[flag_num])) + (m_component_num_to_size[flag_num] * entity_id);
+}
+
+
+int ECS::serializeData(char** buff_ptr) {
+    *buff_ptr = new char[m_usedDataSize];
+
+    size_t ob_ptr = 0;
+    for (int i = 0; i < MAX_ENTITY; i++) {
+        *((entity_t*)(*buff_ptr + ob_ptr)) = m_entities[i];
+        ob_ptr += sizeof(entity_t);
+
+        for (int i = 0; i < MAX_COMPONENTS; i++) {
+
+        }
+    }
+
+
+    return m_usedDataSize;
+}
+
+void ECS::deserializeIntoData(char* serialized_data, int ignore[]) {
+    // IMPORTANT: what happens to used data size when a new object is deserialized in?
+
 }
