@@ -38,7 +38,7 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
 
 void Network::connect(const char* ip, const char* port) {
 
-    sockaddr_in in;
+    //sockaddr_in in;
 
 }
 

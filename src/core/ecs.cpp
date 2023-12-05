@@ -1,4 +1,5 @@
 #include "ecs.h"
+#include <cstring>
 #include <iostream>
 #include <array>
 
