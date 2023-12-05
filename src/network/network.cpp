@@ -1,4 +1,4 @@
-#include "Network.h"
+#include "network.h"
 
 Network::Network(bool server, ECS* ecs)
 {
@@ -21,6 +21,10 @@ void Network::listenThread() {
 
     char* buffer[1400] {};
 //    recv()
+
+}
+
+Gamestate* Network::popLeastRecentGamestate() {
 
 }
 
