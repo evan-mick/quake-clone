@@ -34,6 +34,13 @@ add_executable(${PROJECT_NAME}
     src/network/network.h
     src/game.h src/game.cpp
     src/renderer/renderer.h src/renderer/renderer.cpp
+    src/renderer/scenedata.h
+    src/renderer/objects/player.h src/renderer/objects/player.cpp
+    src/renderer/objects/cube.h src/renderer/objects/cube.cpp
+    src/renderer/objects/sphere.h src/renderer/objects/sphere.cpp
+    src/renderer/objects/cone.h src/renderer/objects/cone.cpp
+    src/renderer/objects/cylinder.h src/renderer/objects/cylinder.cpp
+
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
@@ -41,6 +48,7 @@ add_subdirectory(glm)
 
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
 add_library(StaticGLEW STATIC glew/src/glew.c
+
 )
 include_directories(${PROJECT_NAME} PRIVATE glew/include)
 
