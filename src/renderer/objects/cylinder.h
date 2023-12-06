@@ -27,4 +27,5 @@ private:
     float m_radius = 0.5;
     int m_param1;
     int m_param2;
+    float M_PI = 3.14f;
 };

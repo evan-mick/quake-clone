@@ -57,7 +57,7 @@ struct Physics {
 };
 
 struct Renderable {
-    u_int8_t model_id;
+    uint8_t model_id;
     ScenePrimitive primitive;
     glm::mat4 ctm;
     GLuint vbo;

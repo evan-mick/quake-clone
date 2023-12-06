@@ -5,7 +5,7 @@
 
 
 #include <stdlib.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <sys/types.h>
 //#include <sys/socket.h>
 //#include <arpa/inet.h>
@@ -18,12 +18,12 @@
 const uint16_t default_port = 42069; // hell yeah
 const int MAX_PLAYERS = 4;
 
-
+#pragma pack(1)
 struct Packet {
-    char command;
     unsigned int tick;
+    char command;
     char* data;
-} __attribute__ ((packed));
+};
 
 
 struct Gamestate {

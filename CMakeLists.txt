@@ -87,7 +87,7 @@ endif()
 
 # Set this flag to silence warnings on Windows
 if (MSVC OR MSYS OR MINGW)
-  set(CMAKE_CXX_FLAGS "-Wno-volatile")
+#  set(CMAKE_CXX_FLAGS "-Wno-volatile")
 endif()
 # Set this flag to silence warnings on MacOS
 if (APPLE)

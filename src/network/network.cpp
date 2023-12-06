@@ -25,6 +25,7 @@ void Network::listenThread() {
 }
 
 Gamestate* Network::popLeastRecentGamestate() {
+    return nullptr;
 
 }
 
