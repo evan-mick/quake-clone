@@ -382,15 +382,13 @@ void Network::onTick() {
 
 int Network::initClient() {  
     
-    if (!m_isServer) { // Server setup is called in listenThread()
-        const char* port = std::to_string(default_port).c_str();
-        const char* ip = NULL; // CHANGE THIS TO A USER INPUT
-        int clientSetup = connect(ip, port); 
-        if (clientSetup != 0) {
-            // Handle error: unable to set up UDP connection
-            return -1;
-        }
-
+    const char* port = std::to_string(default_port).c_str();
+    const char* ip = NULL; // CHANGE THIS TO A USER INPUT
+    
+    int clientSetup = connect(ip, port); 
+    if (clientSetup != 0) {
+        // Handle error: unable to set up UDP connection
+        return -1;
     }
 
     return 0;
