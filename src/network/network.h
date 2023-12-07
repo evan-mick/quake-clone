@@ -35,6 +35,10 @@ struct TickData {
     char* data;
 };
 
+struct TickBuffer {
+    std::mutex mutex;
+    std::queue<TickData> buffer;
+};
 
 struct Gamestate {
     int tick;
@@ -50,8 +54,10 @@ struct Connection {
 //    sockaddr sock_data;
     long last_rec_tick;
     int socket;
+    uint16_t port;
+    uint32_t ip;
     int entity; // if the other side is the server, -1, otherwise keep entity_id of the player
-    std::queue<TickData> tickBuffer;
+    TickBuffer tick_buffer;
 };
 
 //bool compare(Gamestate a, Gamestate b) {
@@ -59,26 +65,31 @@ struct Connection {
 //}
 
 
+
 class Network
 {
 public:
     Network(bool server, ECS* ecs);
 
-    void connect(const char* ip, const char* port);
-
+    int connect(const char* ip, const char* port);
+    Connection* getConnection(uint32_t ip);
     Gamestate* popLeastRecentGamestate();
     void deserializeAllDataIntoECS(ECS* ecs);
 
     void shutdown();
-
-    void addConnection(uint32_t ip, Connection conn);
+    void broadcastClientGS(ECS* ecs, Connection* conn, int tick);
+    void addConnection(uint32_t ip, Connection* conn);
     void editConnection(uint32_t ip);
+    
+    void onTick();
+    int initClient();
+    void updateTickBuffer(Packet packet, Connection* conn, int newtick);
 
 private:
     bool m_isServer = false;
     ECS* m_ecs;
     std::atomic_bool m_shutdown = false; // equal sign needs to be removed and defined in the consructor I think
-
+    std::mutex m_connectionMutex;
     // ONLY RELEVENT TO CLIENTS AS OF NOW
     // what should server be receiving? should this be in connection?
     std::priority_queue<Gamestate, std::vector<Gamestate>, Gamestate> m_recentGamestates;
@@ -87,15 +98,14 @@ private:
     std::array<int, MAX_ENTITY> m_hasAuthority{};
 
     std::array<Connection, MAX_PLAYERS> m_connections{}; // not using this atm
-    std::unordered_map<uint32_t, Connection> m_connectionMap{};
+    std::unordered_map<uint32_t, Connection*> m_connectionMap{};
 //    void listenForData();
 
     std::thread m_listenThread;
     
-    std::mutex tickBufferMutex; 
-
-    void listenThread();
-
+    void serverListen();
+    void clientListen();
+    
     int setupUDPConn(const char* address, const char* port);
 };
 

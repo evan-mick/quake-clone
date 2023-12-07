@@ -1,105 +1,97 @@
 #version 330 core
 
-// Task 5: declare "in" variables for the world-space position and normal,
-//         received post-interpolation from the vertex shader
-in vec4 world_position;
-in vec3 world_normal;
-//in vec3 suf_to_light;
-
-
-// Task 10: declare an out vec4 for your output color
+in vec3 worldSpacePos;
+in vec3 worldSpaceNorm;
 out vec4 fragColor;
+uniform float k_a;
+uniform float k_d;
+uniform float k_s;
+uniform int shininess;
 
+uniform vec4 cAmbient;
+uniform vec4 cDiffuse;
+uniform vec4 cSpecular;
 
-uniform float ka;
-uniform float ks;
-uniform float kd;
+uniform vec4 lightPos[8];
+uniform vec4 lightColor[8];
+uniform int lightType[8];
+uniform vec4 lightDir[8];
+uniform vec2 lightAngle[8];
+uniform vec3 lightAtt[8];
+uniform int numLights;
 
-uniform float shininess;
+uniform vec4 worldSpaceCameraPos;
 
-uniform vec4 cam_pos;
-
-
-uniform vec4 lights[8];
-uniform vec3 light_fun[8];
-uniform vec4 light_dir[8];
-uniform vec3 light_in[8];
-uniform int light_num;
-uniform int type[8];
-//uniform int is_directional[8];
-//uniform int is_spot[8];
-
-uniform float angle[8];
-uniform float penumbra[8];
-
-
-//uniform vec4 light_dir_;
-//light_fun
-
-uniform vec4 ambient;
-uniform vec4 diffuse;
-uniform vec4 specular;
-
-
-float falloff(float x) {
-    return -2. * x * x * x + 3 * x * x;
+float attentuation(int i) {
+    if(lightType[i]==1) {
+        return 1.0;
+    }
+    float dist = distance(vec3(worldSpacePos),vec3(lightPos[i]));
+    return min(1.0,1.0/(lightAtt[i][0] + lightAtt[i][1] * dist + lightAtt[i][2] * dist * dist));
 }
 
+vec4 ambient() {
+    return k_a*cAmbient;
+}
+
+float angularFalloff(float x, float inner, float outer) {
+    float ratio = (x - inner) / (outer - inner);
+    return -2.0 * pow(ratio, 3.0) + 3.0 * pow(ratio, 2.0);
+}
+
+vec4 falloffIllumination(int i) {
+    if(lightType[i]!=2) {
+        return lightColor[i];
+    }
+    vec3 currentDir = normalize(worldSpacePos - vec3(lightPos[i]));
+    float x = acos(dot(currentDir,normalize(vec3(lightDir[i]))));
+    if(x <= lightAngle[i][0] - lightAngle[i][1]) {
+        return lightColor[i];
+    } else if(x>lightAngle[i][0]){
+        return vec4(0,0,0,0);
+    }
+    return lightColor[i] * (1.f - angularFalloff(x,lightAngle[i][0] - lightAngle[i][1],lightAngle[i][0]));
+}
+
+vec4 diffuse(int i) {
+    vec3 L;
+    if(lightType[i]!=1) {
+        L = worldSpacePos - vec3(lightPos[i]);
+    } else {
+        L = vec3(lightDir[i]);
+    }
+    float dotLN = clamp(dot(-1*normalize(L),normalize(worldSpaceNorm)),0,1.0);
+    float diffuse = dotLN * k_d;
+    return diffuse * falloffIllumination(i) * cDiffuse * attentuation(i);
+}
+
+vec4 specular(int i) {
+    vec3 L;
+    if(lightType[i]!=1) {
+        L = normalize(vec3(lightPos[i])-worldSpacePos);
+    } else {
+        L = -1*normalize(vec3(lightDir[i]));
+    }
+    vec3 E = normalize(vec3(worldSpaceCameraPos) - vec3(worldSpacePos));
+    float dotLE = clamp(dot(reflect(-L,normalize(worldSpaceNorm)),E),0.0,1.0);
+    float specular = k_s * pow(dotLE,shininess);
+    if(specular > 0) {
+        return specular * falloffIllumination(i) * cSpecular * attentuation(i);
+    } return vec4(0,0,0,0);
+}
 
 void main() {
-
-    fragColor = vec4(0, 0, 0, 1.f);
-
-    fragColor += ka * ambient;
-
-    for (int i = 0; i < light_num; i++) {
-
-        // Of note for types,
-        // type 0 is point light
-        // type 1 is directional
-        // type 2 is spot light
-
-        vec3 world_normal_normalized = vec3(normalize(world_normal));
-
-        float intensity = 1.f;
-
-        vec4 light_direction = normalize(-light_dir[i]);
-
-        if (type[i] != 1)
-            light_direction = normalize((lights[i] - world_position));
-
-        // Spotlight logic
-        if (type[i] == 2) {
-            float inner = angle[i] - penumbra[i];
-            float outer = angle[i];
-
-            float ang = acos(dot(vec3(light_direction), -normalize(vec3(light_dir[i]))));
-
-            if (ang > inner && ang <= outer) {
-                float val = (ang - inner) / (outer - inner);
-                intensity = intensity * (1.f - falloff(val));
-            } else if (ang > outer) {
-                intensity = 0.f;
-            } else {
-                intensity = 1.f;
-            }
-        }
-
-        // dist and attenuation
-        float dist = length(vec3(lights[i]) - vec3(world_position));
-        float atten = min(1.f, 1.f / (light_fun[i].x + (dist * light_fun[i].y) + (dist * dist * light_fun[i].z)));
-
-        if (type[i] == 1)
-            atten = 1.f;
-
-        // Add to frag col
-        fragColor += intensity * atten * vec4(light_in[i], 1.f) * kd * (clamp(dot(light_direction, vec4(world_normal_normalized, 1.f)), 0, 1)) * diffuse;
-
-        fragColor += intensity * atten * vec4(light_in[i], 1.f) * ks * pow(
-                    clamp(dot(normalize(vec3(reflect(-light_direction, vec4(world_normal_normalized, 1.f)))),
-                              normalize(vec3(cam_pos - world_position))), 0, 1),
-                    shininess) * specular;
-
+//    normalize(worldSpaceNorm);
+//    float r = min(max(worldSpaceNorm[0],0.f),1.f);
+//    float g = min(max(worldSpaceNorm[1],0.f),1.f);
+//    float b = min(max(worldSpaceNorm[2],0.f),1.f);
+//    fragColor = vec4(r,g,b,1.0);
+    vec4 res;
+    res += ambient();
+    for(int i=0;i<numLights;i++) {
+        res += diffuse(i);
+        res += specular(i);
     }
-
+    res[3] = 1;
+    fragColor = res;
 }

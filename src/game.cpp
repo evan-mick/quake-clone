@@ -4,6 +4,11 @@
 #include "renderer/renderer.h"
 #include "game_types.h"
 #include "physics/physics.h"
+#include <QApplication>
+#include <QScreen>
+#include <iostream>
+#include <QSettings>
+#include "renderer/mainwindow.h"
 
 Game::Game()
 {
@@ -24,6 +29,26 @@ void Game::startGame(bool server) {
 
 //    if (!server)
 //        net.connect();
+    //TODO: move window generation to its correct space after ECS connection
+    int args = 0;
+    char* argv;
+    QApplication a(args,&argv);
+
+    QCoreApplication::setApplicationName("Nifty Quake Clone");
+    QCoreApplication::setOrganizationName("CS 1230");
+    QCoreApplication::setApplicationVersion(QT_VERSION_STR);
+
+    QSurfaceFormat fmt;
+    fmt.setVersion(4, 1);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    QSurfaceFormat::setDefaultFormat(fmt);
+
+    MainWindow w;
+    w.initialize();
+    w.resize(800, 600);
+    w.show();
+    a.exec();
+    w.finish();
 
 
     while (m_running) {
