@@ -15,6 +15,11 @@
 #include <thread>
 
 
+#include <sys/socket.h>
+#include <netdb.h>
+
+
+
 const uint16_t default_port = 42069; // hell yeah
 const int MAX_PLAYERS = 4;
 
@@ -81,6 +86,8 @@ private:
     std::thread m_listenThread;
 
     void listenThread();
+
+    int setupUDPConn(const char* address, const char* port, addrinfo* info);
 };
 
 #endif // NETWORK_H

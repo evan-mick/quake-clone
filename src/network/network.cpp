@@ -1,5 +1,6 @@
 #include "network.h"
 
+
 Network::Network(bool server, ECS* ecs)
 {
     m_isServer = server;
@@ -46,4 +47,41 @@ void Network::connect(const char* ip, const char* port) {
 void Network::shutdown() {
     m_shutdown = true;
     m_listenThread.join();
+}
+
+
+int Network::setupUDPConn(const char* address, const char* port, addrinfo* info) {
+    int rv;
+    int sock;
+//    std::cout << "starting udp connection on: " << address << ":" << port << std::endl;
+
+    // Ask for a socket that listens on all addresses
+    struct addrinfo hints, *res, *servinfo;
+    memset(&hints, 0, sizeof (struct addrinfo));
+    hints.ai_family = AF_INET;       // Request an IPv4 socket
+    hints.ai_socktype = SOCK_DGRAM;  // UDP socket
+    hints.ai_flags = AI_PASSIVE;     // Bind to all addresses on the system
+
+    if ((rv = getaddrinfo(address, port, &hints, &servinfo)) != 0) {
+        perror("getaddrinfo");
+        return -1;
+    }
+
+    // Look at all the results and bind to the first one
+    // (Technically, we should be able to eliminate this loop, since we only picked AF_INET)
+    for (res = servinfo; res != NULL; res = res->ai_next) {
+        if((sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+            continue;
+        }
+        break;
+    }
+
+    if (res == nullptr) {
+        printf("Could not bind to socket\n");
+        return -1;
+    }
+
+    *info = *res;
+
+    return sock;
 }

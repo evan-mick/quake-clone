@@ -21,7 +21,7 @@ public:
 
 private:
     // The singleton
-    static Physics* phys;
+    static inline Physics* phys;
 
     Timer m_timer = Timer(1/20.f);
     float m_tickTime;

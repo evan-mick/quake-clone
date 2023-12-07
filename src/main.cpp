@@ -9,8 +9,9 @@
 #include "core/ecs.h"
 #include "game_types.h"
 #include <random>
+#include "game.h"
 
-
+void test_main();
 
 int main(int argc, char *argv[]) {
     //    QApplication a(argc, argv);
@@ -29,6 +30,19 @@ int main(int argc, char *argv[]) {
     //    w.resize(800, 600);
     //    w.show();
 
+    bool server = (argc > 1 && strcmp(argv[1], "s"));
+    Game game = Game();
+    game.startGame(server);
+
+
+    //    int return_val = a.exec();
+    //    w.finish();
+    //    return return_val;
+}
+
+
+
+void test_main() {
     ECS ecs = ECS();
 
     ecs.registerComponent(FLN_PHYSICS, sizeof(PhysicsData));
@@ -36,10 +50,10 @@ int main(int argc, char *argv[]) {
     ecs.registerComponent(FLN_TEST, sizeof(Test));
     std::cout << "hi" << std::endl;
 
-//    int flag = FL_PHYSICS | FL_TRANSFORM | FL_TEST;
+    //    int flag = FL_PHYSICS | FL_TRANSFORM | FL_TEST;
     entity_t test_ent = ecs.createEntity({FLN_TEST, FLN_TRANSFORM, FLN_TESTKILL});
     std::cout << std::to_string(ecs.getEntityBitMask(test_ent)) << std::endl;
-//    int test_ent2 = ecs.createEntityWithBitFlags((1 << FLN_TEST) | (1 << FLN_TRANSFORM) | (1 << FLN_TESTKILL));
+    //    int test_ent2 = ecs.createEntityWithBitFlags((1 << FLN_TEST) | (1 << FLN_TRANSFORM) | (1 << FLN_TESTKILL));
 
     Test* tst = static_cast<Test*>(ecs.getComponentData(test_ent, FLN_TEST));
     tst->timer = 1.f;
@@ -87,17 +101,7 @@ int main(int argc, char *argv[]) {
         }
     }, {FLN_TESTKILL, FLN_PHYSICS});
 
-
-
-
     while (true) {
         ecs.update();
     }
-
-    std::cout << sizeof(glm::vec3) << std::endl;
-    //    int return_val = a.exec();
-    //    w.finish();
-    //    return return_val;
 }
-
-
