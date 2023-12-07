@@ -1,5 +1,8 @@
 #include "network.h"
-
+#include <cstring>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include "../game_types.h"
 
 Network::Network(bool server, ECS* ecs)
 {
@@ -16,18 +19,81 @@ Network::Network(bool server, ECS* ecs)
 
 
 void Network::listenThread() {
+    struct sockaddr_storage their_addr;
+    socklen_t addr_len = sizeof their_addr;
 
-    // Constantly listen for receiving
-    // May need to add stuff to check for when no longer listening
+    int serverSocket = setupUDPConn(NULL, "[Your Server Port]"); // Replace with your port
+    if (serverSocket < 0) {
+        // Handle error: unable to set up UDP connection
+        return;
+    }
 
-    char* buffer[1400] {};
-//    recv()
+    while (!m_shutdown) {
+        Packet packet;
+        struct sockaddr clientAddr;
+        socklen_t clientAddrLen = sizeof(clientAddr);
+        
+        int bytesReceived = recvfrom(serverSocket, (char*)&packet, sizeof(packet), 0, &clientAddr, &clientAddrLen);
+        if (bytesReceived < 0) {
+            // Handle error
+            continue;
+        }
 
+        // Process received packet
+        if (packet.command == 'H') { // 'H' for Hello
+            // create entity for client
+            int entity_id = m_ecs->createEntity({FLN_PHYSICS, FLN_TRANSFORM, FLN_TEST, FLN_TESTKILL});
+            char* welcome_entity_id = new char[sizeof(entity_id)];
+            memcpy(welcome_entity_id, &entity_id, sizeof(entity_id));
+            Connection conn;
+            conn.last_rec_tick = 0;
+            conn.socket = serverSocket;
+            conn.entity = entity_id;
+            uint32_t clientIP = ((struct sockaddr_in*)&clientAddr)->sin_addr.s_addr;
+            addConnection(clientIP, conn);
+            Packet welcomePacket;
+            welcomePacket.tick = packet.tick; // or set your own tick
+            welcomePacket.command = 'W'; // 'W' for Welcome
+            welcomePacket.data = welcome_entity_id;
+
+            sendto(serverSocket, (char*)&welcomePacket, sizeof(welcomePacket), 0, &clientAddr, clientAddrLen);
+
+            delete[] welcome_entity_id;
+        } else if (packet.command == 'D') { // 'D' for Data
+            TickData data;
+            Connection client_conn;
+            auto it = m_connectionMap.find(((struct sockaddr_in*)&clientAddr)->sin_addr.s_addr);
+            if (it == m_connectionMap.end()) {
+                // Key not found:
+                throw std::runtime_error("Connection not found in the map");
+            } else {
+                client_conn = it->second;
+            }
+            // update client's last received tick
+            client_conn.last_rec_tick = packet.tick;
+            // Populate data based on received Packet
+            data.tick = packet.tick;
+            size_t dataSize = sizeof(packet.data); // might just have to make this a constant
+            char* dataPtr = new char[dataSize]; // Remember to delete this when it gets popped
+            memcpy(dataPtr, packet.data, dataSize);
+            data.data = dataPtr;
+            {
+                std::lock_guard<std::mutex> lock(tickBufferMutex);
+                client_conn.tickBuffer.push(data);
+            }
+        }
+    }
+
+    close(serverSocket);
 }
 
 Gamestate* Network::popLeastRecentGamestate() {
     return nullptr;
 
+}
+
+void Network::addConnection(uint32_t ip, Connection conn) {
+    m_connectionMap[ip] = conn;
 }
 
 void Network::deserializeAllDataIntoECS(ECS* ecs) {
@@ -39,9 +105,60 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
 }
 
 void Network::connect(const char* ip, const char* port) {
+    int sockfd;
+    struct addrinfo hints, *servinfo, *p;
+    int rv;
 
-    //sockaddr_in in;
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
 
+    if ((rv = getaddrinfo(ip, port, &hints, &servinfo)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        return;
+    }
+
+    // loop through all the results and make a socket
+    for(p = servinfo; p != NULL; p = p->ai_next) {
+        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+            perror("client: socket");
+            continue;
+        }
+        break;
+    }
+
+    if (p == NULL) {
+        fprintf(stderr, "client: failed to create socket\n");
+        return;
+    }
+
+    // Send Hello packet
+    Packet helloPacket;
+    helloPacket.tick = 0; // Set your initial tick
+    helloPacket.command = 'H'; // 'H' for Hello
+    // TODO: set your entity id
+    helloPacket.data = nullptr; 
+
+    struct sockaddr_in servAddr;
+
+    sendto(sockfd, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, sizeof(servAddr));
+
+    // Wait for Welcome packet
+    Packet welcomePacket;
+    recvfrom(sockfd, (char*)&welcomePacket, sizeof(welcomePacket), 0, NULL, NULL);
+
+    if (welcomePacket.command == 'W') {
+        Connection conn;
+        conn.last_rec_tick = 0;
+        conn.socket = sockfd;
+        conn.entity = -1; // -1 for server
+        uint32_t serverIP = ((struct sockaddr_in*)&servAddr)->sin_addr.s_addr;
+        addConnection(serverIP, conn);
+    }
+
+    freeaddrinfo(servinfo); // all done with this structure
+
+    // You might want to save sockfd for future sendto/recvfrom calls.
 }
 
 void Network::shutdown() {
@@ -50,47 +167,54 @@ void Network::shutdown() {
 }
 
 
-int Network::setupUDPConn(const char* address, const char* port, addrinfo* info) {
-    int rv;
+int Network::setupUDPConn(const char* address, const char* port) {
     int sock;
-//    std::cout << "starting udp connection on: " << address << ":" << port << std::endl;
+    struct addrinfo hints, *servinfo, *p;
+    int rv;
 
-    // Ask for a socket that listens on all addresses
-    struct addrinfo hints, *res, *servinfo;
-    memset(&hints, 0, sizeof (struct addrinfo));
-    hints.ai_family = AF_INET;       // Request an IPv4 socket
-    hints.ai_socktype = SOCK_DGRAM;  // UDP socket
-    hints.ai_flags = AI_PASSIVE;     // Bind to all addresses on the system
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET; // IPv4
+    hints.ai_socktype = SOCK_DGRAM; // UDP
+    hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(address, port, &hints, &servinfo)) != 0) {
-        perror("getaddrinfo");
+    std::string defaultPortStr = std::to_string(default_port); // Convert default port to string
+
+    if ((rv = getaddrinfo(address, defaultPortStr.c_str(), &hints, &servinfo)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return -1;
     }
 
-    // Look at all the results and bind to the first one
-    // (Technically, we should be able to eliminate this loop, since we only picked AF_INET)
-    for (res = servinfo; res != NULL; res = res->ai_next) {
-        if((sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+    // loop through all the results and bind to the first we can
+    for (p = servinfo; p != NULL; p = p->ai_next) {
+        if ((sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+            perror("server: socket");
             continue;
         }
+
+        if (bind(sock, p->ai_addr, p->ai_addrlen) == -1) {
+            close(sock);
+            perror("server: bind");
+            continue;
+        }
+
         break;
     }
 
-    if (res == nullptr) {
-        printf("Could not bind to socket\n");
-        return -1;
+    if (p == NULL) {
+        fprintf(stderr, "server: failed to bind socket\n");
+        return -2;
     }
 
-    *info = *res;
-
+    freeaddrinfo(servinfo); // all done with this structure
     return sock;
 }
 
 // TODO:
 
 // 1. Hello /  Welcome for connections
+// - Still need to get clients player entity_id
 
-// 2. Give Network a hashmap of connections and allow for new conns to populate this map
+// 2. Give Network a hashmap of connections and allow for new conns to populate this map -- DONE
 
 // 3. Implement Tick Buffer Class
 
