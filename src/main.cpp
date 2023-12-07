@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 
     ECS ecs = ECS();
 
-    ecs.registerComponent(FLN_PHYSICS, sizeof(Physics));
+    ecs.registerComponent(FLN_PHYSICS, sizeof(PhysicsData));
     ecs.registerComponent(FLN_TRANSFORM, sizeof(Transform));
     ecs.registerComponent(FLN_TEST, sizeof(Test));
     std::cout << "hi" << std::endl;
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
         std::cout << std::to_string(e->getEntityBitMask(ent)) << " physics" << std::endl;
 
-        Physics* phys = static_cast<Physics*>(e->getComponentData(ent, FLN_PHYSICS));
+        PhysicsData* phys = static_cast<PhysicsData*>(e->getComponentData(ent, FLN_PHYSICS));
         if (phys == nullptr) {
             std::cout << "Test kill err! " << ent << " " << std::to_string(delta) << std::endl;
             e->queueDestroyEntity(ent);

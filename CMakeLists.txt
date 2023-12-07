@@ -40,6 +40,8 @@ add_executable(${PROJECT_NAME}
     src/renderer/objects/sphere.h src/renderer/objects/sphere.cpp
     src/renderer/objects/cone.h src/renderer/objects/cone.cpp
     src/renderer/objects/cylinder.h src/renderer/objects/cylinder.cpp
+    src/core/timer.h
+    src/physics/physics.h src/physics/physics.cpp
 
 )
 

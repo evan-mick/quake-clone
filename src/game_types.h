@@ -27,6 +27,9 @@ constexpr uint32_t FLN_TEST = 30;
 //constexpr u_int32_t FL_TESTKILL = 1 << (FLN_TESTKILL);
 //constexpr u_int32_t FL_TEST = 1 << (FLN_TEST);
 
+// GAME LOGIC CONSTANTS
+const uint8_t TICKS_PER_SECOND = 20;
+constexpr float TICK_RATE = 1.f/TICKS_PER_SECOND;
 
 // COMPONENT STRUCTS
 struct TypeData {
@@ -46,7 +49,7 @@ struct Transform {
     // float y_rot
 };
 
-struct Physics {
+struct PhysicsData {
     glm::vec3 vel;
     glm::vec3 accel;
     // float x_rot
