@@ -80,7 +80,7 @@ public:
     void broadcastClientGS(ECS* ecs, Connection* conn, int tick);
     void addConnection(uint32_t ip, Connection* conn);
     void editConnection(uint32_t ip);
-    void clientListen();
+    
     void onTick();
     int initClient();
     void updateTickBuffer(Packet packet, Connection* conn, int newtick);
@@ -103,10 +103,9 @@ private:
 
     std::thread m_listenThread;
     
+    void serverListen();
+    void clientListen();
     
-
-    void listenThread();
-
     int setupUDPConn(const char* address, const char* port);
 };
 

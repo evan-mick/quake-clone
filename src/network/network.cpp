@@ -19,7 +19,7 @@ Network::Network(bool server, ECS* ecs)
     if (server) {
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
         // initialize server and open listen thread
-        m_listenThread = std::thread([this]() { this->listenThread(); });
+        m_listenThread = std::thread([this]() { this->serverListen(); });
     }
 
     // Initialize client
@@ -39,7 +39,7 @@ Network::Network(bool server, ECS* ecs)
 }
 
 
-void Network::listenThread() {
+void Network::serverListen() {
     struct sockaddr_storage their_addr;
     socklen_t addr_len = sizeof(their_addr);
 
