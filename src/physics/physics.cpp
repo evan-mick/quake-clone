@@ -59,8 +59,6 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
             phys->m_collisionOccured.emplace(collision_hash);
 
-            PhysicsData* otherPhysDat = static_cast<PhysicsData*>(e->getComponentData(ent, FLN_PHYSICS));
-            Transform* otherTransform = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
 
             //      IF collides
             //          IF Not trigger
@@ -77,6 +75,18 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
         // entities would need more dynamic system
     }
 }
+
+void Physics::AABBtoAABBCollision(ECS* e, entity_t ent, entity_t other_ent) {
+
+    PhysicsData* physDat = static_cast<PhysicsData*>(e->getComponentData(ent, FLN_PHYSICS));
+    Transform* transform = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
+
+    PhysicsData* otherPhysDat = static_cast<PhysicsData*>(e->getComponentData(other_ent, FLN_PHYSICS));
+    Transform* otherTransform = static_cast<Transform*>(e->getComponentData(other_ent, FLN_TRANSFORM));
+
+}
+
+
 
 void Physics::registerType(ent_type_t type, collision_response_t response) {
     // no bounds checking because array size correlates with size of ent_type

@@ -35,6 +35,7 @@ void Game::startGame(bool server) {
 
 void Game::registerECSComponents(ECS& ecs) {
     ecs.registerComponent(FLN_PHYSICS, sizeof(PhysicsData));
+    ecs.registerComponent(FLN_PHYSICS, sizeof(CollisionData));
     ecs.registerComponent(FLN_TRANSFORM, sizeof(Transform));
     ecs.registerComponent(FLN_INPUT, sizeof(InputData));
     ecs.registerComponent(FLN_RENDER, sizeof(Renderable));
