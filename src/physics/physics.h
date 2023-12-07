@@ -52,16 +52,19 @@ private:
     std::array<Transform, MAX_ENTITY> m_previousTransforms;
 
     // All of this is for storing what collisions have already occured
-    struct Hash {
-        entity_t low_ent;
-        entity_t high_ent;
-    };
-    inline Hash createHash(entity_t ent1, entity_t ent2) {
-        if (ent1 > ent2)
-            return { ent2, ent1 };
-        return { ent1, ent2 };
+    std::unordered_set<size_t> m_collisionOccured;
+
+    inline bool checkOccured(entity_t ent, entity_t other) {
+        size_t first_check = (ent << sizeof(ent)) | other;
+        size_t second_check = (other << sizeof(other)) | ent;
+        return m_collisionOccured.count(first_check) || m_collisionOccured.count(second_check);
     }
-    std::unordered_set<Hash> m_collisionOccured;
+    inline void addOccured(entity_t ent, entity_t other) {
+        size_t first_check = (ent << sizeof(ent)) | other;
+        m_collisionOccured.insert(first_check);
+    }
+
+    void AABBtoAABBCollision(ECS* e, entity_t ent, entity_t other_ent);
 
 //    void runStep(struct ECS*, entity_t entity_id, float delta_seconds);
 };

@@ -1,6 +1,6 @@
 #include "game.h"
 #include "core/ecs.h"
-#include "network/Network.h"
+#include "network/network.h"
 #include "renderer/renderer.h"
 #include "game_types.h"
 #include "physics/physics.h"

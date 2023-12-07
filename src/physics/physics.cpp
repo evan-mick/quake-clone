@@ -49,15 +49,16 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
 
         // ECS objects, optimize later by only going to highest value
-        for (entity_t ent = 0; ent < MAX_ENTITY; ent++) {
-            Hash collision_hash = phys->createHash(ent, my_ent);
+        for (int ent = 0; ent < MAX_ENTITY; ent++) {
+
+
             if (!e->entityExists(ent) || ent == my_ent
                 || !e->entityHasComponent(ent, FLN_PHYSICS)
                 || !e->entityHasComponent(ent, FLN_TRANSFORM)
-                || phys->m_collisionOccured.contains(collision_hash))
+                || phys->checkOccured(my_ent, ent))
                 continue;
 
-            phys->m_collisionOccured.emplace(collision_hash);
+            phys->addOccured(my_ent, ent);
 
 
             //      IF collides
