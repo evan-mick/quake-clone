@@ -2,7 +2,7 @@
 #define PLAYER_H
 
 #include "renderer/scenedata.h"
-#include "game_types.h"
+#include "renderer/renderer.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #define PRIM_COUNT 7

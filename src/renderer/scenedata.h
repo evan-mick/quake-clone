@@ -6,6 +6,9 @@
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 
+
+
+
 // Enum of the types of virtual lights that might be in the scene
 enum class LightType {
     LIGHT_POINT,

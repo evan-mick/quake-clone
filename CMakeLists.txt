@@ -53,7 +53,8 @@ add_executable(${PROJECT_NAME}
     src/renderer/AspectRatioWidget.hpp
     resources/shaders/default.frag resources/shaders/default.vert resources/shaders/texture.frag resources/shaders/texture.vert
     src/renderer/rendermodel.h src/renderer/rendermodel.cpp
-
+    src/core/timer.h
+    src/physics/physics.h src/physics/physics.cpp
 
 )
 
@@ -101,7 +102,7 @@ endif()
 
 # Set this flag to silence warnings on Windows
 if (MSVC OR MSYS OR MINGW)
-  set(CMAKE_CXX_FLAGS "-Wno-volatile")
+#  set(CMAKE_CXX_FLAGS "-Wno-volatile")
 endif()
 # Set this flag to silence warnings on MacOS
 if (APPLE)

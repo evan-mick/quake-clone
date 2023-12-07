@@ -1,5 +1,4 @@
 #include "renderer.h"
-
 #include <QCoreApplication>
 #include <QMouseEvent>
 #include <QKeyEvent>

@@ -6,9 +6,9 @@
 #include "core/ecs.h"
 
 
+
 // COMPONENT FLAG NUMBERS
 // represents where in the bitmask they are
-
 constexpr uint32_t FLN_TYPE = 0;
 constexpr uint32_t FLN_INPUT = 1;
 constexpr uint32_t FLN_TRANSFORM = 2;
@@ -28,11 +28,18 @@ constexpr uint32_t FLN_TEST = 30;
 //constexpr u_int32_t FL_TESTKILL = 1 << (FLN_TESTKILL);
 //constexpr u_int32_t FL_TEST = 1 << (FLN_TEST);
 
+// GAME LOGIC CONSTANTS
+const uint8_t TICKS_PER_SECOND = 20;
+constexpr float TICK_RATE = 1.f/TICKS_PER_SECOND;
 
+
+typedef unsigned char ent_type_t;
 // COMPONENT STRUCTS
 struct TypeData {
-    uint8_t type;
+    ent_type_t type;
 };
+constexpr uint8_t MAX_TYPE_VAL = -1;
+constexpr uint16_t MAX_TYPES = MAX_TYPE_VAL + 1;
 
 
 struct InputData {
@@ -47,15 +54,16 @@ struct Transform {
     // float y_rot
 };
 
-struct Physics {
+struct PhysicsData {
     glm::vec3 vel;
     glm::vec3 accel;
+    int8_t col_type; // Positive => physical, Negative => trigger, abs(col_type) => collision type
     // float x_rot
     // float y_rot
 };
 
 struct Renderable {
-    u_int8_t model_id;
+    uint8_t model_id;
 };
 
 struct Test {

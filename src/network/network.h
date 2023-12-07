@@ -3,28 +3,42 @@
 
 #include "../core/ecs.h"
 
-
+#include <unordered_map>
 #include <stdlib.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <sys/types.h>
 //#include <sys/socket.h>
-//#include <arpa/inet.h>
+#include <arpa/inet.h>
 //#include <netinet/in.h>
-
+#include <cstring>
 #include <queue>
 #include <thread>
+#include <mutex>
+
+#include <sys/socket.h>
+#include <netdb.h>
+
 
 
 const uint16_t default_port = 42069; // hell yeah
 const int MAX_PLAYERS = 4;
 
-
+#pragma pack(1)
 struct Packet {
+    unsigned int tick;
     char command;
+    char* data;
+};
+
+struct TickData {
     unsigned int tick;
     char* data;
-} __attribute__ ((packed));
+};
 
+struct TickBuffer {
+    std::mutex mutex;
+    std::queue<TickData> buffer;
+};
 
 struct Gamestate {
     int tick;
@@ -41,6 +55,7 @@ struct Connection {
     long last_rec_tick;
     int socket;
     int entity; // if the other side is the server, -1, otherwise keep entity_id of the player
+    TickBuffer tick_buffer;
 };
 
 //bool compare(Gamestate a, Gamestate b) {
@@ -54,19 +69,20 @@ public:
     Network(bool server, ECS* ecs);
 
     void connect(const char* ip, const char* port);
-
+    Connection* getConnection(uint32_t ip);
     Gamestate* popLeastRecentGamestate();
     void deserializeAllDataIntoECS(ECS* ecs);
 
     void shutdown();
 
-
+    void addConnection(uint32_t ip, Connection* conn);
+    void editConnection(uint32_t ip);
 
 private:
     bool m_isServer = false;
     ECS* m_ecs;
-    std::atomic_bool m_shutdown = false;
-
+    std::atomic_bool m_shutdown = false; // equal sign needs to be removed and defined in the consructor I think
+    std::mutex m_connectionMutex;
     // ONLY RELEVENT TO CLIENTS AS OF NOW
     // what should server be receiving? should this be in connection?
     std::priority_queue<Gamestate, std::vector<Gamestate>, Gamestate> m_recentGamestates;
@@ -74,13 +90,17 @@ private:
     // To store what entities they have authority over
     std::array<int, MAX_ENTITY> m_hasAuthority{};
 
-    std::array<Connection, MAX_PLAYERS> m_connections{};
-
+    std::array<Connection, MAX_PLAYERS> m_connections{}; // not using this atm
+    std::unordered_map<uint32_t, Connection*> m_connectionMap{};
 //    void listenForData();
 
     std::thread m_listenThread;
+    
+    
 
     void listenThread();
+
+    int setupUDPConn(const char* address, const char* port);
 };
 
 #endif // NETWORK_H

@@ -78,6 +78,17 @@ public:
     // IMPORTANT: some functionality incomplete, especially for objects that didn't exist before or got destroyed
     void deserializeIntoData(char* serialized_data, size_t max_size, const bool* ignore);
 
+
+    // Does the entity have the component with the given flag?
+    inline bool entityHasComponent(entity_t ent, int flag_num) {
+        return m_entities[ent] | (1 << flag_num);
+    }
+
+    // Check if an entity exists
+    inline bool entityExists(entity_t ent) {
+        return (m_entities[ent] != 0);
+    }
+
 private:
 
     struct SystemData {
