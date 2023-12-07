@@ -122,7 +122,7 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
             ecs->deserializeIntoData(data.data, sizeof(data.data), nullptr);
             delete[] data.data;
             // Need a way to broadcast new gamestate to all clients
-            
+
         }
         conn.second->tick_buffer.mutex.unlock();
     }
@@ -238,11 +238,11 @@ int Network::setupUDPConn(const char* address, const char* port) {
 
 // TODO:
 
-// 4. Implement Client/Server first tick normalization (maybe just have server send a tick)
+// Add a way to serialize game state and turn it into a packet
 
-// 5. Implement pop_ticks_from_all_connections 
+// Implement Client/Server first tick normalization (maybe just have server send a tick)
 
-// 6. Add main loop that pops all Tick buffers from conn maps, calls OR_with_authority(?),
+// Add main loop that pops all Tick buffers from conn maps, calls OR_with_authority(?),
 //    and calls deserializeAllGameData
 
-// 7. Discuss main loop with team
+// Discuss main loop with team
