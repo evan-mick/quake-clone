@@ -22,7 +22,7 @@ void Network::listenThread() {
     struct sockaddr_storage their_addr;
     socklen_t addr_len = sizeof their_addr;
 
-    int serverSocket = setupUDPConn(NULL, "[Your Server Port]"); // Replace with your port
+    int serverSocket = setupUDPConn(NULL, "42069"); // NULL for localhost
     if (serverSocket < 0) {
         // Handle error: unable to set up UDP connection
         return;
@@ -149,11 +149,14 @@ void Network::connect(const char* ip, const char* port) {
 
     if (welcomePacket.command == 'W') {
         Connection conn;
+        char* entity_id = welcomePacket.data;
+        memcpy(&conn.entity, entity_id, sizeof(conn.entity));
         conn.last_rec_tick = 0;
         conn.socket = sockfd;
         conn.entity = -1; // -1 for server
         uint32_t serverIP = ((struct sockaddr_in*)&servAddr)->sin_addr.s_addr;
         addConnection(serverIP, conn);
+        // what do we do with the entity id?
     }
 
     freeaddrinfo(servinfo); // all done with this structure
@@ -211,18 +214,11 @@ int Network::setupUDPConn(const char* address, const char* port) {
 
 // TODO:
 
-// 1. Hello /  Welcome for connections
-// - Still need to get clients player entity_id
+// 4. Implement Client/Server first tick normalization (maybe just have server send a tick)
 
-// 2. Give Network a hashmap of connections and allow for new conns to populate this map -- DONE
+// 5. Implement pop_ticks_from_all_connections 
 
-// 3. Implement Tick Buffer Class
-
-// 4. Implement Client/Server first tick normalization
-
-// 5. Implement "OR_with_authority"
-
-// 6. Add main loop that pops all Tick buffers from conn maps, calls OR_with_authority,
+// 6. Add main loop that pops all Tick buffers from conn maps, calls OR_with_authority(?),
 //    and calls deserializeAllGameData
 
-// 7. Put it all together into a main loop (might use state machine)
+// 7. Discuss main loop with team
