@@ -49,6 +49,7 @@ private:
     // Arbitrary limit on number of types, once again, here so we can use arrays
     std::array<collision_response_t, MAX_TYPES> m_typeToResponse;
 
+    std::array<Transform, MAX_ENTITY> m_previousTransforms;
 
     // All of this is for storing what collisions have already occured
     struct Hash {
