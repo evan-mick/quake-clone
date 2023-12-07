@@ -41,7 +41,7 @@ Network::Network(bool server, ECS* ecs)
 
 void Network::listenThread() {
     struct sockaddr_storage their_addr;
-    socklen_t addr_len = sizeof their_addr;
+    socklen_t addr_len = sizeof(their_addr);
 
     int serverSocket = setupUDPConn(NULL, "42069"); // NULL for localhost
     if (serverSocket < 0) {
@@ -171,7 +171,7 @@ int Network::connect(const char* ip, const char* port) {
     struct addrinfo hints, *servinfo, *p;
     int rv;
 
-    memset(&hints, 0, sizeof hints);
+    memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
 
@@ -246,7 +246,7 @@ int Network::setupUDPConn(const char* address, const char* port) {
     struct addrinfo hints, *servinfo, *p;
     int rv;
 
-    memset(&hints, 0, sizeof hints);
+    memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET; // IPv4
     hints.ai_socktype = SOCK_DGRAM; // UDP
     hints.ai_flags = AI_PASSIVE; // use my IP
@@ -384,7 +384,7 @@ int Network::initClient() {
     
     const char* port = std::to_string(default_port).c_str();
     const char* ip = NULL; // CHANGE THIS TO A USER INPUT
-    
+
     int clientSetup = connect(ip, port); 
     if (clientSetup != 0) {
         // Handle error: unable to set up UDP connection
