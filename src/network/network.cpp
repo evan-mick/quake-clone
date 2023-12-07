@@ -17,7 +17,6 @@ Network::Network(bool server, ECS* ecs)
 }
 
 
-
 void Network::listenThread() {
     struct sockaddr_storage their_addr;
     socklen_t addr_len = sizeof their_addr;
@@ -45,12 +44,13 @@ void Network::listenThread() {
             int entity_id = m_ecs->createEntity({FLN_PHYSICS, FLN_TRANSFORM, FLN_TEST, FLN_TESTKILL});
             char* welcome_entity_id = new char[sizeof(entity_id)];
             memcpy(welcome_entity_id, &entity_id, sizeof(entity_id));
+            // Make new Connection
             Connection conn;
             conn.last_rec_tick = 0;
             conn.socket = serverSocket;
             conn.entity = entity_id;
             uint32_t clientIP = ((struct sockaddr_in*)&clientAddr)->sin_addr.s_addr;
-            addConnection(clientIP, conn);
+            addConnection(clientIP, &conn);
             Packet welcomePacket;
             welcomePacket.tick = packet.tick; // or set your own tick
             welcomePacket.command = 'W'; // 'W' for Welcome
@@ -61,7 +61,7 @@ void Network::listenThread() {
             delete[] welcome_entity_id;
         } else if (packet.command == 'D') { // 'D' for Data
             TickData data;
-            Connection client_conn;
+            Connection* client_conn;
             auto it = m_connectionMap.find(((struct sockaddr_in*)&clientAddr)->sin_addr.s_addr);
             if (it == m_connectionMap.end()) {
                 // Key not found:
@@ -70,7 +70,7 @@ void Network::listenThread() {
                 client_conn = it->second;
             }
             // update client's last received tick
-            client_conn.last_rec_tick = packet.tick;
+            client_conn->last_rec_tick = packet.tick;
             // Populate data based on received Packet
             data.tick = packet.tick;
             size_t dataSize = sizeof(packet.data); // might just have to make this a constant
@@ -78,8 +78,9 @@ void Network::listenThread() {
             memcpy(dataPtr, packet.data, dataSize);
             data.data = dataPtr;
             {
-                std::lock_guard<std::mutex> lock(tickBufferMutex);
-                client_conn.tickBuffer.push(data);
+                client_conn->tick_buffer.mutex.lock();
+                client_conn->tick_buffer.buffer.push(data);
+                client_conn->tick_buffer.mutex.unlock();
             }
         }
     }
@@ -87,20 +88,39 @@ void Network::listenThread() {
     close(serverSocket);
 }
 
-Gamestate* Network::popLeastRecentGamestate() {
-    return nullptr;
+// Gamestate* Network::popLeastRecentGamestate() { // not used
+//     return nullptr;
 
-}
+// }
 
-void Network::addConnection(uint32_t ip, Connection conn) {
+void Network::addConnection(uint32_t ip, Connection* conn) {
+    std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map
     m_connectionMap[ip] = conn;
 }
 
+Connection* Network::getConnection(uint32_t ip) {
+    std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map
+    auto it = m_connectionMap.find(ip);
+    if (it == m_connectionMap.end()) {
+        // Key not found:
+        return nullptr;
+    } else {
+        return it->second;
+    }
+}
 void Network::deserializeAllDataIntoECS(ECS* ecs) {
     // TODO: tick checks, authority check (need to get client id)
-    Gamestate* curState = popLeastRecentGamestate();
-    while (curState != nullptr) {
-        ecs->deserializeIntoData(curState->data, curState->data_size, nullptr);
+    std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map
+    for (auto& conn : m_connectionMap) { // iterate through all connections
+                                        // pop once per tick
+        TickData data;
+        conn.second->tick_buffer.mutex.lock();
+        if (!conn.second->tick_buffer.buffer.empty()) {
+            data = conn.second->tick_buffer.buffer.front();
+            conn.second->tick_buffer.buffer.pop();
+            ecs->deserializeIntoData(data.data, sizeof(data.data), nullptr);
+        }
+        conn.second->tick_buffer.mutex.unlock();
     }
 }
 
@@ -155,7 +175,7 @@ void Network::connect(const char* ip, const char* port) {
         conn.socket = sockfd;
         conn.entity = -1; // -1 for server
         uint32_t serverIP = ((struct sockaddr_in*)&servAddr)->sin_addr.s_addr;
-        addConnection(serverIP, conn);
+        addConnection(serverIP, &conn);
         // what do we do with the entity id?
     }
 
