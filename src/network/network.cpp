@@ -32,9 +32,12 @@ Network::Network(bool server, ECS* ecs)
         m_listenThread = std::thread([this]() { this->clientListen(); });
     }
 
-    // On tick, call onTick()
+    
     // Need ticks to be implemented
 
+    // while (!m_shutdown) {
+    //     onTick();
+    // }
 
 }
 
