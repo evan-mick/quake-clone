@@ -54,6 +54,8 @@ struct Connection {
 //    sockaddr sock_data;
     long last_rec_tick;
     int socket;
+    uint16_t port;
+    uint32_t ip;
     int entity; // if the other side is the server, -1, otherwise keep entity_id of the player
     TickBuffer tick_buffer;
 };
@@ -69,7 +71,7 @@ class Network
 public:
     Network(bool server, ECS* ecs);
 
-    void connect(const char* ip, const char* port);
+    int connect(const char* ip, const char* port);
     Connection* getConnection(uint32_t ip);
     Gamestate* popLeastRecentGamestate();
     void deserializeAllDataIntoECS(ECS* ecs);
@@ -78,9 +80,10 @@ public:
     void broadcastClientGS(ECS* ecs, Connection* conn, int tick);
     void addConnection(uint32_t ip, Connection* conn);
     void editConnection(uint32_t ip);
-    void listenForData();
+    void clientListen();
     void onTick();
-    void init();
+    int init();
+    void updateTickBuffer(Packet packet, Connection* conn, int newtick);
 
 private:
     bool m_isServer = false;
