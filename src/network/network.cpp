@@ -85,3 +85,20 @@ int Network::setupUDPConn(const char* address, const char* port, addrinfo* info)
 
     return sock;
 }
+
+// TODO:
+
+// 1. Hello /  Welcome for connections
+
+// 2. Give Network a hashmap of connections and allow for new conns to populate this map
+
+// 3. Implement Tick Buffer Class
+
+// 4. Implement Client/Server first tick normalization
+
+// 5. Implement "OR_with_authority"
+
+// 6. Add main loop that pops all Tick buffers from conn maps, calls OR_with_authority,
+//    and calls deserializeAllGameData
+
+// 7. Put it all together into a main loop (might use state machine)
