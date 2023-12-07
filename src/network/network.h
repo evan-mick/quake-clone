@@ -82,7 +82,7 @@ public:
     void editConnection(uint32_t ip);
     void clientListen();
     void onTick();
-    int init();
+    int initClient();
     void updateTickBuffer(Packet packet, Connection* conn, int newtick);
 
 private:

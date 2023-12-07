@@ -18,14 +18,17 @@ Network::Network(bool server, ECS* ecs)
     // Server has authority over everything by default
     if (server) {
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
+        // initialize server and open listen thread
         m_listenThread = std::thread([this]() { this->listenThread(); });
     }
-    int initSuccess = init();
-    if (initSuccess != 0) {
-        throw std::runtime_error("Network initialization failed");
-    }
 
+    // Initialize client
+    
     if (!server){
+        int initSuccess = initClient();
+        if (initSuccess != 0) {
+            throw std::runtime_error("Network initialization failed");
+        }
         m_listenThread = std::thread([this]() { this->clientListen(); });
     }
 
@@ -377,20 +380,17 @@ void Network::onTick() {
     }
 }
 
-int Network::init() {  
+int Network::initClient() {  
     
-    if (m_isServer) {
-        int servSetup = setupUDPConn(NULL, "42069"); // NULL for localhost
-        if (servSetup != 0) {
-            // Handle error: unable to set up UDP connection
-            return -1;
-        }
-    } else {
-        int clientSetup = connect(NULL, "42069"); // CHANGE THIS TO A USER INPUT
+    if (!m_isServer) { // Server setup is called in listenThread()
+        const char* port = std::to_string(default_port).c_str();
+        const char* ip = NULL; // CHANGE THIS TO A USER INPUT
+        int clientSetup = connect(ip, port); 
         if (clientSetup != 0) {
             // Handle error: unable to set up UDP connection
             return -1;
         }
+
     }
 
     return 0;
