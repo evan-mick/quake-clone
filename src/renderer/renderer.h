@@ -1,6 +1,8 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include "renderer/scenedata.h"
+#include "GL/glew.h"
 
 
 /* Structure
@@ -13,6 +15,15 @@
  *
  *
  */
+
+struct RenderOb {
+    uint8_t model_id;
+    ScenePrimitive primitive;
+    glm::mat4 ctm;
+    GLuint vbo;
+    GLuint vao;
+};
+
 
 class Renderer
 {

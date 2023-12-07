@@ -2,7 +2,7 @@
 #define PLAYER_H
 
 #include "renderer/scenedata.h"
-#include "game_types.h"
+#include "renderer/renderer.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #define PRIM_COUNT 7
@@ -26,7 +26,7 @@ public:
     void rotatePlayer(float angle, glm::vec3 axis);
     void translatePlayer(glm::vec3 delta);
     void relocatePlayer(glm::vec3 position);
-    std::array<Renderable,PRIM_COUNT> m_geometry;
+    std::array<RenderOb,PRIM_COUNT> m_geometry;
     float m_leg_angle = 0;
 private:
     void makeHead(glm::mat4 root_ctm);
@@ -48,8 +48,8 @@ private:
     glm::mat4 m_left_arm_ctm;
     glm::mat4 m_right_arm_ctm;
 
-    Renderable* m_left;
-    Renderable* m_right;
+    RenderOb* m_left;
+    RenderOb* m_right;
     const float WALK_SPEED = 100.f;//degrees per second
     int sign;
     SceneMaterial m_material;

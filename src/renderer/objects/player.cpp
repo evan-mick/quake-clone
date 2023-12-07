@@ -146,7 +146,7 @@ void Player::stopAnimation() {
 }
 
 void Player::insertGeometry(glm::mat4 ctm, PrimitiveType type, int index) {
-    Renderable shape;
+    RenderOb shape;
     shape.ctm = ctm;
     shape.primitive = {.type = type, .material = m_material};
     m_geometry[index] = shape;

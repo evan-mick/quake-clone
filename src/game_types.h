@@ -3,14 +3,11 @@
 
 #include "glm/glm.hpp"
 #include <string>
-#include "core/ecs.h"
-#include "renderer/scenedata.h"
-#include "GL/glew.h"
+
 
 
 // COMPONENT FLAG NUMBERS
 // represents where in the bitmask they are
-
 constexpr uint32_t FLN_TYPE = 0;
 constexpr uint32_t FLN_INPUT = 1;
 constexpr uint32_t FLN_TRANSFORM = 2;
@@ -58,10 +55,6 @@ struct Physics {
 
 struct Renderable {
     uint8_t model_id;
-    ScenePrimitive primitive;
-    glm::mat4 ctm;
-    GLuint vbo;
-    GLuint vao;
 
 };
 
