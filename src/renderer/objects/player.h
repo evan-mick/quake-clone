@@ -13,11 +13,14 @@
 #define RIGHT_LEG_I 4
 #define LEFT_ARM_I 5
 #define RIGHT_ARM_I 6
+#include "renderer/rendermodel.h"
 
 class Player
 {
 public:
     Player();
+    void assignModelID(u_int8_t id);
+    Model getModel();
     void generateGeometry();
     void startAnimation();
     void stepLegs(float deltaTime);
@@ -26,7 +29,7 @@ public:
     void rotatePlayer(float angle, glm::vec3 axis);
     void translatePlayer(glm::vec3 delta);
     void relocatePlayer(glm::vec3 position);
-    std::array<RenderOb,PRIM_COUNT> m_geometry;
+    std::array<RenderObject,PRIM_COUNT> m_geometry;
     float m_leg_angle = 0;
 private:
     void makeHead(glm::mat4 root_ctm);
@@ -41,6 +44,7 @@ private:
 
     bool loaded;
     bool walking;
+    u_int8_t m_model_id = -1;
 
     glm::mat4 m_left_ctm;
     glm::mat4 m_right_ctm;
@@ -48,14 +52,11 @@ private:
     glm::mat4 m_left_arm_ctm;
     glm::mat4 m_right_arm_ctm;
 
-    RenderOb* m_left;
-    RenderOb* m_right;
-    const float WALK_SPEED = 100.f;//degrees per second
+    Renderable* m_left;
+    Renderable* m_right;
+    const float WALK_SPEED = 100.f; //degrees per second
     int sign;
     SceneMaterial m_material;
-
-
-
 };
 
 #endif // PLAYER_H

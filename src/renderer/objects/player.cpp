@@ -1,6 +1,7 @@
 #include "player.h"
 #include <iostream>
 
+
 Player::Player()
 {
     walking = false;
@@ -11,6 +12,19 @@ Player::Player()
     m_material.cDiffuse = glm::vec4(1);
     m_material.cSpecular = glm::vec4(1);
     m_material.shininess = 1.0;
+}
+
+void Player::assignModelID(u_int8_t id) {
+    m_model_id = id;
+}
+
+Model Player::getModel() {
+    std::vector<RenderObject *> objects;
+    for(int i=0;i<PRIM_COUNT;i++) {
+        objects.push_back(&m_geometry[i]);
+    }
+
+    return (Model){.objects=objects,.id=m_model_id};
 }
 
 void Player::rotatePlayer(float angle, glm::vec3 axis) {
@@ -146,7 +160,7 @@ void Player::stopAnimation() {
 }
 
 void Player::insertGeometry(glm::mat4 ctm, PrimitiveType type, int index) {
-    RenderOb shape;
+    RenderObject shape;
     shape.ctm = ctm;
     shape.primitive = {.type = type, .material = m_material};
     m_geometry[index] = shape;
