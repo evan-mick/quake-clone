@@ -63,6 +63,7 @@ struct Connection {
 //}
 
 
+
 class Network
 {
 public:
@@ -74,9 +75,12 @@ public:
     void deserializeAllDataIntoECS(ECS* ecs);
 
     void shutdown();
-
+    void broadcastClientGS(ECS* ecs, Connection* conn, int tick);
     void addConnection(uint32_t ip, Connection* conn);
     void editConnection(uint32_t ip);
+    void listenForData();
+    void onTick();
+    void init();
 
 private:
     bool m_isServer = false;

@@ -4,6 +4,12 @@
 #include <unistd.h>
 #include "../game_types.h"
 
+// TODO //
+
+// Implement onTick(), and init() functions and syncromize with Network main loop
+// Find a way to get server tick rate and client tick rate to match, adjust broadcastClientGS() and listenThread() accordingly
+
+
 Network::Network(bool server, ECS* ecs)
 {
     m_isServer = server;
@@ -88,11 +94,6 @@ void Network::listenThread() {
     close(serverSocket);
 }
 
-// Gamestate* Network::popLeastRecentGamestate() { // not used
-//     return nullptr;
-
-// }
-
 void Network::addConnection(uint32_t ip, Connection* conn) {
     std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map
     m_connectionMap[ip] = conn;
@@ -110,7 +111,7 @@ Connection* Network::getConnection(uint32_t ip) {
 }
 void Network::deserializeAllDataIntoECS(ECS* ecs) {
     // TODO: tick checks, authority check (need to get client id)
-    std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map
+    m_connectionMutex.lock();
     for (auto& conn : m_connectionMap) { // iterate through all connections
                                         // pop once per tick
         TickData data;
@@ -126,6 +127,29 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
         }
         conn.second->tick_buffer.mutex.unlock();
     }
+    if (m_isServer) {
+        TickData* td = new TickData;
+        char* tick_data = new char[1400];
+        int data_written = ecs->serializeData(&tick_data);
+        assert(data_written <= 1400);
+        td->data = tick_data;
+        // ADD A WAY TO GET THE SERVER TICK
+        td->tick = 0; // ecs->getTick();
+        for (auto& conn : m_connectionMap) {
+            // Send data to all clients
+            Packet dataPacket;
+            dataPacket.tick = td->tick;
+            dataPacket.command = 'D'; // 'D' for Data
+            char* data = new char[data_written];
+            memcpy(data, td->data, data_written);
+            dataPacket.data = data;
+            sendto(conn.second->socket, (char*)&dataPacket, sizeof(dataPacket), 0, NULL, NULL);
+            delete[] data;
+        }
+        delete[] td->data;
+        delete td;
+    }
+    m_connectionMutex.unlock();
 }
 
 void Network::connect(const char* ip, const char* port) {
@@ -167,7 +191,7 @@ void Network::connect(const char* ip, const char* port) {
     servAddr.sin_addr.s_addr = ((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
     servAddr.sin_family = AF_INET;
     servAddr.sin_port = ((struct sockaddr_in*)p->ai_addr)->sin_port;
-    
+
     sendto(sockfd, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, sizeof(servAddr));
 
     // Wait for Welcome packet
@@ -240,13 +264,38 @@ int Network::setupUDPConn(const char* address, const char* port) {
     return sock;
 }
 
-// TODO:
 
-// Add a way to serialize game state and turn it into a packet
+void Network::broadcastClientGS(ECS* ecs, Connection* conn, int tick) {
+    TickData* td = new TickData;
+    char* tick_data = new char[1400];
+    int data_written = ecs->serializeData(&tick_data);
+    assert(data_written <= 1400);
+    td->data = tick_data;
+    td->tick = tick;
+    Packet dataPacket;
+    dataPacket.tick = td->tick;
+    dataPacket.command = 'D'; // 'D' for Data
+    char* data = new char[data_written];
+    memcpy(data, td->data, data_written);
+    dataPacket.data = data;
+    sendto(conn->socket, (char*)&dataPacket, sizeof(dataPacket), 0, NULL, NULL);
+    delete[] data;
+    delete[] td->data;
+    delete td;
+}
 
-// Implement Client/Server first tick normalization (maybe just have server send a tick)
 
-// Add main loop that pops all Tick buffers from conn maps, calls OR_with_authority(?),
-//    and calls deserializeAllGameData
+void Network::onTick() {
+    // Main loop for network -- called every tick
+    // Call deserializeAllDataIntoECS() each tick
+    // Assume data is getting added to the tick buffers by the listenThread
+    // TODO
+}
 
-// Discuss main loop with team
+void Network::init() {  
+    // TODO:
+    // Handle Accepting Connections if server/ connecting if client
+    // Once established start onTick() loop
+
+}
+
