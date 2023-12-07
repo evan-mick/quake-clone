@@ -40,6 +40,20 @@ add_executable(${PROJECT_NAME}
     src/renderer/objects/sphere.h src/renderer/objects/sphere.cpp
     src/renderer/objects/cone.h src/renderer/objects/cone.cpp
     src/renderer/objects/cylinder.h src/renderer/objects/cylinder.cpp
+    src/renderer/sceneparser.h src/renderer/sceneparser.cpp
+    src/renderer/scenefilereader.h src/renderer/scenefilereader.cpp
+    src/renderer/camera.h src/renderer/camera.cpp
+    src/renderer/movement.h src/renderer/movement.cpp
+    src/settings.h src/settings.cpp
+    src/renderer/ShaderLoader.h
+    src/renderer/lights.h src/renderer/lights.cpp
+    src/renderer/objects/trimesh.h src/renderer/objects/trimesh.cpp
+    src/renderer/objects/OBJ_Loader.h
+    src/renderer/mainwindow.h src/renderer/mainwindow.cpp
+    src/renderer/AspectRatioWidget.hpp
+    resources/shaders/default.frag resources/shaders/default.vert resources/shaders/texture.frag resources/shaders/texture.vert
+    src/renderer/rendermodel.h src/renderer/rendermodel.cpp
+
 
 )
 

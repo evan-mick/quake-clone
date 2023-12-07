@@ -4,8 +4,6 @@
 #include "glm/glm.hpp"
 #include <string>
 #include "core/ecs.h"
-#include "renderer/scenedata.h"
-#include "GL/glew.h"
 
 
 // COMPONENT FLAG NUMBERS
@@ -58,11 +56,6 @@ struct Physics {
 
 struct Renderable {
     u_int8_t model_id;
-    ScenePrimitive primitive;
-    glm::mat4 ctm;
-    GLuint vbo;
-    GLuint vao;
-
 };
 
 struct Test {
