@@ -60,6 +60,13 @@ private:
     void paintGeometry();
     void paintTexture(GLuint texture, bool includePost);
     void insertModel(std::vector<RenderObject>& objects, u_int8_t id, bool isStatic);
+    std::vector<RenderObject *> inline getModelObjectsList(std::vector<RenderObject>& shapes) {
+        std::vector<RenderObject *> res;
+        for(RenderObject& shape : shapes) {
+            res.push_back(&shape);
+        }
+        return res;
+    };
 
     // Tick Related Variables
     int m_timer;                                        // Stores timer which attempts to run ~60 times per second
@@ -86,8 +93,7 @@ private:
     bool parsed_ = false;
     int lightVBO_ = -1;
     Player m_player;
-    std::vector<RenderModel> m_static_models;
-    std::vector<RenderModel> m_dynamic_models;
+    std::vector<Model> m_models;
 
     u_int8_t m_model_count = 0;
 

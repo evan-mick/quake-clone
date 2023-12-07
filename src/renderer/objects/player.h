@@ -20,7 +20,7 @@ class Player
 public:
     Player();
     void assignModelID(u_int8_t id);
-    RenderModel getModel();
+    Model getModel();
     void generateGeometry();
     void startAnimation();
     void stepLegs(float deltaTime);

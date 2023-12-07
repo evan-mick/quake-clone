@@ -18,11 +18,13 @@ void Player::assignModelID(u_int8_t id) {
     m_model_id = id;
 }
 
-RenderModel Player::getModel() {
-    std::vector<RenderObject> objects;
-    objects.assign(m_geometry.begin(),m_geometry.end());
-    RenderModel res(objects=objects,m_model_id);
-    return res;
+Model Player::getModel() {
+    std::vector<RenderObject *> objects;
+    for(int i=0;i<PRIM_COUNT;i++) {
+        objects.push_back(&m_geometry[i]);
+    }
+
+    return (Model){.objects=objects,.id=m_model_id};
 }
 
 void Player::rotatePlayer(float angle, glm::vec3 axis) {

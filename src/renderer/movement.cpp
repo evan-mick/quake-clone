@@ -11,7 +11,6 @@ void Movement::forward(float dist) {
     glm::vec3 og = updated;
     updated += dist * glm::normalize(glm::vec3(cam_.getLook()));
     cam_.updatePos(updated);
-    std::cout << og.x << ","<< og.y << ","<< og.z << " to "<< updated.x << ","<< updated.y << ","<< updated.z << std::endl;
 }
 void Movement::backward(float dist) {
     glm::vec3 updated = cam_.getPos();

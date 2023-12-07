@@ -140,39 +140,39 @@ void Renderer::makeFBO(){
     glBindFramebuffer(GL_FRAMEBUFFER,m_defaultFBO);
 }
 
-void inline initializeModelGeometry(RenderModel& model, int param1, int param2) {
-    for(RenderObject& shape : model.m_objects) {
+void inline initializeModelGeometry(Model& model) {
+    for(RenderObject *shape : model.objects) {
         std::vector<GLfloat> vertexData;
 
-        if(shape.primitive.type==PrimitiveType::PRIMITIVE_SPHERE){
+        if(shape->primitive.type==PrimitiveType::PRIMITIVE_SPHERE){
             Sphere sphere;
-            sphere.updateParams(param1,param2);
+            sphere.updateParams(settings.shapeParameter1,settings.shapeParameter2);
             vertexData = sphere.generateShape();
-        } else if(shape.primitive.type==PrimitiveType::PRIMITIVE_CUBE){
+        } else if(shape->primitive.type==PrimitiveType::PRIMITIVE_CUBE){
             Cube cube;
-            cube.updateParams(param1);
+            cube.updateParams(settings.shapeParameter1);
             vertexData = cube.generateShape();
-        } else if(shape.primitive.type==PrimitiveType::PRIMITIVE_CONE){
+        } else if(shape->primitive.type==PrimitiveType::PRIMITIVE_CONE){
             Cone cone;
-            cone.updateParams(param1,param2);
+            cone.updateParams(settings.shapeParameter1,settings.shapeParameter2);
             vertexData = cone.generateShape();
-        } else if(shape.primitive.type==PrimitiveType::PRIMITIVE_CYLINDER){
+        } else if(shape->primitive.type==PrimitiveType::PRIMITIVE_CYLINDER){
             Cylinder cylinder;
-            cylinder.updateParams(param1,param2);
+            cylinder.updateParams(settings.shapeParameter1,settings.shapeParameter2);
             vertexData = cylinder.generateShape();
         } else {
             Trimesh trimesh;
-            trimesh.updateParams(param1,param2,shape,shape.primitive.meshfile);
+            trimesh.updateParams(settings.shapeParameter1,settings.shapeParameter2,*shape,shape->primitive.meshfile);
             vertexData = trimesh.generateShape();
         }
 
-        shape.vertCount = vertexData.size() / 6;
+        shape->vertCount = vertexData.size() / 6;
 
         GLuint vbo;
         glGenBuffers(1,&vbo);
         glBindBuffer(GL_ARRAY_BUFFER,vbo);
 
-        shape.vbo = vbo;
+        shape->vbo = vbo;
 
         glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(GLfloat), vertexData.data(), GL_STATIC_DRAW);
 
@@ -180,7 +180,7 @@ void inline initializeModelGeometry(RenderModel& model, int param1, int param2) 
         glGenVertexArrays(1,&vao);
 
         glBindVertexArray(vao);
-        shape.vao = vao;
+        shape->vao = vao;
 
         glEnableVertexAttribArray(0);//vertexposition
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void*>(0));
@@ -215,22 +215,16 @@ void Renderer::initializeScene(std::string filepath) {
     // All player rendering should happen locally imo. we should implement a network system to only
     //send player model ID, location, and rotation. that's all you need. - Luke
     m_player.generateGeometry();
-    m_player.assignModelID(m_model_count++);//temp fix while we are only modelling locally
     m_player.startAnimation();
-    m_dynamic_models.push_back(m_player.getModel());
+    m_player.assignModelID(m_model_count++);
+    m_models.push_back(m_player.getModel());
+    m_models.push_back((Model){getModelObjectsList(m_metaData.shapes),m_model_count++});
 
-    m_static_models.push_back(RenderModel(m_metaData.shapes,m_model_count++));
-
-    for(RenderModel model : m_static_models) {
-        initializeModelGeometry(model,settings.shapeParameter1,settings.shapeParameter2);
-    }
-    for(RenderModel model : m_dynamic_models) {
-        initializeModelGeometry(model,settings.shapeParameter1,settings.shapeParameter2);
+    for(Model& model : m_models) {
+        initializeModelGeometry(model);
     }
 
 }
-
-
 
 void Renderer::paintGL()
 {
@@ -271,22 +265,23 @@ void Renderer::paintTexture(GLuint texture, bool includePost){
     glUseProgram(0);
 }
 
-void inline paintModel(RenderModel& model, GLuint shader) {
-    for(RenderObject& shape : model.m_objects) {
-        glBindVertexArray(shape.vao);
-        glUniform1i(glGetUniformLocation(shader,"shininess"),shape.primitive.material.shininess);
-        glUniform4fv(glGetUniformLocation(shader,"cAmbient"),1,&shape.primitive.material.cAmbient[0]);
-        glUniform4fv(glGetUniformLocation(shader,"cDiffuse"),1,&shape.primitive.material.cDiffuse[0]);
-        glUniform4fv(glGetUniformLocation(shader,"cSpecular"),1,&shape.primitive.material.cSpecular[0]);
+void inline paintModel(Model& model, GLuint shader) {
+    for(RenderObject* shape : model.objects) {
+        glBindVertexArray(shape->vao);
+        glUniform1i(glGetUniformLocation(shader,"shininess"),shape->primitive.material.shininess);
+        glUniform4fv(glGetUniformLocation(shader,"cAmbient"),1,&shape->primitive.material.cAmbient[0]);
+        glUniform4fv(glGetUniformLocation(shader,"cDiffuse"),1,&shape->primitive.material.cDiffuse[0]);
+        glUniform4fv(glGetUniformLocation(shader,"cSpecular"),1,&shape->primitive.material.cSpecular[0]);
 
         GLint modelLoc = glGetUniformLocation(shader, "modelMatrix");
-        glUniformMatrix4fv(modelLoc,1,GL_FALSE,&shape.ctm[0][0]);
+        glUniformMatrix4fv(modelLoc,1,GL_FALSE,&shape->ctm[0][0]);
 
-        glDrawArrays(GL_TRIANGLES, 0, shape.vertCount);
+        glDrawArrays(GL_TRIANGLES, 0, shape->vertCount);
 
         glBindVertexArray(0);
     }
 }
+
 
 void Renderer::paintGeometry() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -304,27 +299,8 @@ void Renderer::paintGeometry() {
     glUniformMatrix4fv(viewLoc,1,GL_FALSE,&view[0][0]);
     glUniformMatrix4fv(projLoc,1,GL_FALSE,&proj[0][0]);
 
-//    for(RenderModel& model : m_static_models) {
-//        paintModel(model, m_shader);
-//        std::cout << "painted static " <<model.m_objects.size() <<std::endl;
-//    }
-//    for(RenderModel& model : m_dynamic_models) {
-//        paintModel(model,m_shader);
-//        std::cout << "painted dyn " <<model.m_objects.size() <<std::endl;
-//    }
-    for(RenderObject& shape : m_player.m_geometry) {
-        glBindVertexArray(shape.vao);
-        glUniform1i(glGetUniformLocation(m_shader,"shininess"),shape.primitive.material.shininess);
-        glUniform4fv(glGetUniformLocation(m_shader,"cAmbient"),1,&shape.primitive.material.cAmbient[0]);
-        glUniform4fv(glGetUniformLocation(m_shader,"cDiffuse"),1,&shape.primitive.material.cDiffuse[0]);
-        glUniform4fv(glGetUniformLocation(m_shader,"cSpecular"),1,&shape.primitive.material.cSpecular[0]);
-
-        GLint modelLoc = glGetUniformLocation(m_shader, "modelMatrix");
-        glUniformMatrix4fv(modelLoc,1,GL_FALSE,&shape.ctm[0][0]);
-
-        glDrawArrays(GL_TRIANGLES, 0, shape.vertCount);
-
-        glBindVertexArray(0);
+    for(Model& model : m_models) {
+        paintModel(model,m_shader);
     }
 }
 

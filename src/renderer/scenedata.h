@@ -161,6 +161,11 @@ struct RenderData {
     std::vector<RenderObject> shapes;
 };
 
+struct Model {
+    std::vector<RenderObject *> objects;
+    u_int8_t id;
+};
+
 // Struct which contains data for a transformation.
 struct SceneTransformation {
     TransformationType type;
