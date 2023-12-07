@@ -2,7 +2,6 @@
 #define PLAYER_H
 
 #include "renderer/scenedata.h"
-#include "renderer/renderer.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #define PRIM_COUNT 7
@@ -52,8 +51,8 @@ private:
     glm::mat4 m_left_arm_ctm;
     glm::mat4 m_right_arm_ctm;
 
-    Renderable* m_left;
-    Renderable* m_right;
+//    Renderable* m_left;
+//    Renderable* m_right;
     const float WALK_SPEED = 100.f; //degrees per second
     int sign;
     SceneMaterial m_material;
