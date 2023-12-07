@@ -4,6 +4,7 @@
 #include <string>
 
 #include <glm/glm.hpp>
+#include <GL/glew.h>
 
 
 
@@ -145,6 +146,27 @@ struct ScenePrimitive {
     SceneMaterial material;
     std::string meshfile; // Used for triangle meshes
     std::string id;
+};
+
+struct RenderObject {
+    ScenePrimitive primitive;
+    glm::mat4 ctm;
+    GLuint vbo;
+    GLuint vao;
+    int vertCount = -1;
+};
+
+struct RenderData {
+    SceneGlobalData globalData;
+    SceneCameraData cameraData;
+
+    std::vector<SceneLightData> lights;
+    std::vector<RenderObject> shapes;
+};
+
+struct Model {
+    std::vector<RenderObject *> objects;
+    u_int8_t id;
 };
 
 // Struct which contains data for a transformation.

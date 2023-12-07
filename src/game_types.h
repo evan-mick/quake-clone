@@ -3,6 +3,7 @@
 
 #include "glm/glm.hpp"
 #include <string>
+#include "core/ecs.h"
 
 
 
@@ -63,7 +64,6 @@ struct PhysicsData {
 
 struct Renderable {
     uint8_t model_id;
-
 };
 
 struct Test {

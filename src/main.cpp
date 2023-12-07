@@ -5,7 +5,8 @@
 #include <iostream>
 #include <QSettings>
 #include <iostream>
-
+#include "renderer/mainwindow.h"
+#include "QtGui/qsurfaceformat.h"
 #include "core/ecs.h"
 #include "game_types.h"
 #include <random>
@@ -14,21 +15,25 @@
 void test_main();
 
 int main(int argc, char *argv[]) {
-    //    QApplication a(argc, argv);
+    //TODO: move window generation to its correct space after ECS connection
+    QApplication a(argc, argv);
 
-    //    QCoreApplication::setApplicationName("Nifty Quake Clone);
-    //    QCoreApplication::setOrganizationName("CS 1230");
-    //    QCoreApplication::setApplicationVersion(QT_VERSION_STR);
+    QCoreApplication::setApplicationName("Nifty Quake Clone");
+    QCoreApplication::setOrganizationName("CS 1230");
+    QCoreApplication::setApplicationVersion(QT_VERSION_STR);
 
-    //    QSurfaceFormat fmt;
-    //    fmt.setVersion(4, 1);
-    //    fmt.setProfile(QSurfaceFormat::CoreProfile);
-    //    QSurfaceFormat::setDefaultFormat(fmt);
+    QSurfaceFormat fmt;
+    fmt.setVersion(4, 1);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    QSurfaceFormat::setDefaultFormat(fmt);
 
-    //    MainWindow w;
-    //    w.initialize();
-    //    w.resize(800, 600);
-    //    w.show();
+    MainWindow w;
+    w.initialize();
+    w.resize(800, 600);
+    w.show();
+    a.exec();
+    w.finish();
+
 
     bool server = (argc > 1 && strcmp(argv[1], "s"));
     Game game = Game();
@@ -50,7 +55,8 @@ void test_main() {
     ecs.registerComponent(FLN_TEST, sizeof(Test));
     std::cout << "hi" << std::endl;
 
-    //    int flag = FL_PHYSICS | FL_TRANSFORM | FL_TEST;
+
+//    int flag = FL_PHYSICS | FL_TRANSFORM | FL_TEST;
     entity_t test_ent = ecs.createEntity({FLN_TEST, FLN_TRANSFORM, FLN_TESTKILL});
     std::cout << std::to_string(ecs.getEntityBitMask(test_ent)) << std::endl;
     //    int test_ent2 = ecs.createEntityWithBitFlags((1 << FLN_TEST) | (1 << FLN_TRANSFORM) | (1 << FLN_TESTKILL));
