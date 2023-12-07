@@ -164,7 +164,10 @@ void Network::connect(const char* ip, const char* port) {
     helloPacket.data = nullptr; 
 
     struct sockaddr_in servAddr;
-
+    servAddr.sin_addr.s_addr = ((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
+    servAddr.sin_family = AF_INET;
+    servAddr.sin_port = ((struct sockaddr_in*)p->ai_addr)->sin_port;
+    
     sendto(sockfd, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, sizeof(servAddr));
 
     // Wait for Welcome packet
@@ -178,7 +181,8 @@ void Network::connect(const char* ip, const char* port) {
         conn.last_rec_tick = 0;
         conn.socket = sockfd;
         conn.entity = -1; // -1 for server
-        uint32_t serverIP = ((struct sockaddr_in*)&servAddr)->sin_addr.s_addr;
+
+        uint32_t serverIP = ((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
         addConnection(serverIP, &conn);
         // what do we do with the entity id?
     }
