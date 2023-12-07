@@ -31,10 +31,14 @@ constexpr uint32_t FLN_TEST = 30;
 const uint8_t TICKS_PER_SECOND = 20;
 constexpr float TICK_RATE = 1.f/TICKS_PER_SECOND;
 
+
+typedef unsigned char ent_type_t;
 // COMPONENT STRUCTS
 struct TypeData {
-    uint8_t type;
+    ent_type_t type;
 };
+constexpr uint8_t MAX_TYPE_VAL = -1;
+constexpr uint16_t MAX_TYPES = MAX_TYPE_VAL + 1;
 
 
 struct InputData {
@@ -52,6 +56,7 @@ struct Transform {
 struct PhysicsData {
     glm::vec3 vel;
     glm::vec3 accel;
+    int8_t col_type; // Positive => physical, Negative => trigger, abs(col_type) => collision type
     // float x_rot
     // float y_rot
 };
