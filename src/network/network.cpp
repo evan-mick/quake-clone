@@ -117,8 +117,12 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
         conn.second->tick_buffer.mutex.lock();
         if (!conn.second->tick_buffer.buffer.empty()) {
             data = conn.second->tick_buffer.buffer.front();
+            // if server, broadcast to all clients
             conn.second->tick_buffer.buffer.pop();
             ecs->deserializeIntoData(data.data, sizeof(data.data), nullptr);
+            delete[] data.data;
+            // Need a way to broadcast new gamestate to all clients
+            
         }
         conn.second->tick_buffer.mutex.unlock();
     }
