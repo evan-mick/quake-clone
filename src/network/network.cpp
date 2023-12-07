@@ -385,7 +385,7 @@ void Network::onTick() {
 
 int Network::initClient() {  
     
-    const char* port = std::to_string(default_port).c_str();
+    const char* port = "42069";
     const char* ip = NULL; // CHANGE THIS TO A USER INPUT
 
     int clientSetup = connect(ip, port); 
