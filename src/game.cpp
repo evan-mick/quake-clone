@@ -23,24 +23,6 @@ Game::Game()
 
 }
 
-// Vertex shader source code
-const char* vertexShaderSource = R"(
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-    void main() {
-        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-    }
-)";
-
-// Fragment shader source code
-const char* fragmentShaderSource = R"(
-    #version 330 core
-    out vec4 FragColor;
-    void main() {
-        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-    }
-)";
-
 void Game::startGame(bool server) {
 
     std::cout << "Starting Game" << std::endl;
@@ -89,10 +71,6 @@ void Game::startGame(bool server) {
     }
 
     // Make the window's context current
-    glfwMakeContextCurrent(window);
-
-//    glfwSetKeyCallback(window, key_callback);
-
     glfwMakeContextCurrent(window);
 //    gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(1);
