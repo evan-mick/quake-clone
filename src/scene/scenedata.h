@@ -166,7 +166,7 @@ struct SceneData {
 
 struct Model {
     std::vector<RenderObject *> objects;
-    u_int8_t id;
+    uint8_t id;
 };
 
 // Struct which contains data for a transformation.

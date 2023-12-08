@@ -17,6 +17,7 @@
 Renderer::Renderer(QWidget *parent)
     : QOpenGLWidget(parent)
 {
+    m_renderer = this;
     m_prev_mouse_pos = glm::vec2(size().width()/2, size().height()/2);
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
@@ -63,9 +64,12 @@ void Renderer::initializeGL() {
     }
     std::cout << "Initialized GL: Version " << glewGetString(GLEW_VERSION) << std::endl;
 
-    m_shader = ShaderLoader::createShaderProgram("./resources/shaders/default.vert", "./resources/shaders/default.frag");
-    m_texture_shader = ShaderLoader::createShaderProgram("./resources/shaders/texture.vert",
-                                                         "./resources/shaders/texture.frag");
+    // This file path stuff ain't ideal? for whatever reason when I do it the style of realtime it doesn't work... i tried a lot of stuff but whatevs
+    m_shader = ShaderLoader::createShaderProgram("../../resources/shaders/default.vert", "../../resources/shaders/default.frag");
+    m_texture_shader = ShaderLoader::createShaderProgram("../../resources/shaders/texture.vert", "../../resources/shaders/texture.frag");
+
+//    resources/shaders/default.frag
+//                              resources/shaders/default.vert
 
     // Allows OpenGL to draw objects appropriately on top of one another
     glEnable(GL_DEPTH_TEST);

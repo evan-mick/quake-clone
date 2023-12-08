@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Sets project name
-project(quake-clone LANGUAGES CXX C)
+project(quake_clone LANGUAGES CXX C)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -47,7 +47,7 @@ add_executable(${PROJECT_NAME}
     src/renderer/objects/OBJ_Loader.h
     src/renderer/mainwindow.h src/renderer/mainwindow.cpp
     src/renderer/AspectRatioWidget.hpp
-    resources/shaders/default.frag resources/shaders/default.vert resources/shaders/texture.frag resources/shaders/texture.vert
+#    resources/shaders/default.frag resources/shaders/default.vert resources/shaders/texture.frag resources/shaders/texture.vert
     src/renderer/rendermodel.h src/renderer/rendermodel.cpp
     src/core/timer.h
     src/physics/physics.h src/physics/physics.cpp
@@ -59,9 +59,7 @@ add_executable(${PROJECT_NAME}
 add_subdirectory(glm)
 
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
-add_library(StaticGLEW STATIC glew/src/glew.c
-
-)
+add_library(StaticGLEW STATIC glew/src/glew.c)
 include_directories(${PROJECT_NAME} PRIVATE glew/include)
 
 # Specifies libraries to be linked (Qt components, glew, etc)
@@ -75,18 +73,18 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 # Specifies other files
-# qt6_add_resources(${PROJECT_NAME} "Resources"
-#     PREFIX
-#         "/"
-#     FILES
-#         resources/shaders/default.frag
-#         resources/shaders/default.vert
-# )
+ qt6_add_resources(${PROJECT_NAME} "Resources"
+     PREFIX
+         "/"
+     FILES
+         resources/shaders/default.frag
+         resources/shaders/default.vert
+ )
 
-# target_sources(projects_realtime_other_files
-#   PRIVATE
-#     resources/shaders/texture.frag resources/shaders/texture.vert
-# )
+ target_sources(quake_clone_other_files
+   PRIVATE
+     resources/shaders/texture.frag resources/shaders/texture.vert
+ )
 
 # GLEW: this provides support for Windows (including 64-bit)
 if (WIN32)
@@ -99,7 +97,7 @@ endif()
 
 # Set this flag to silence warnings on Windows
 if (MSVC OR MSYS OR MINGW)
-#  set(CMAKE_CXX_FLAGS "-Wno-volatile")
+  set(CMAKE_CXX_FLAGS "-Wno-volatile")
 endif()
 # Set this flag to silence warnings on MacOS
 if (APPLE)

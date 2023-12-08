@@ -16,6 +16,7 @@
 #include "movement.h"
 #include "rendermodel.h"
 #include "objects/player.h"
+#include "core/ecs.h"
 
 #include "scene/scenedata.h"
 #include "GL/glew.h"
@@ -57,6 +58,8 @@ public:
     void saveViewportImage(std::string filePath);
     void clearScreen();
 
+    static void ecsEntityRender(ECS* e, entity_t ent, float delta);
+
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
 
@@ -66,6 +69,9 @@ protected:
     void resizeGL(int width, int height) override;      // Called when window size changes
 
 private:
+
+    static inline Renderer* m_renderer;
+
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
