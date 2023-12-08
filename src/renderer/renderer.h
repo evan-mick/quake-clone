@@ -51,7 +51,8 @@
 class Renderer //: public QOpenGLWidget
 {
 public:
-    Renderer(QWidget *parent = nullptr);
+//    Renderer(QWidget *parent = nullptr);
+    Renderer();
     void finish();                                      // Called on program exit
     void sceneChanged();
     void settingsChanged();
@@ -62,11 +63,16 @@ public:
 
     static void ecsEntityRender(ECS* e, entity_t ent, float delta);
 
+    void initializeScene(/*SceneParser* parser*/);
+    void initializeGL();
+
+    void renderFrame();
+
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
 
 protected:
-    void initializeGL();                       // Called once at the start of the program
+                        // Called once at the start of the program
     void paintGL();                            // Called whenever the OpenGL context changes or by an update() request
     void resizeGL(int width, int height);      // Called when window size changes
 
@@ -80,7 +86,8 @@ private:
 //    void mouseReleaseEvent(QMouseEvent *event) override;
 //    void mouseMoveEvent(QMouseEvent *event) override;
 //    void timerEvent(QTimerEvent *event) override;
-    void initializeScene(std::string filepath);
+//    void initializeScene(std::string filepath);
+
     void handleMovement(float deltaTime);
     void makeFBO();
     void paintGeometry();
