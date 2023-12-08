@@ -20,7 +20,7 @@
 
 
 
-const uint16_t default_port = 42069; // hell yeah
+extern const char* DEFAULT_PORT;
 const int MAX_PLAYERS = 4;
 
 #pragma pack(1)
@@ -69,7 +69,7 @@ struct Connection {
 class Network
 {
 public:
-    Network(bool server, ECS* ecs, const char* ip, const char* port);
+    Network(bool server, ECS* ecs, const char* ip);
 
     int connect(const char* ip, const char* port);
     Connection* getConnection(uint32_t ip);
@@ -77,14 +77,14 @@ public:
     void deserializeAllDataIntoECS(ECS* ecs);
 
     void shutdown();
-    void broadcastClientGS(ECS* ecs, Connection* conn, int tick);
+    void broadcastGS(ECS* ecs, Connection* conn, int tick);
     void addConnection(uint32_t ip, Connection* conn);
-    void editConnection(uint32_t ip);
+    void editConnection(uint32_t ip, unsigned int tick);
     
-    void onTick();
+    void onTick(unsigned int tick);
     int initClient(const char* ip, const char* port);
     void updateTickBuffer(Packet packet, Connection* conn, unsigned int tick);
-    
+    void pushTickData(TickData td, Connection* conn);
 
 private:
     bool m_isServer = false;
