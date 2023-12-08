@@ -88,10 +88,9 @@ void Game::startGame(bool server) {
 
     while (m_running) {
 
-        ecs.update();
-
         glClear(GL_COLOR_BUFFER_BIT);
-        // Draw the triangle
+
+        ecs.update();
 
         render.paintGL();
 
