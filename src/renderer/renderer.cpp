@@ -17,7 +17,7 @@
 #include "game_types.h"
 
 
-Renderer::Renderer(QWidget *parent)
+Renderer::Renderer()//(QWidget *parent)
     //: QOpenGLWidget(parent)
 {
     m_renderer = this;
@@ -202,11 +202,21 @@ void inline initializeModelGeometry(Model& model) {
     }
 }
 
-void Renderer::initializeScene(std::string filepath) {
-    parsed_ = SceneParser::parse(filepath,m_metaData);
+//void Renderer::initializeScene(std::string filepath) {
+void Renderer::initializeScene(/*SceneParser* parser)*/) {
+    parsed_ = SceneParser::hasParsed();//SceneParser::parse(filepath,m_metaData);
+
+//    if (parser == nullptr)
+//        std::cout << "null parser" << std::endl;
+
+
     if(!parsed_) {
-        std::cerr << "Error parsing scene JSON" << std::endl;
+        std::cerr << "Unparsed data" << std::endl;
+        return;
     }
+
+    m_metaData = SceneParser::getSceneData();
+
     m_camera = Camera(DSCREEN_WIDTH,DSCREEN_HEIGHT,m_metaData.cameraData);//Camera(size().width(),size().height(),m_metaData.cameraData);
 
     glUseProgram(m_shader);
@@ -232,6 +242,7 @@ void Renderer::initializeScene(std::string filepath) {
     for(Model& model : m_models) {
         initializeModelGeometry(model);
     }
+    std::cout << "Renderer Init Complete" << std::endl;
 
 }
 
@@ -244,6 +255,10 @@ void Renderer::beginFrame() {
 
     glViewport(0,0,m_fbo_width,m_fbo_height);
 
+}
+
+void Renderer::renderFrame() {
+    paintGL();
 }
 
 void Renderer::paintGL()
@@ -376,7 +391,7 @@ void Renderer::settingsChanged() {
             shape.vbo = 0;
             shape.vao = 0;
         }
-        initializeScene(settings.sceneFilePath);
+//        initializeScene(settings.sceneFilePath);
     }
 //    update(); // asks for a PaintGL() call to occur
 }

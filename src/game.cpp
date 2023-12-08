@@ -84,9 +84,12 @@ void Game::startGame(bool server) {
 //    }
 
 
-    SceneParser parser = SceneParser();
-    parser.parse("resources/scenes/phong_total.json");
+    SceneParser SCENEparser = SceneParser();
+    SCENEparser.parse("../../resources/scenes/phong_total.json");
 
+    Renderer render = Renderer();
+    render.initializeScene();
+    render.initializeGL();
 
 
     while (m_running) {
@@ -94,12 +97,15 @@ void Game::startGame(bool server) {
         ecs.update();
 
 
+        render.renderFrame();
+
         // Swap front and back buffers
         glfwSwapBuffers(window);
 
         // Poll for and process events
         glfwPollEvents();
     }
+    glfwTerminate();
 
 }
 

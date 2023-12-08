@@ -12,29 +12,36 @@ bool SceneParser::parse(std::string filepath, SceneData &renderData) {
         return false;
     }
 
+//    renderData.lights = std::vector<
+
     renderData.cameraData = fileReader.getCameraData();
     renderData.globalData = fileReader.getGlobalData();
 
-    renderData.lights.clear();
-    renderData.shapes.clear();
+    std::vector<RenderObject>().swap(renderData.shapes);
+    std::vector<SceneLightData>().swap(renderData.lights);
 
+    std::cout << "Parse Start" << std::endl;
     SceneNode* rootNode = fileReader.getRootNode();
     getRenderShapes(rootNode,
-                    &renderData.shapes,
-                    &renderData.lights,
+                    &(renderData.shapes),
+                    &(renderData.lights),
                     glm::mat4(1.f));
+    std::cout << "Parse Complete" << std::endl;
     return true;
 }
 
 
 bool SceneParser::parse(std::string filepath) {
-    return parse(filepath, m_sceneData);
+
+    m_hasParsed = parse(filepath, m_sceneData);
+    return m_hasParsed;
 }
 
 void SceneParser::getRenderShapes(SceneNode* node,
                                   std::vector<RenderObject>* shapes,
                                   std::vector<SceneLightData>* lights,
                                   glm::mat4 ctm) {
+
     for (SceneTransformation* t : node->transformations) {
         switch(t->type) {
         case TransformationType::TRANSFORMATION_TRANSLATE:
@@ -51,6 +58,8 @@ void SceneParser::getRenderShapes(SceneNode* node,
             break;
         }
     }
+
+//    std::cout << "Render LIGHTS " << (long) node << std::endl;
     for(SceneLight* l : node->lights) {
         SceneLightData lightData;
         lightData.id = l->id;
@@ -72,11 +81,28 @@ void SceneParser::getRenderShapes(SceneNode* node,
         lights->push_back(lightData);
     }
 
-    for(ScenePrimitive* p : node->primitives) {
-        RenderObject s = {*p,ctm};
+
+
+    std::cout << "Render Shape " << (long) node << std::endl;
+    for (ScenePrimitive* p : node->primitives) {
+        std::cout << "Render PRIMITIVES " << (long)shapes << std::endl;
+
+        if (p == nullptr) {
+            std::cout << "Render PRIMITIVES NULL " << (long)p << std::endl;
+            continue;
+        }
+
+        RenderObject s {};
+        s.ctm = ctm;
+        s.primitive = *p;
+//        s.vao = 0;
+//        s.vbo = 0;
+//        s.vertCount = 0;
+//        std::cout << "RENDER PRE PUSH" << std::endl;
         shapes->push_back(s);
     }
 
+//    std::cout << "Render CHILDS " << (long) node << std::endl;
     for(SceneNode* child : node->children) {
         getRenderShapes(child,shapes,lights,ctm);
     }
