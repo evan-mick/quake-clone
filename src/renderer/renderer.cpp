@@ -65,8 +65,13 @@ void Renderer::initializeGL() {
     std::cout << "Initialized GL: Version " << glewGetString(GLEW_VERSION) << std::endl;
 
     // This file path stuff ain't ideal? for whatever reason when I do it the style of realtime it doesn't work... i tried a lot of stuff but whatevs
-    m_shader = ShaderLoader::createShaderProgram("../../resources/shaders/default.vert", "../../resources/shaders/default.frag");
-    m_texture_shader = ShaderLoader::createShaderProgram("../../resources/shaders/texture.vert", "../../resources/shaders/texture.frag");
+    //hmm is your working dir set to the quakeclone folder? -luke
+//    m_shader = ShaderLoader::createShaderProgram("../../resources/shaders/default.vert", "../../resources/shaders/default.frag");
+//    m_texture_shader = ShaderLoader::createShaderProgram("../../resources/shaders/texture.vert", "../../resources/shaders/texture.frag");
+    m_shader = ShaderLoader::createShaderProgram("resources/shaders/default.vert", "resources/shaders/default.frag");
+    m_texture_shader = ShaderLoader::createShaderProgram("resources/shaders/texture.vert", "resources/shaders/texture.frag");
+
+
 
 //    resources/shaders/default.frag
 //                              resources/shaders/default.vert
@@ -116,7 +121,6 @@ void Renderer::initializeGL() {
 
 
 void Renderer::makeFBO(){
-    // Task 19: Generate and bind an empty texture, set its min/mag filter interpolation, then unbind
     glActiveTexture(GL_TEXTURE0);
     glGenTextures(1,&m_fbo_texture);
     glBindTexture(GL_TEXTURE_2D,m_fbo_texture);
