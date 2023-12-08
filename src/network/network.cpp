@@ -25,7 +25,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
     
     // Initialize server
     if (server) {
-        
+
         // Server has authority over everything by default
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
 
@@ -41,7 +41,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         // Attempt to connect to server
         int initSuccess = initClient(ip, DEFAULT_PORT);
         if (initSuccess != 0) {
-            throw std::runtime_error("Network initialization failed");
+            throw std::runtime_error("Client initialization failed");
         }
 
         // Populate Client authority vector
@@ -72,7 +72,7 @@ void Network::serverListen(const char* ip, const char* port) {
 
     int serverSocket = setupUDPConn(ip, port); 
     if (serverSocket < 0) {
-        throw std::runtime_error("Unable to set up UDP connection");
+        throw std::runtime_error("Unable to set up UDP connection for server");
     }
 
     while (!m_shutdown) {
