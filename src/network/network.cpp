@@ -67,9 +67,6 @@ Network::Network(bool server, ECS* ecs, const char* ip)
 
 void Network::serverListen(const char* ip, const char* port) {
 
-    struct sockaddr_storage their_addr;
-    socklen_t addr_len = sizeof(their_addr);
-
     int serverSocket = setupUDPConn(ip, port); 
     if (serverSocket < 0) {
         throw std::runtime_error("Unable to set up UDP connection for server");
@@ -229,17 +226,18 @@ int Network::connect(const char* ip, const char* port) {
     helloPacket.data = nullptr; 
 
     struct sockaddr_in servAddr;
+    socklen_t servAddr_len = sizeof(servAddr);
     servAddr.sin_addr.s_addr = ((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
     servAddr.sin_family = AF_INET;
     servAddr.sin_port = ((struct sockaddr_in*)p->ai_addr)->sin_port;
 
-    sendto(sockfd, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, sizeof(servAddr));
+    sendto(sockfd, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, servAddr_len);
 
     // Wait for Welcome packet
     Packet welcomePacket;
 
     // Listen on that port for a welcome packet
-    recvfrom(sockfd, (char*)&welcomePacket, sizeof(welcomePacket), 0, (struct sockaddr *)&servAddr, (socklen_t*)sizeof(servAddr));
+    recvfrom(sockfd, (char*)&welcomePacket, sizeof(welcomePacket), 0, (struct sockaddr *)&servAddr, &servAddr_len);
 
     if (welcomePacket.command == 'W') {
         // Create new Connection
@@ -357,10 +355,11 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
 
     // Send data to server
     struct sockaddr_in connAddr;
+    socklen_t connAddr_len = sizeof(connAddr);
     connAddr.sin_addr.s_addr = conn->ip;
     connAddr.sin_family = AF_INET;
     connAddr.sin_port = conn->port;
-    sendto(conn->socket, (char*)&dataPacket, sizeof(dataPacket), 0, (struct sockaddr *)&connAddr, sizeof(connAddr));
+    sendto(conn->socket, (char*)&dataPacket, sizeof(dataPacket), 0, (struct sockaddr *)&connAddr, connAddr_len);
 
     // Clean up
     delete[] data;
@@ -392,10 +391,11 @@ void Network::clientListen() {
 
                 // Receive packet
                 struct sockaddr_in servAddr;
+                socklen_t servAddr_len = sizeof(servAddr);
                 servAddr.sin_addr.s_addr = serverIP;
                 servAddr.sin_family = AF_INET;
                 servAddr.sin_port = serverPort;
-                recvfrom(servSocket, (char*)&packet, sizeof(packet), 0, (struct sockaddr *)&servAddr, (socklen_t*)sizeof(servAddr));
+                recvfrom(servSocket, (char*)&packet, sizeof(packet), 0, (struct sockaddr *)&servAddr, &servAddr_len);
 
                 // Process packet
                 if (packet.command == 'D') {

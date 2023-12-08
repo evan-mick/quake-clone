@@ -118,7 +118,7 @@ void Player::stepLegs(float deltaTime) {
 
         m_geometry[LEFT_LEG_I].ctm = rotatedLeft * m_left_ctm;
         m_geometry[RIGHT_LEG_I].ctm = rotatedRight * m_right_ctm;
-        stepArms(m_leg_angle / 2.f);
+        stepArms(-m_leg_angle / 2.f);
     }
 }
 
