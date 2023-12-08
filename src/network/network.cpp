@@ -55,7 +55,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
 
         // Wait for tick
         if (m_timer.finishedThenResetTime()) {
-             // get tick
+             // Get tick
             unsigned int tick = m_timer.getTimesRun();
 
             // Pop tick buffers and deserialize into ECS
