@@ -29,7 +29,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         // Server has authority over everything by default
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
 
-        // initialize server and open listen thread
+        // Open listen thread and accept connections
         m_listenThread = std::thread([this, ip]() { 
             this->serverListen(ip, DEFAULT_PORT); 
         });
