@@ -35,6 +35,20 @@ public:
         return true;
     }
 
+    inline float getTime() {
+        return m_time;
+    }
+
+    inline float getRate() {
+        return m_rate;
+    }
+
+    inline unsigned int getTimesRun() {
+        return m_timesRun;
+    }
+
+    
+
 
 private:
     unsigned int m_timesRun = 0;

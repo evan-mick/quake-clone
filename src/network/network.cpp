@@ -6,50 +6,61 @@
 
 // TODO //
 
-// Implement onTick(), and init() functions and syncromize with Network main loop
-// Find a way to get server tick rate and client tick rate to match, adjust broadcastClientGS() and listenThread() accordingly
+// Deal with client authority
 
 
-Network::Network(bool server, ECS* ecs)
+Network::Network(bool server, ECS* ecs, const char* ip, const char* port)
 {
+    // IP and port are ALWAYS the server address and port
+
+    // Port should always be default_port, but when we initialize the Network, we pass it in
+
     m_isServer = server;
     m_ecs = ecs;
+    m_shutdown = false;
 
+    // Initialize Tick Rate
+    m_timer.setAndResetTimer(1/20.f); // 20 ticks per second
+    
     // Server has authority over everything by default
     if (server) {
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
         // initialize server and open listen thread
-        m_listenThread = std::thread([this]() { this->serverListen(); });
+        m_listenThread = std::thread([this, ip, port]() { 
+            this->serverListen(ip, port); 
+        });
     }
 
     // Initialize client
     
     if (!server){
-        int initSuccess = initClient();
+        int initSuccess = initClient(ip, port);
         if (initSuccess != 0) {
             throw std::runtime_error("Network initialization failed");
         }
+        // Populate Client authority vector
+
         m_listenThread = std::thread([this]() { this->clientListen(); });
     }
 
-    
-    // Need ticks to be implemented
+    while (!m_shutdown) {
+        // Wait for tick
+        while (m_timer.getTime() > 0.0f) { } 
 
-    // while (!m_shutdown) {
-    //     onTick();
-    // }
+        // Pop tick buffers and deserialize into ECS
+        onTick();
+    }
 
 }
 
 
-void Network::serverListen() {
+void Network::serverListen(const char* ip, const char* port) {
     struct sockaddr_storage their_addr;
     socklen_t addr_len = sizeof(their_addr);
 
-    int serverSocket = setupUDPConn(NULL, "42069"); // NULL for localhost
+    int serverSocket = setupUDPConn(ip, port); 
     if (serverSocket < 0) {
-        // Handle error: unable to set up UDP connection
-        return;
+        throw std::runtime_error("Unable to set up UDP connection");
     }
 
     while (!m_shutdown) {
@@ -71,7 +82,7 @@ void Network::serverListen() {
             memcpy(welcome_entity_id, &entity_id, sizeof(entity_id));
             // Make new Connection
             Connection conn;
-            conn.last_rec_tick = 0;
+            conn.last_rec_tick = packet.tick;
             conn.socket = serverSocket;
             conn.entity = entity_id;
             conn.ip = (uint32_t)((struct sockaddr_in*)&clientAddr)->sin_addr.s_addr;
@@ -79,7 +90,7 @@ void Network::serverListen() {
             uint32_t clientIP = ((struct sockaddr_in*)&clientAddr)->sin_addr.s_addr;
             addConnection(clientIP, &conn);
             Packet welcomePacket;
-            welcomePacket.tick = packet.tick; // or set your own tick
+            welcomePacket.tick = m_timer.getTimesRun(); 
             welcomePacket.command = 'W'; // 'W' for Welcome
             welcomePacket.data = welcome_entity_id;
 
@@ -96,8 +107,8 @@ void Network::serverListen() {
             } else {
                 client_conn = it->second;
             }
-            // CHANGE THIS
-            int tick = packet.tick;
+            
+            unsigned int tick = m_timer.getTimesRun();
             // Populate data based on received Packet
             updateTickBuffer(packet, client_conn, tick);
         }
@@ -134,8 +145,6 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
             conn.second->tick_buffer.buffer.pop();
             ecs->deserializeIntoData(data.data, sizeof(data.data), nullptr);
             delete[] data.data;
-            // Need a way to broadcast new gamestate to all clients
-
         }
         conn.second->tick_buffer.mutex.unlock();
     }
@@ -145,8 +154,8 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
         int data_written = ecs->serializeData(&tick_data);
         assert(data_written <= 1400);
         td->data = tick_data;
-        // ADD A WAY TO GET THE SERVER TICK
-        td->tick = 0; // ecs->getTick();
+        
+        td->tick = m_timer.getTimesRun();
         Packet dataPacket;
         dataPacket.tick = td->tick;
         dataPacket.command = 'D'; // 'D' for Data
@@ -199,9 +208,8 @@ int Network::connect(const char* ip, const char* port) {
 
     // Send Hello packet
     Packet helloPacket;
-    helloPacket.tick = 0; // Set your initial tick
+    helloPacket.tick = m_timer.getTimesRun(); 
     helloPacket.command = 'H'; // 'H' for Hello
-    // TODO: set your entity id
     helloPacket.data = nullptr; 
 
     struct sockaddr_in servAddr;
@@ -215,7 +223,7 @@ int Network::connect(const char* ip, const char* port) {
     Packet welcomePacket;
 
     // Listen on that port for a welcome packet
-    recvfrom(sockfd, (char*)&welcomePacket, sizeof(welcomePacket), 0, (struct sockaddr *)&servAddr, NULL);
+    recvfrom(sockfd, (char*)&welcomePacket, sizeof(welcomePacket), 0, (struct sockaddr *)&servAddr, (socklen_t*)sizeof(servAddr));
 
     if (welcomePacket.command == 'W') {
         // Create new Connection
@@ -223,7 +231,7 @@ int Network::connect(const char* ip, const char* port) {
         char* entity_id = welcomePacket.data;
         memcpy(&conn.entity, entity_id, sizeof(conn.entity));
         // Create new Connection
-        conn.last_rec_tick = 0;
+        conn.last_rec_tick = welcomePacket.tick;
         conn.socket = sockfd;
         conn.entity = -1; // -1 for server
         conn.ip = (uint32_t)((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
@@ -235,12 +243,34 @@ int Network::connect(const char* ip, const char* port) {
 
     freeaddrinfo(servinfo); // all done with this structure
     return 0;
-    // You might want to save sockfd for future sendto/recvfrom calls.
 }
 
 void Network::shutdown() {
     m_shutdown = true;
     m_listenThread.join();
+
+    m_connectionMutex.lock();
+    for (auto& conn : m_connectionMap) {
+
+        // close all sockets
+        close(conn.second->socket);
+
+        // Delete all Tick Data in the buffer
+        conn.second->tick_buffer.mutex.lock();
+        while (!conn.second->tick_buffer.buffer.empty()) {
+            TickData data = conn.second->tick_buffer.buffer.front();
+            conn.second->tick_buffer.buffer.pop();
+            delete[] data.data;
+        }
+        conn.second->tick_buffer.mutex.unlock();
+
+        // Delete the connection
+        delete conn.second;
+    }
+
+    // Clear the map
+    m_connectionMap.clear();
+    m_connectionMutex.unlock();
 }
 
 
@@ -335,11 +365,11 @@ void Network::clientListen() {
                 servAddr.sin_addr.s_addr = serverIP;
                 servAddr.sin_family = AF_INET;
                 servAddr.sin_port = serverPort;
-                recvfrom(servSocket, (char*)&packet, sizeof(packet), 0, (struct sockaddr *)&servAddr, NULL);
+                recvfrom(servSocket, (char*)&packet, sizeof(packet), 0, (struct sockaddr *)&servAddr, (socklen_t*)sizeof(servAddr));
                 if (packet.command == 'D') {
                     // Populate data based on received Packet
-                    int newtick = packet.tick; // CHANGE
-                    updateTickBuffer(packet, conn.second, newtick);
+                    unsigned int tick = m_timer.getTimesRun();
+                    updateTickBuffer(packet, conn.second, tick);
                 }
                 continue;
             }
@@ -347,10 +377,10 @@ void Network::clientListen() {
     }
 }
 
-void Network::updateTickBuffer(Packet packet, Connection* conn, int newtick) {
+void Network::updateTickBuffer(Packet packet, Connection* conn, unsigned int tick) {
     // Populate data based on received Packet
     TickData data;
-    data.tick = newtick;
+    data.tick = tick;
     size_t dataSize = sizeof(packet.data); // might just have to make this a constant
     char* dataPtr = new char[dataSize]; // Remember to delete this when it gets popped
     memcpy(dataPtr, packet.data, dataSize);
@@ -363,7 +393,10 @@ void Network::updateTickBuffer(Packet packet, Connection* conn, int newtick) {
 }
 
 void Network::onTick() {
-    int tick = 0; // CHANGE THIS
+    
+    unsigned int tick = m_timer.getTimesRun();
+    
+    // If server, send gamestate to all clients
 
     // Night change the order of these two, not sure yet
 
@@ -383,14 +416,12 @@ void Network::onTick() {
     }
 }
 
-int Network::initClient() {  
+int Network::initClient(const char* ip,  const char* port) {  
     
-    const char* port = "42069";
-    const char* ip = NULL; // CHANGE THIS TO A USER INPUT
 
     int clientSetup = connect(ip, port); 
     if (clientSetup != 0) {
-        // Handle error: unable to set up UDP connection
+        // Error handled in constructor
         return -1;
     }
 
