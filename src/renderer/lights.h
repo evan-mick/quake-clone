@@ -1,7 +1,6 @@
 #ifndef LIGHTS_H
 #define LIGHTS_H
 #include "scene/scenedata.h"
-#include <GL/glew.h>
 
 class Lights
 {

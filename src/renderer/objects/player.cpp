@@ -24,7 +24,8 @@ Model Player::getModel() {
         objects.push_back(&m_geometry[i]);
     }
 
-    return (Model){.objects=objects,.id=m_model_id};
+    return {};
+//    return (Model){.objects=objects,.id=m_model_id};
 }
 
 void Player::rotatePlayer(float angle, glm::vec3 axis) {

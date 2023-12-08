@@ -11,6 +11,7 @@
 
 
 
+
 // Enum of the types of virtual lights that might be in the scene
 enum class LightType {
     LIGHT_POINT,
@@ -167,7 +168,7 @@ struct SceneData {
 };
 
 struct Model {
-    std::vector<RenderObject *> objects;
+    std::vector<RenderObject> objects;
     uint8_t id;
 };
 

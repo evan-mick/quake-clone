@@ -2,7 +2,7 @@
 #define NETWORK_H
 
 #include "../core/ecs.h"
-
+#include "../core/timer.h"
 #include <unordered_map>
 #include <stdlib.h>
 //#include <unistd.h>
@@ -20,7 +20,7 @@
 
 
 
-const uint16_t default_port = 42069; // hell yeah
+extern const char* DEFAULT_PORT;
 const int MAX_PLAYERS = 4;
 
 #pragma pack(1)
@@ -69,7 +69,7 @@ struct Connection {
 class Network
 {
 public:
-    Network(bool server, ECS* ecs);
+    Network(bool server, ECS* ecs, const char* ip);
 
     int connect(const char* ip, const char* port);
     Connection* getConnection(uint32_t ip);
@@ -77,18 +77,19 @@ public:
     void deserializeAllDataIntoECS(ECS* ecs);
 
     void shutdown();
-    void broadcastClientGS(ECS* ecs, Connection* conn, int tick);
+    void broadcastGS(ECS* ecs, Connection* conn, int tick);
     void addConnection(uint32_t ip, Connection* conn);
-    void editConnection(uint32_t ip);
+    void editConnection(uint32_t ip, unsigned int tick);
     
-    void onTick();
-    int initClient();
-    void updateTickBuffer(Packet packet, Connection* conn, int newtick);
+    void onTick(unsigned int tick);
+    // int initClient(const char* ip, const char* port);
+    void updateTickBuffer(Packet packet, Connection* conn, unsigned int tick);
+    void pushTickData(TickData td, Connection* conn);
 
 private:
     bool m_isServer = false;
     ECS* m_ecs;
-    std::atomic_bool m_shutdown = false; // equal sign needs to be removed and defined in the consructor I think
+    std::atomic_bool m_shutdown; // equal sign needs to be removed and defined in the consructor I think
     std::mutex m_connectionMutex;
     // ONLY RELEVENT TO CLIENTS AS OF NOW
     // what should server be receiving? should this be in connection?
@@ -103,10 +104,14 @@ private:
 
     std::thread m_listenThread;
     
-    void serverListen();
+    void serverListen(const char* ip, const char* port);
     void clientListen();
-    
+
     int setupUDPConn(const char* address, const char* port);
+
+    // Tick stuff
+    Timer m_timer = Timer(1/20.f);
+    float m_tickRate = 1/20.f;
 };
 
 #endif // NETWORK_H

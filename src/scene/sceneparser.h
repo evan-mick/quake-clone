@@ -3,7 +3,7 @@
 #include "scenedata.h"
 #include <vector>
 #include <string>
-#include <GL/glew.h>
+
 
 
 class SceneParser {
@@ -17,7 +17,17 @@ public:
                                 std::vector<RenderObject>* shapes,
                                 std::vector<SceneLightData>* lights,
                                 glm::mat4 ctm);
-    bool parse(std::string filepath);
+    static bool parse(std::string filepath);
+
+    static inline SceneData& getSceneData() {
+        return m_sceneData;
+    }
+
+    static inline bool hasParsed() {
+        return m_hasParsed;
+    }
+
 private:
-    SceneData m_sceneData;
+    static inline SceneData m_sceneData {};
+    static inline bool m_hasParsed = false;
 };
