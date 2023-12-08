@@ -75,6 +75,10 @@ void Game::startGame(bool server) {
 //    gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(1);
 
+    float xscale, yscale;
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    glfwGetMonitorContentScale(monitor, &xscale, &yscale);
+
     // Initialize GLEW
     if (glewInit() != GLEW_OK) {
         std::cerr << "Failed to initialize GLEW" << std::endl;
@@ -85,6 +89,11 @@ void Game::startGame(bool server) {
     SCENEparser.parse("../../resources/scenes/phong_total.json");
 
     Renderer render = Renderer();
+    Renderer::default_render->setRatio(xscale, yscale);
+
+//    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
+//        Renderer::default_render->resizeGL(width, height);
+//    });
 
     while (m_running) {
 

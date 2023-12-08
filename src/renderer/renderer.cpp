@@ -19,6 +19,8 @@
 Renderer::Renderer(/*QWidget *parent*/)
     //: QOpenGLWidget(parent)
 {
+
+    default_render = this;
     m_prev_mouse_pos = glm::vec2(DSCREEN_WIDTH/2, DSCREEN_HEIGHT/2);
     //setMouseTracking(true);
     //setFocusPolicy(Qt::StrongFocus);
@@ -136,7 +138,6 @@ void Renderer::initializeGL() {
     old_settings = settings;
 
     std::cout <<" HII" << std::endl;
-    m_devicePixelRatio = DSCREEN_WIDTH/DSCREEN_HEIGHT;//this->devicePixelRatio();
 
 //    m_timer = startTimer(1000/60);
     m_elapsedTimer.start();
@@ -157,17 +158,19 @@ void Renderer::initializeGL() {
     // Tells OpenGL to only draw the front face
     glEnable(GL_CULL_FACE);
 
-    // Tells OpenGL how big the screen is
-    glViewport(0, 0, DSCREEN_WIDTH, DSCREEN_HEIGHT);
+
 
     // Students: anything requiring OpenGL calls when the program starts should be done here
     m_defaultFBO = 0;
 
-    m_screen_width = DSCREEN_WIDTH;//size().width() * m_devicePixelRatio;
-    m_screen_height =  DSCREEN_HEIGHT;//size().height() * m_devicePixelRatio;
+    m_screen_width = DSCREEN_WIDTH;
+    m_screen_height =  DSCREEN_HEIGHT;
 
     m_o_scrn_width = m_screen_width;
     m_o_scrn_height = m_screen_height;
+
+    // Tells OpenGL how big the screen is
+    glViewport(0, 0, m_screen_width, m_screen_height);
 
 
     m_shader = ShaderLoader::createShaderProgram("../../resources/shaders/default.vert", "../../resources/shaders/default.frag");
@@ -504,6 +507,11 @@ void Renderer::resizeGL(int w, int h) {
 //    m_screen_width = size().width() * m_devicePixelRatio;
 //    m_screen_height = size().height() * m_devicePixelRatio;
     // Students: anything requiring OpenGL calls when the program starts should be done here
+
+    m_screen_width = w;
+    m_screen_height = h;
+
+    glViewport(0, 0, m_screen_width, m_screen_height);
 
 //    glGenRenderbuffers(1, &m_fbo_renderbuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, m_fbo_renderbuffer);

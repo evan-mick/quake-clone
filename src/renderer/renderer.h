@@ -16,6 +16,7 @@
 #include "camera.h"
 #include "scene/sceneparser.h"
 #include "scene/settings.h"
+#include "game_types.h"
 
 class Renderer //: public QOpenGLWidget
 {
@@ -29,14 +30,25 @@ public:
 
     void paintGL();                            // Called whenever the OpenGL context changes or by an update() request
 
+    void resizeGL(int width, int height);      // Called when window size changes
+
+    inline void setRatio(float x, float y) {
+//        m_devicePixelRatio = ratio;
+        ratio_x = x;
+        ratio_y = y;
+        resizeGL(DSCREEN_WIDTH * ratio_x, DSCREEN_HEIGHT * ratio_y);
+    }
+
+    static inline Renderer* default_render;
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
 
 protected:
 
-    void resizeGL(int width, int height);      // Called when window size changes
+
 
 private:
+
 //    void keyPressEvent(QKeyEvent *event) override;
 //    void keyReleaseEvent(QKeyEvent *event) override;
 //    void mousePressEvent(QMouseEvent *event) override;
@@ -72,7 +84,10 @@ private:
     std::unordered_map<Qt::Key, bool> m_keyMap;         // Stores whether keys are pressed or not
 
     // Device Correction Variables
-    int m_devicePixelRatio;
+//    int m_devicePixelRatio;
+    float ratio_x;
+    float ratio_y;
+
 
     GLuint m_shader;
 
