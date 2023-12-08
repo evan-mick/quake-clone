@@ -29,6 +29,7 @@ Renderer::Renderer(/*QWidget *parent*/)
     m_keyMap[Qt::Key_D]       = false;
     m_keyMap[Qt::Key_Control] = false;
     m_keyMap[Qt::Key_Space]   = false;
+    initializeGL();
 
     // If you must use this function, do not edit anything above this
 
@@ -140,6 +141,8 @@ void Renderer::initializeGL() {
 //    m_timer = startTimer(1000/60);
     m_elapsedTimer.start();
 
+
+
     // Initializing GL.
     // GLEW (GL Extension Wrangler) provides access to OpenGL functions.
     glewExperimental = GL_TRUE;
@@ -158,7 +161,7 @@ void Renderer::initializeGL() {
     glViewport(0, 0, DSCREEN_WIDTH, DSCREEN_HEIGHT);
 
     // Students: anything requiring OpenGL calls when the program starts should be done here
-    m_defaultFBO = 2;
+    m_defaultFBO = 0;
 
     m_screen_width = DSCREEN_WIDTH;//size().width() * m_devicePixelRatio;
     m_screen_height =  DSCREEN_HEIGHT;//size().height() * m_devicePixelRatio;
@@ -222,6 +225,7 @@ void Renderer::initializeGL() {
 
 
 
+
     std::cout << "shader: " << std::to_string(m_shader) << std::endl;
 
     generateShape();
@@ -229,6 +233,8 @@ void Renderer::initializeGL() {
     init_gen = true;
 
     makeFBO();
+
+    sceneChanged();
 }
 
 
@@ -263,20 +269,23 @@ void Renderer::paintTexture(GLuint texture, bool post_process){
 
 void Renderer::generateShape() {
 
+    int p_1 = 10;
+    int p_2 = 10;
+
     Sphere sphere = Sphere();
-    sphere.updateParams(settings.shapeParameter1, settings.shapeParameter2);
+    sphere.updateParams(p_1, p_2);
     bindBuff(sphere.generateShape(), sphere_in);
 
     Cube cube = Cube();
-    cube.updateParams(settings.shapeParameter1);
+    cube.updateParams(p_1);
     bindBuff(cube.generateShape(), cube_in);
 
     Cone cone = Cone();
-    cone.updateParams(settings.shapeParameter1, settings.shapeParameter2);
+    cone.updateParams(p_1, p_2);
     bindBuff(cone.generateShape(), cone_in);
 
     Cylinder cyl = Cylinder();
-    cyl.updateParams(settings.shapeParameter1, settings.shapeParameter2);
+    cyl.updateParams(p_1, p_2);
     bindBuff(cyl.generateShape(), cylinder_in);
 
 }
@@ -515,9 +524,14 @@ void Renderer::resizeGL(int w, int h) {
 
 void Renderer::sceneChanged() {
 
-    SceneParser parser = SceneParser();
+//    SceneParser parser = SceneParser();
 //    parser.parse(settings.sceneFilePath);
-    parser.parse("../../resources/scenes/phong_total.json");
+//    parser.parse("../../resources/scenes/phong_total.json");
+
+    if (!SceneParser::hasParsed()) {
+        std::cout << "SCENE PARSER RENDERER ERROR" << std::endl;
+        return;
+    }
     data = SceneParser::getSceneData();
 
     camera = Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, data.cameraData);

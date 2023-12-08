@@ -3,17 +3,18 @@
 #include "game.h"
 #include "core/ecs.h"
 #include "network/network.h"
-//#include "renderer/renderer.h"
+#include "renderer/renderer.h"
 #include "game_types.h"
 #include "physics/physics.h"
 //#include <QApplication>
 //#include <QScreen>
 #include <iostream>
 //#include <QSettings>
-#include "renderer/mainwindow.h"
+
+#include "scene/sceneparser.h"
 
 //#include <GLFW/glfw3.h>
-//#include <GL/glew.h>
+#include <GL/glew.h>
 #include <glfw/glfw3.h>
 
 
@@ -75,6 +76,7 @@ void Game::startGame(bool server) {
 
     // Create a GLFW windowed mode window and its OpenGL context
     GLFWwindow* window = glfwCreateWindow(DSCREEN_WIDTH, DSCREEN_HEIGHT, "Quake Clone", nullptr, nullptr);
+
     if (!window) {
         std::cerr << "Failed to create GLFW window" << std::endl;
         const char* description;
@@ -89,72 +91,31 @@ void Game::startGame(bool server) {
     // Make the window's context current
     glfwMakeContextCurrent(window);
 
+//    glfwSetKeyCallback(window, key_callback);
+
+    glfwMakeContextCurrent(window);
+//    gladLoadGL(glfwGetProcAddress);
+    glfwSwapInterval(1);
+
     // Initialize GLEW
     if (glewInit() != GLEW_OK) {
         std::cerr << "Failed to initialize GLEW" << std::endl;
         return;
     }
 
-//    while (!glfwWindowShouldClose(window)) {
-//        // Render here
-
-
-//    }
-
-
-    // Vertex data
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f,  // Vertex 1
-        0.5f, -0.5f, 0.0f,  // Vertex 2
-        0.0f,  0.5f, 0.0f   // Vertex 3
-    };
-
-    // Create Vertex Array Object (VAO)
-    GLuint VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    // Create Vertex Buffer Object (VBO)
-    GLuint VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // Set vertex attribute pointers
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // Compile and link shaders
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
-    glCompileShader(vertexShader);
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
-    glCompileShader(fragmentShader);
-
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    glUseProgram(shaderProgram);
-
-
-
     SceneParser SCENEparser = SceneParser();
     SCENEparser.parse("../../resources/scenes/phong_total.json");
 
     Renderer render = Renderer();
-//    render.initializeScene();
-    render.initializeGL();
-
 
     while (m_running) {
-        //
+
+        ecs.update();
+
         glClear(GL_COLOR_BUFFER_BIT);
         // Draw the triangle
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        render.paintGL();
 
         // Swap front and back buffers
         glfwSwapBuffers(window);
