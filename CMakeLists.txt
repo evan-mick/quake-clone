@@ -19,6 +19,7 @@ find_package(Qt6 REQUIRED COMPONENTS Gui)
 find_package(Qt6 REQUIRED COMPONENTS OpenGL)
 find_package(Qt6 REQUIRED COMPONENTS OpenGLWidgets)
 find_package(Qt6 REQUIRED COMPONENTS Xml)
+find_package(glfw3 REQUIRED CONFIG)
 
 # Allows you to include files from within those directories, without prefixing their filepaths
 include_directories(src)
@@ -45,7 +46,7 @@ add_executable(${PROJECT_NAME}
     src/renderer/lights.h src/renderer/lights.cpp
     src/renderer/objects/trimesh.h src/renderer/objects/trimesh.cpp
     src/renderer/objects/OBJ_Loader.h
-    src/renderer/mainwindow.h src/renderer/mainwindow.cpp
+#    src/renderer/mainwindow.h src/renderer/mainwindow.cpp
     src/renderer/AspectRatioWidget.hpp
 #    resources/shaders/default.frag resources/shaders/default.vert resources/shaders/texture.frag resources/shaders/texture.vert
     src/renderer/rendermodel.h src/renderer/rendermodel.cpp
@@ -63,12 +64,12 @@ add_library(StaticGLEW STATIC glew/src/glew.c)
 include_directories(${PROJECT_NAME} PRIVATE glew/include)
 
 
-# GLM: this creates its library and allows you to `#include "glm/..."`
-add_subdirectory(glfw)
+## GLM: this creates its library and allows you to `#include "glm/..."`
+#add_subdirectory(glfw)
 
-# GLFW: this creates its library and allows you to `#include "GL/glew.h"`
-add_library(StaticGLFW STATIC glfw/src/context.c)
-include_directories(${PROJECT_NAME} PRIVATE glfw/include)
+### GLFW: this creates its library and allows you to `#include "GL/glew.h"`
+#add_library(StaticGLFW STATIC glfw/src/context.c)
+#include_directories(${PROJECT_NAME} PRIVATE glfw/include)
 
 
 # Specifies libraries to be linked (Qt components, glew, etc)
@@ -79,6 +80,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt::OpenGLWidgets
     Qt::Xml
     StaticGLEW
+    glfw
+#    StaticGLFW
+#    ${COCOA_LIBRARY}
 )
 
 # Specifies other files
@@ -93,6 +97,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
  target_sources(quake_clone_other_files
    PRIVATE
      resources/shaders/texture.frag resources/shaders/texture.vert
+     resources/scenes/phong_total.json
  )
 
 # GLEW: this provides support for Windows (including 64-bit)

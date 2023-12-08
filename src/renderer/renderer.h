@@ -48,7 +48,7 @@
  *
  */
 
-class Renderer : public QOpenGLWidget
+class Renderer //: public QOpenGLWidget
 {
 public:
     Renderer(QWidget *parent = nullptr);
@@ -58,26 +58,28 @@ public:
     void saveViewportImage(std::string filePath);
     void clearScreen();
 
+    void beginFrame();
+
     static void ecsEntityRender(ECS* e, entity_t ent, float delta);
 
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
 
 protected:
-    void initializeGL() override;                       // Called once at the start of the program
-    void paintGL() override;                            // Called whenever the OpenGL context changes or by an update() request
-    void resizeGL(int width, int height) override;      // Called when window size changes
+    void initializeGL();                       // Called once at the start of the program
+    void paintGL();                            // Called whenever the OpenGL context changes or by an update() request
+    void resizeGL(int width, int height);      // Called when window size changes
 
 private:
 
     static inline Renderer* m_renderer;
 
-    void keyPressEvent(QKeyEvent *event) override;
-    void keyReleaseEvent(QKeyEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void timerEvent(QTimerEvent *event) override;
+//    void keyPressEvent(QKeyEvent *event) override;
+//    void keyReleaseEvent(QKeyEvent *event) override;
+//    void mousePressEvent(QMouseEvent *event) override;
+//    void mouseReleaseEvent(QMouseEvent *event) override;
+//    void mouseMoveEvent(QMouseEvent *event) override;
+//    void timerEvent(QTimerEvent *event) override;
     void initializeScene(std::string filepath);
     void handleMovement(float deltaTime);
     void makeFBO();

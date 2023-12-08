@@ -14,14 +14,16 @@
 #include "lights.h"
 #include "objects/trimesh.h"
 
+#include "game_types.h"
+
 
 Renderer::Renderer(QWidget *parent)
-    : QOpenGLWidget(parent)
+    //: QOpenGLWidget(parent)
 {
     m_renderer = this;
-    m_prev_mouse_pos = glm::vec2(size().width()/2, size().height()/2);
-    setMouseTracking(true);
-    setFocusPolicy(Qt::StrongFocus);
+    m_prev_mouse_pos = glm::vec2(DSCREEN_WIDTH/2, DSCREEN_HEIGHT/2);//glm::vec2(size().width()/2, size().height()/2);
+//    setMouseTracking(true);
+//    setFocusPolicy(Qt::StrongFocus);
 
     m_keyMap[Qt::Key_W]       = false;
     m_keyMap[Qt::Key_A]       = false;
@@ -34,12 +36,12 @@ Renderer::Renderer(QWidget *parent)
 }
 
 void Renderer::finish() {
-    killTimer(m_timer);
-    this->makeCurrent();
+//    killTimer(m_timer);
+//    this->makeCurrent();
 
     // Students: anything requiring OpenGL calls when the program exits should be done here
 
-    this->doneCurrent();
+//    this->doneCurrent();
 }
 
 
@@ -52,10 +54,12 @@ inline void glErrorCheck(){
 }
 
 void Renderer::initializeGL() {
-    m_devicePixelRatio = this->devicePixelRatio();
+//    m_devicePixelRatio = this->devicePixelRatio();
+    // could be wrong
+    m_devicePixelRatio = DSCREEN_WIDTH/DSCREEN_HEIGHT;
     m_camera = Camera();
 
-    m_timer = startTimer(1000/60);
+//    m_timer = startTimer(1000/60);
     m_elapsedTimer.start();
 
     glewExperimental = GL_TRUE;
@@ -77,7 +81,8 @@ void Renderer::initializeGL() {
     // Tells OpenGL to only draw the front face
     glEnable(GL_CULL_FACE);
     // Tells OpenGL how big the screen is
-    glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
+//    glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
+    glViewport(0, 0, DSCREEN_WIDTH, DSCREEN_HEIGHT);
 
     glActiveTexture(GL_TEXTURE0);
     glUseProgram(m_texture_shader);
@@ -202,7 +207,7 @@ void Renderer::initializeScene(std::string filepath) {
     if(!parsed_) {
         std::cerr << "Error parsing scene JSON" << std::endl;
     }
-    m_camera = Camera(size().width(),size().height(),m_metaData.cameraData);
+    m_camera = Camera(DSCREEN_WIDTH,DSCREEN_HEIGHT,m_metaData.cameraData);//Camera(size().width(),size().height(),m_metaData.cameraData);
 
     glUseProgram(m_shader);
 
@@ -227,6 +232,17 @@ void Renderer::initializeScene(std::string filepath) {
     for(Model& model : m_models) {
         initializeModelGeometry(model);
     }
+
+}
+
+
+void Renderer::beginFrame() {
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//moved to top
+    glUseProgram(m_shader);
+    glBindFramebuffer(GL_FRAMEBUFFER,m_fbo);
+
+    glViewport(0,0,m_fbo_width,m_fbo_height);
 
 }
 
@@ -343,11 +359,12 @@ void Renderer::resizeGL(int w, int h) {
     makeFBO();
 }
 
+/*
 void Renderer::sceneChanged() {
     resizeGL(size().width(),size().height());
     initializeScene(settings.sceneFilePath);
     update(); // asks for a PaintGL() call to occur
-}
+}*/
 
 void Renderer::settingsChanged() {
     if(parsed_) {
@@ -361,11 +378,11 @@ void Renderer::settingsChanged() {
         }
         initializeScene(settings.sceneFilePath);
     }
-    update(); // asks for a PaintGL() call to occur
+//    update(); // asks for a PaintGL() call to occur
 }
 
 // ================== Project 6: Action!
-
+/*
 void Renderer::keyPressEvent(QKeyEvent *event) {
     m_keyMap[Qt::Key(event->key())] = true;
 }
@@ -414,11 +431,11 @@ void Renderer::timerEvent(QTimerEvent *event) {
 
     update(); // asks for a PaintGL() call to occur
 }
-
+*/
 // DO NOT EDIT
 void Renderer::saveViewportImage(std::string filePath) {
     // Make sure we have the right context and everything has been drawn
-    makeCurrent();
+//    makeCurrent();
 
     int fixedWidth = 1024;
     int fixedHeight = 768;
