@@ -55,12 +55,12 @@ Network::Network(bool server, ECS* ecs, const char* ip)
 
         // Wait for tick
         while (!m_timer.finishedThenResetTime()) { }
-        
-             // Get tick
-            unsigned int tick = m_timer.getTimesRun();
 
-            // Pop tick buffers and deserialize into ECS
-            onTick(tick);
+        // Get tick
+        unsigned int tick = m_timer.getTimesRun();
+
+        // Pop tick buffers and deserialize into ECS
+        onTick(tick);
     }
 }
 
