@@ -10,6 +10,8 @@
 #include <QSettings>
 #include "renderer/mainwindow.h"
 
+#include "glfw/glfw3.h"
+
 Game::Game()
 {
 

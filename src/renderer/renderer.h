@@ -48,7 +48,7 @@
  *
  */
 
-class Renderer: public QOpenGLWidget
+class Renderer : public QOpenGLWidget
 {
 public:
     Renderer(QWidget *parent = nullptr);
