@@ -167,7 +167,7 @@ struct SceneData {
 };
 
 struct Model {
-    std::vector<RenderObject *> objects;
+    std::vector<RenderObject> objects;
     uint8_t id;
 };
 

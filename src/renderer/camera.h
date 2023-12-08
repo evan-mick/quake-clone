@@ -15,6 +15,10 @@ public:
 
     glm::mat4 getPerspectiveMatrix(float near, float far);
 
+    inline glm::mat4 getProjectionMatrix() {
+        return projMat_;
+    }
+
     // Returns the aspect ratio of the camera.
     float getAspectRatio() const;
 
@@ -48,6 +52,8 @@ public:
 private:
     glm::mat4 viewMatrix_;
     glm::mat4 inverseViewMatrix_;
+    glm::mat4 projMat_;
+
     float aspectRatio_;
     float heightAngle_;
     float focalLength_;

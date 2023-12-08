@@ -10,10 +10,11 @@ public:
     RenderModel(std::vector<RenderObject> objects, u_int8_t id);
     void initializeGLGeometry(int param1, int param2);
     void paintModel(GLuint shader);
-    std::vector<RenderObject> m_objects;
+
 
 private:
 
+    std::vector<RenderObject> m_objects;
     u_int8_t m_id;
 
 };

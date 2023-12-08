@@ -22,6 +22,24 @@ Game::Game()
 
 }
 
+// Vertex shader source code
+const char* vertexShaderSource = R"(
+    #version 330 core
+    layout (location = 0) in vec3 aPos;
+    void main() {
+        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    }
+)";
+
+// Fragment shader source code
+const char* fragmentShaderSource = R"(
+    #version 330 core
+    out vec4 FragColor;
+    void main() {
+        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+    }
+)";
+
 void Game::startGame(bool server) {
 
     std::cout << "Starting Game" << std::endl;
@@ -84,20 +102,59 @@ void Game::startGame(bool server) {
 //    }
 
 
+    // Vertex data
+    float vertices[] = {
+        -0.5f, -0.5f, 0.0f,  // Vertex 1
+        0.5f, -0.5f, 0.0f,  // Vertex 2
+        0.0f,  0.5f, 0.0f   // Vertex 3
+    };
+
+    // Create Vertex Array Object (VAO)
+    GLuint VAO;
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    // Create Vertex Buffer Object (VBO)
+    GLuint VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // Set vertex attribute pointers
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Compile and link shaders
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
+    glCompileShader(vertexShader);
+
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
+    glCompileShader(fragmentShader);
+
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+    glUseProgram(shaderProgram);
+
+
+
     SceneParser SCENEparser = SceneParser();
     SCENEparser.parse("../../resources/scenes/phong_total.json");
 
     Renderer render = Renderer();
-    render.initializeScene();
+//    render.initializeScene();
     render.initializeGL();
 
 
     while (m_running) {
         //
-        ecs.update();
-
-
-        render.renderFrame();
+        glClear(GL_COLOR_BUFFER_BIT);
+        // Draw the triangle
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // Swap front and back buffers
         glfwSwapBuffers(window);

@@ -10,6 +10,7 @@
 
 RenderModel::RenderModel(std::vector<RenderObject> objects, u_int8_t id) : m_objects(objects), m_id(id)
 {
+    m_objects = objects;
 
 }
 
