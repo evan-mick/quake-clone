@@ -34,7 +34,7 @@ add_executable(${PROJECT_NAME}
     src/game_types.h
     src/network/network.h
     src/game.h src/game.cpp
-#    src/renderer/renderer.h src/renderer/renderer.cpp
+    src/renderer/renderer.h src/renderer/renderer.cpp
     src/renderer/objects/player.h src/renderer/objects/player.cpp
     src/renderer/objects/cube.h src/renderer/objects/cube.cpp
     src/renderer/objects/sphere.h src/renderer/objects/sphere.cpp
