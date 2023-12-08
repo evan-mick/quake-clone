@@ -39,8 +39,8 @@ Network::Network(bool server, ECS* ecs, const char* ip)
     if (!server){
 
         // Attempt to connect to server
-        int initSuccess = initClient(ip, DEFAULT_PORT);
-        if (initSuccess != 0) {
+        int clientSetup = connect(ip, DEFAULT_PORT); 
+        if (clientSetup != 0) {
             throw std::runtime_error("Client initialization failed");
         }
 
@@ -467,17 +467,4 @@ void Network::onTick(unsigned int tick) {
     }
 }
 
-int Network::initClient(const char* ip,  const char* port) {  
-
-    // Connect to server
-    int clientSetup = connect(ip, port); 
-
-    if (clientSetup != 0) {
-        // Error handled in constructor
-        return -1;
-    }
-
-    // Success
-    return 0;
-}
 

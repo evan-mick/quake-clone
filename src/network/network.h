@@ -82,7 +82,7 @@ public:
     void editConnection(uint32_t ip, unsigned int tick);
     
     void onTick(unsigned int tick);
-    int initClient(const char* ip, const char* port);
+    // int initClient(const char* ip, const char* port);
     void updateTickBuffer(Packet packet, Connection* conn, unsigned int tick);
     void pushTickData(TickData td, Connection* conn);
 
