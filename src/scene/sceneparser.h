@@ -3,7 +3,7 @@
 #include "scenedata.h"
 #include <vector>
 #include <string>
-#include <GL/glew.h>
+
 
 
 class SceneParser {

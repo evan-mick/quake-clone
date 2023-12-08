@@ -21,6 +21,9 @@ constexpr uint32_t FLN_TESTKILL = 29;
 constexpr uint32_t FLN_TEST = 30;
 
 
+const uint32_t DSCREEN_WIDTH = 800;
+const uint32_t DSCREEN_HEIGHT = 600;
+
 // COMPONENT BIT FLAGS
 //constexpr u_int32_t FL_INPUT = 1;
 //constexpr u_int32_t FL_TRANSFORM = 1 << (FLN_TRANSFORM);

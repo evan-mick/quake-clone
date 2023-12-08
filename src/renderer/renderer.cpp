@@ -16,7 +16,7 @@
 
 
 Renderer::Renderer(QWidget *parent)
-    : QOpenGLWidget(parent)
+    //: QOpenGLWidget(parent)
 {
     m_renderer = this;
     m_prev_mouse_pos = glm::vec2(size().width()/2, size().height()/2);
@@ -230,6 +230,17 @@ void Renderer::initializeScene(std::string filepath) {
 
 }
 
+
+void Renderer::beginFrame() {
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//moved to top
+    glUseProgram(m_shader);
+    glBindFramebuffer(GL_FRAMEBUFFER,m_fbo);
+
+    glViewport(0,0,m_fbo_width,m_fbo_height);
+
+}
+
 void Renderer::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//moved to top
@@ -343,11 +354,12 @@ void Renderer::resizeGL(int w, int h) {
     makeFBO();
 }
 
+/*
 void Renderer::sceneChanged() {
     resizeGL(size().width(),size().height());
     initializeScene(settings.sceneFilePath);
     update(); // asks for a PaintGL() call to occur
-}
+}*/
 
 void Renderer::settingsChanged() {
     if(parsed_) {
@@ -361,11 +373,11 @@ void Renderer::settingsChanged() {
         }
         initializeScene(settings.sceneFilePath);
     }
-    update(); // asks for a PaintGL() call to occur
+//    update(); // asks for a PaintGL() call to occur
 }
 
 // ================== Project 6: Action!
-
+/*
 void Renderer::keyPressEvent(QKeyEvent *event) {
     m_keyMap[Qt::Key(event->key())] = true;
 }
@@ -414,11 +426,11 @@ void Renderer::timerEvent(QTimerEvent *event) {
 
     update(); // asks for a PaintGL() call to occur
 }
-
+*/
 // DO NOT EDIT
 void Renderer::saveViewportImage(std::string filePath) {
     // Make sure we have the right context and everything has been drawn
-    makeCurrent();
+//    makeCurrent();
 
     int fixedWidth = 1024;
     int fixedHeight = 768;

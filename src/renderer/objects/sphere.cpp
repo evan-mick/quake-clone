@@ -1,4 +1,4 @@
-#include "Sphere.h"
+#include "sphere.h"
 
 void Sphere::updateParams(int param1, int param2) {
     m_vertexData = std::vector<GLfloat>();

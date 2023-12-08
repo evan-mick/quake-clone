@@ -1,7 +1,7 @@
 #ifndef RENDERMODEL_H
 #define RENDERMODEL_H
 #include "scene/scenedata.h"
-#include "GL/glew.h"
+
 
 
 class RenderModel
