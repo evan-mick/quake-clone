@@ -17,9 +17,12 @@
 #include "rendermodel.h"
 #include "objects/player.h"
 #include "core/ecs.h"
-
+#include "scene/level.h"
 #include "scene/scenedata.h"
 #include "GL/glew.h"
+
+#define NEAR_PLANE .10
+#define FAR_PLANE 50
 
 
 /* Structure
@@ -118,6 +121,7 @@ private:
     int lightVBO_ = -1;
     Player m_player;
     std::vector<Model> m_models;
+    Level m_level = Level(15.f,5.f,15.f);
 
     u_int8_t m_model_count = 0;
 

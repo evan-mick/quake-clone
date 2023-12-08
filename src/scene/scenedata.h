@@ -5,6 +5,8 @@
 
 #include <glm/glm.hpp>
 #include <GL/glew.h>
+#define PARAM_1 10
+#define PARAM_2 10
 
 
 

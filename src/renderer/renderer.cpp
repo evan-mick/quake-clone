@@ -226,6 +226,11 @@ void Renderer::initializeScene(std::string filepath) {
     m_player.assignModelID(m_model_count++);
     m_models.push_back(m_player.getModel());
     m_models.push_back((Model){getModelObjectsList(m_metaData.shapes),m_model_count++});
+//    m_level.generateLevel();
+//    std::vector<Model> levelmodels = m_level.getLevelModels();
+//    for(Model& model : levelmodels) {
+//        m_models.push_back(model);
+//    }
 
     for(Model& model : m_models) {
         initializeModelGeometry(model);
@@ -297,7 +302,7 @@ void Renderer::paintGeometry() {
     glUniform1f(glGetUniformLocation(m_shader,"k_s"),m_metaData.globalData.ks);
 
 
-    glm::mat4 proj = m_camera.getPerspectiveMatrix(settings.nearPlane,settings.farPlane);
+    glm::mat4 proj = m_camera.getPerspectiveMatrix(NEAR_PLANE,FAR_PLANE);
     glm::mat4 view = m_camera.getViewMatrix();
 
 

@@ -9,7 +9,7 @@ Player::Player()
     sign = 1;
     m_root_ctm = glm::mat4(1.f);
     m_material.cAmbient = glm::vec4(0.5,0.5,0.5,1);
-    m_material.cDiffuse = glm::vec4(1);
+    m_material.cDiffuse = glm::vec4(1,0,0,1);
     m_material.cSpecular = glm::vec4(1);
     m_material.shininess = 1.0;
 }
