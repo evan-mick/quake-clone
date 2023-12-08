@@ -14,7 +14,19 @@ const uint8_t COL_NONE = 0;
 const uint8_t COL_AABB = 1;
 const uint8_t COL_SPHERE = 2;
 
-typedef void (*collision_response_t)(struct ECS*, entity_t my_ent, entity_t other_ent);
+// Pass in ecs and entity ids, then will return the translation offset (or will be zero if not colliding)
+typedef glm::vec3 (*collision_response_t)(struct ECS*, entity_t my_ent, entity_t other_ent);
+
+
+//struct AABB {
+//    glm::vec3 min;
+//    glm::vec3 max;
+//};
+
+//struct SPHERE {
+//    glm::vec3 min;
+//    glm::vec3 max;
+//};
 
 
 class Physics
@@ -37,7 +49,14 @@ public:
         return requiredFlags;
     }
 
+    // Prepares internal data for the next tick
+    void Reset();
+
 private:
+
+
+
+
     // The singleton
     static inline Physics* phys;
 
@@ -64,7 +83,8 @@ private:
         m_collisionOccured.insert(first_check);
     }
 
-    void AABBtoAABBCollision(ECS* e, entity_t ent, entity_t other_ent);
+    bool AABBtoAABBIntersect(ECS* e, entity_t ent, entity_t other_ent, bool slide);
+
 
 //    void runStep(struct ECS*, entity_t entity_id, float delta_seconds);
 };
