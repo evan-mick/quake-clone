@@ -5,7 +5,7 @@
 #include <chrono>
 #include <iostream>
 
-bool SceneParser::parse(std::string filepath, RenderData &renderData) {
+bool SceneParser::parse(std::string filepath, SceneData &renderData) {
     ScenefileReader fileReader = ScenefileReader(filepath);
     bool success = fileReader.readJSON();
     if (!success) {
@@ -24,6 +24,11 @@ bool SceneParser::parse(std::string filepath, RenderData &renderData) {
                     &renderData.lights,
                     glm::mat4(1.f));
     return true;
+}
+
+
+bool SceneParser::parse(std::string filepath) {
+    return parse(filepath, m_sceneData);
 }
 
 void SceneParser::getRenderShapes(SceneNode* node,

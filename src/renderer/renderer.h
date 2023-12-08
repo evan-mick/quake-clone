@@ -11,13 +11,13 @@
 #include <QOpenGLWidget>
 #include <QTime>
 #include <QTimer>
-#include "sceneparser.h"
+#include "scene/sceneparser.h"
 #include "camera.h"
 #include "movement.h"
 #include "rendermodel.h"
 #include "objects/player.h"
 
-#include "renderer/scenedata.h"
+#include "scene/scenedata.h"
 #include "GL/glew.h"
 
 
@@ -96,7 +96,7 @@ private:
     std::unordered_map<Qt::Key, bool> m_keyMap;         // Stores whether keys are pressed or not
 
     //RenderData
-    RenderData m_metaData;
+    SceneData m_metaData;
     GLuint m_shader;
     GLuint m_texture_shader;
     GLuint m_fullscreen_vbo;

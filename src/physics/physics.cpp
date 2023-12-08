@@ -8,6 +8,11 @@ Physics::Physics(float tickTime)
 }
 
 
+void Physics::Reset() {
+    m_collisionOccured.clear();
+}
+
+
 void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
     phys->m_timer.increment(delta_seconds);
 

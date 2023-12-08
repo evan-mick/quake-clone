@@ -34,17 +34,13 @@ add_executable(${PROJECT_NAME}
     src/network/network.h
     src/game.h src/game.cpp
     src/renderer/renderer.h src/renderer/renderer.cpp
-    src/renderer/scenedata.h
     src/renderer/objects/player.h src/renderer/objects/player.cpp
     src/renderer/objects/cube.h src/renderer/objects/cube.cpp
     src/renderer/objects/sphere.h src/renderer/objects/sphere.cpp
     src/renderer/objects/cone.h src/renderer/objects/cone.cpp
     src/renderer/objects/cylinder.h src/renderer/objects/cylinder.cpp
-    src/renderer/sceneparser.h src/renderer/sceneparser.cpp
-    src/renderer/scenefilereader.h src/renderer/scenefilereader.cpp
     src/renderer/camera.h src/renderer/camera.cpp
     src/renderer/movement.h src/renderer/movement.cpp
-    src/settings.h src/settings.cpp
     src/renderer/ShaderLoader.h
     src/renderer/lights.h src/renderer/lights.cpp
     src/renderer/objects/trimesh.h src/renderer/objects/trimesh.cpp
@@ -55,6 +51,7 @@ add_executable(${PROJECT_NAME}
     src/renderer/rendermodel.h src/renderer/rendermodel.cpp
     src/core/timer.h
     src/physics/physics.h src/physics/physics.cpp
+    src/scene/scene_types.h src/scene/scenedata.h src/scene/scenefilereader.cpp src/scene/scenefilereader.h src/scene/sceneparser.cpp src/scene/sceneparser.h src/scene/settings.cpp src/scene/settings.h
 
 )
 

@@ -156,7 +156,7 @@ struct RenderObject {
     int vertCount = -1;
 };
 
-struct RenderData {
+struct SceneData {
     SceneGlobalData globalData;
     SceneCameraData cameraData;
 

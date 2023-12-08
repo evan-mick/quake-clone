@@ -3,7 +3,7 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <iostream>
-#include "settings.h"
+#include "scene/settings.h"
 #include "objects/cube.h"
 #include "objects/sphere.h"
 #include "objects/cone.h"
