@@ -7,12 +7,37 @@
 #include <random>
 #include "game.h"
 #include <iostream>
+#include <QApplication>
+#include <QScreen>
+#include <iostream>
+#include <QSettings>
+#include "renderer/mainwindow.h"
+
 
 
 void test_main();
 
 int main(int argc, char *argv[]) {
+//    QApplication a(argc,argv);
 
+//    QCoreApplication::setApplicationName("Nifty Quake Clone");
+//    QCoreApplication::setOrganizationName("CS 1230");
+//    QCoreApplication::setApplicationVersion(QT_VERSION_STR);
+
+//    QSurfaceFormat fmt;
+//    fmt.setVersion(4, 1);
+//    fmt.setProfile(QSurfaceFormat::CoreProfile);
+//    QSurfaceFormat::setDefaultFormat(fmt);
+
+//    std::cout << "Application setup" << std::endl;
+
+//    MainWindow w;
+//    w.initialize();
+//    w.resize(800, 600);
+//    w.show();
+//    std::cout << "Window start, about to execute main loop" << std::endl;
+//    a.exec();
+//    w.finish();
 
 
     bool server = (argc > 1 && strcmp(argv[1], "s"));
