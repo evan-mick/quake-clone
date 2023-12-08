@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "scenedata.h"
+#include "scene/scenedata.h"
 
 class Camera {
 public:

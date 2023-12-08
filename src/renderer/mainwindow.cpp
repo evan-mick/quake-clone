@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "settings.h"
+#include "scene/settings.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>

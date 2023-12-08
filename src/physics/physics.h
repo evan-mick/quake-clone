@@ -14,7 +14,19 @@ const uint8_t COL_NONE = 0;
 const uint8_t COL_AABB = 1;
 const uint8_t COL_SPHERE = 2;
 
-typedef void (*collision_response_t)(struct ECS*, entity_t my_ent, entity_t other_ent);
+// Pass in ecs and entity ids, then will return the translation offset (or will be zero if not colliding)
+typedef glm::vec3 (*collision_response_t)(struct ECS*, entity_t my_ent, entity_t other_ent);
+
+
+//struct AABB {
+//    glm::vec3 min;
+//    glm::vec3 max;
+//};
+
+//struct SPHERE {
+//    glm::vec3 min;
+//    glm::vec3 max;
+//};
 
 
 class Physics
@@ -37,7 +49,14 @@ public:
         return requiredFlags;
     }
 
+    // Prepares internal data for the next tick
+    void Reset();
+
 private:
+
+
+
+
     // The singleton
     static inline Physics* phys;
 
@@ -52,16 +71,20 @@ private:
     std::array<Transform, MAX_ENTITY> m_previousTransforms;
 
     // All of this is for storing what collisions have already occured
-    struct Hash {
-        entity_t low_ent;
-        entity_t high_ent;
-    };
-    inline Hash createHash(entity_t ent1, entity_t ent2) {
-        if (ent1 > ent2)
-            return { ent2, ent1 };
-        return { ent1, ent2 };
+    std::unordered_set<size_t> m_collisionOccured;
+
+    inline bool checkOccured(entity_t ent, entity_t other) {
+        size_t first_check = (ent << sizeof(ent)) | other;
+        size_t second_check = (other << sizeof(other)) | ent;
+        return m_collisionOccured.count(first_check) || m_collisionOccured.count(second_check);
     }
-    std::unordered_set<Hash> m_collisionOccured;
+    inline void addOccured(entity_t ent, entity_t other) {
+        size_t first_check = (ent << sizeof(ent)) | other;
+        m_collisionOccured.insert(first_check);
+    }
+
+    bool AABBtoAABBIntersect(ECS* e, entity_t ent, entity_t other_ent, bool slide);
+
 
 //    void runStep(struct ECS*, entity_t entity_id, float delta_seconds);
 };

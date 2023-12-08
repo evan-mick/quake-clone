@@ -1,7 +1,7 @@
 #ifndef TRIMESH_H
 #define TRIMESH_H
 
-#include "renderer/scenedata.h"
+#include "scene/scenedata.h"
 
 class Trimesh
 {

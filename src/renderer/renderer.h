@@ -11,13 +11,14 @@
 #include <QOpenGLWidget>
 #include <QTime>
 #include <QTimer>
-#include "sceneparser.h"
+#include "scene/sceneparser.h"
 #include "camera.h"
 #include "movement.h"
 #include "rendermodel.h"
 #include "objects/player.h"
+#include "core/ecs.h"
 
-#include "renderer/scenedata.h"
+#include "scene/scenedata.h"
 #include "GL/glew.h"
 
 
@@ -47,7 +48,7 @@
  *
  */
 
-class Renderer: public QOpenGLWidget
+class Renderer : public QOpenGLWidget
 {
 public:
     Renderer(QWidget *parent = nullptr);
@@ -56,6 +57,8 @@ public:
     void settingsChanged();
     void saveViewportImage(std::string filePath);
     void clearScreen();
+
+    static void ecsEntityRender(ECS* e, entity_t ent, float delta);
 
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
@@ -66,6 +69,9 @@ protected:
     void resizeGL(int width, int height) override;      // Called when window size changes
 
 private:
+
+    static inline Renderer* m_renderer;
+
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -96,7 +102,7 @@ private:
     std::unordered_map<Qt::Key, bool> m_keyMap;         // Stores whether keys are pressed or not
 
     //RenderData
-    RenderData m_metaData;
+    SceneData m_metaData;
     GLuint m_shader;
     GLuint m_texture_shader;
     GLuint m_fullscreen_vbo;

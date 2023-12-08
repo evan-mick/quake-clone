@@ -14,6 +14,8 @@ constexpr uint32_t FLN_INPUT = 1;
 constexpr uint32_t FLN_TRANSFORM = 2;
 constexpr uint32_t FLN_RENDER = 3;
 constexpr uint32_t FLN_PHYSICS = 4;
+constexpr uint32_t FLN_COLLISION = 5;
+constexpr uint32_t FLN_PROJECTILE = 6;
 
 constexpr uint32_t FLN_TESTKILL = 29;
 constexpr uint32_t FLN_TEST = 30;
@@ -41,30 +43,38 @@ struct TypeData {
 constexpr uint8_t MAX_TYPE_VAL = -1;
 constexpr uint16_t MAX_TYPES = MAX_TYPE_VAL + 1;
 
+const glm::vec3 GRAVITY { 0, -9.8f, 0 };
+
 
 struct InputData {
     uint8_t dat;
-    // float x_rot
-    // float y_rot
 };
 
 struct Transform {
     glm::vec3 pos;
-    // float x_rot
-    // float y_rot
+    glm::vec3 scale;
+    glm::vec3 rot;
 };
 
 struct PhysicsData {
     glm::vec3 vel;
     glm::vec3 accel;
+};
+
+struct CollisionData {
     int8_t col_type; // Positive => physical, Negative => trigger, abs(col_type) => collision type
-    // float x_rot
-    // float y_rot
+};
+
+struct Projectile {
+    float speed;
 };
 
 struct Renderable {
     uint8_t model_id;
 };
+
+//const int test = sizeof(PhysicsData) + sizeof(Transform) + sizeof(InputData) + sizeof(Renderable);
+//const int test2 = sizeof(Transform) + sizeof(Projectile) + sizeof(Renderable);
 
 struct Test {
     std::string to_print;

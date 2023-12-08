@@ -6,7 +6,6 @@
 ECS::ECS()
 {
     m_lastUpdate = std::chrono::steady_clock::now();
-
 }
 
 void ECS::update() {

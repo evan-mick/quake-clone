@@ -1,7 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "renderer/scenedata.h"
+#include "scene/scenedata.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #define PRIM_COUNT 7
