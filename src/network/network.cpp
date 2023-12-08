@@ -25,6 +25,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
     
     // Initialize server
     if (server) {
+        
         // Server has authority over everything by default
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
 
@@ -36,6 +37,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
 
     // Initialize client
     if (!server){
+
         // Attempt to connect to server
         int initSuccess = initClient(ip, DEFAULT_PORT);
         if (initSuccess != 0) {
@@ -50,14 +52,15 @@ Network::Network(bool server, ECS* ecs, const char* ip)
     }
 
     while (!m_shutdown) {
-        // Wait for tick
-        while (m_timer.getTime() > 0.0f) { } 
-        
-        // get tick
-        unsigned int tick = m_timer.getTimesRun();
 
-        // Pop tick buffers and deserialize into ECS
-        onTick(tick);
+        // Wait for tick
+        if (m_timer.finishedThenResetTime()) {
+             // get tick
+            unsigned int tick = m_timer.getTimesRun();
+
+            // Pop tick buffers and deserialize into ECS
+            onTick(tick);
+        }
     }
 }
 
