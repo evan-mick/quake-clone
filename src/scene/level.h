@@ -17,7 +17,8 @@ public:
 
 private:
 
-    RenderObject *m_objs;
+//    RenderObject *m_objs;
+    std::array<RenderObject,PRIM_COUNT> m_geometry;
     std::vector<Model> m_models;
     void insertSimpleModel(glm::mat4 ctm, PrimitiveType type, int index);
     void makeSpawnpoints(int count);

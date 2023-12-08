@@ -2,7 +2,7 @@
 
 Level::Level(float x, float y, float z) : size_x(x), size_z(z), height(y)
 {
-    m_objs = (RenderObject *)malloc(PRIM_COUNT * sizeof(RenderObject));
+//    m_objs = (RenderObject *)malloc(PRIM_COUNT * sizeof(RenderObject));
     m_mat.cAmbient = glm::vec4(0.5,0.5,0.5,1);
     m_mat.cDiffuse = glm::vec4(.5);
     m_mat.cSpecular = glm::vec4(.5);
@@ -18,20 +18,21 @@ void Level::generateLevel() {
 
 void Level::makeWalls() {
     glm::mat4 negZ = glm::translate(glm::vec3(0,height/2,-size_z/2.0));
-    negZ = glm::scale(negZ,glm::vec3(size_x,height,0));
+    negZ = glm::scale(negZ,glm::vec3(size_x,height,1));
     insertSimpleModel(negZ,PrimitiveType::PRIMITIVE_CUBE,0);
 
     glm::mat4 posZ = glm::translate(glm::vec3(0,height/2,size_z/2.0));
-    posZ = glm::scale(posZ,glm::vec3(size_x,height,0));
+    posZ = glm::scale(posZ,glm::vec3(size_x,height,1));
     insertSimpleModel(posZ,PrimitiveType::PRIMITIVE_CUBE,1);
 
-    glm::mat4 negX = glm::translate(glm::vec3(0,height/2,size_z/2.0));
-    negX = glm::scale(negX,glm::vec3(size_x,height,0));
+    glm::mat4 negX = glm::translate(glm::vec3(-size_x/2.0,height/2,0));
+    negX = glm::scale(negX,glm::vec3(1,height,size_z));
     insertSimpleModel(negX,PrimitiveType::PRIMITIVE_CUBE,2);
 
-    glm::mat4 posX = glm::translate(glm::vec3(0,height/2,size_z/2.0));
-    posX = glm::scale(negX,glm::vec3(size_x,height,0));
-    insertSimpleModel(negX,PrimitiveType::PRIMITIVE_CUBE,3);
+    glm::mat4 posX = glm::translate(glm::vec3(size_x/2.0,height/2,0));
+    posX = glm::scale(posX,glm::vec3(1,height,size_z));
+    insertSimpleModel(posX,PrimitiveType::PRIMITIVE_CUBE,3);
+
 }
 
 void Level::makeFloor() {
@@ -56,7 +57,7 @@ std::vector<Model> Level::getLevelModels() {
     std::vector<Model> res;
     for(int i=0;i<PRIM_COUNT;i++) {
         std::vector<RenderObject *> objs;
-        objs.push_back(&m_objs[i]);
+        objs.push_back(&m_geometry[i]);
         res.push_back((Model){.objects=objs});
     }
     return res;
@@ -89,5 +90,6 @@ glm::vec3 Level::getRandomSpawnpointPos() {
 void Level::insertSimpleModel(glm::mat4 ctm, PrimitiveType type, int index) {
     RenderObject shape;
     shape.primitive = {.type=type,.material=m_mat};
-    m_objs[index] = shape;
+    shape.ctm = ctm;
+    m_geometry[index] = shape;
 }

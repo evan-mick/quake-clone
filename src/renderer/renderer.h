@@ -121,7 +121,7 @@ private:
     int lightVBO_ = -1;
     Player m_player;
     std::vector<Model> m_models;
-    Level m_level = Level(15.f,5.f,15.f);
+    Level m_level = Level(25.f,5.f,25.f);
 
     u_int8_t m_model_count = 0;
 

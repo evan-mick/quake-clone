@@ -41,6 +41,7 @@ void Player::relocatePlayer(glm::vec3 position) {
     m_root_ctm[3][0] = position[0];
     m_root_ctm[3][1] = position[1];
     m_root_ctm[3][2] = position[2];
+    generateGeometry();
 }
 
 void Player::generateGeometry() {
@@ -136,7 +137,7 @@ void Player::stepArms(float angle) {
 
 void Player::startAnimation() {
     if(loaded) {
-        m_left_ctm = m_geometry[LEFT_LEG_I].ctm;
+        m_left_ctm =  m_geometry[LEFT_LEG_I].ctm;
         m_right_ctm = m_geometry[RIGHT_LEG_I].ctm;
         m_left_arm_ctm = m_geometry[LEFT_ARM_I].ctm;
         m_right_arm_ctm = m_geometry[RIGHT_ARM_I].ctm;
@@ -150,7 +151,7 @@ void Player::stopAnimation() {
     if(loaded) {
         walking = false;
         m_geometry[LEFT_LEG_I].ctm = m_left_ctm;
-        m_geometry[LEFT_LEG_I].ctm = m_right_ctm;
+        m_geometry[LEFT_LEG_I].ctm =  m_right_ctm;
         m_geometry[LEFT_ARM_I].ctm = m_left_arm_ctm;
         m_geometry[RIGHT_ARM_I].ctm = m_right_arm_ctm;
         m_leg_angle = 0;

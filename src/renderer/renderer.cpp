@@ -150,6 +150,7 @@ void Renderer::makeFBO(){
 void inline initializeModelGeometry(Model& model) {
     for(RenderObject *shape : model.objects) {
         std::vector<GLfloat> vertexData;
+        std::cout << "model type" << static_cast<int>(shape->primitive.type) << std::endl;
 
         if(shape->primitive.type==PrimitiveType::PRIMITIVE_SPHERE){
             Sphere sphere;
@@ -221,16 +222,18 @@ void Renderer::initializeScene(std::string filepath) {
     //TODO: loop for all players in match; use data structure representing all players
     // All player rendering should happen locally imo. we should implement a network system to only
     //send player model ID, location, and rotation. that's all you need. - Luke
-    m_player.generateGeometry();
-    m_player.startAnimation();
+
+    m_level.generateLevel();
+    std::vector<Model> levelmodels = m_level.getLevelModels();
+    std::cout << "level number modelll" <<levelmodels.size() <<std::endl;
+    for(Model& model : levelmodels) {
+        m_models.push_back(model);
+    }
     m_player.assignModelID(m_model_count++);
+    m_player.relocatePlayer(m_level.getRandomSpawnpointPos());
+//    m_player.startAnimation();
     m_models.push_back(m_player.getModel());
     m_models.push_back((Model){getModelObjectsList(m_metaData.shapes),m_model_count++});
-//    m_level.generateLevel();
-//    std::vector<Model> levelmodels = m_level.getLevelModels();
-//    for(Model& model : levelmodels) {
-//        m_models.push_back(model);
-//    }
 
     for(Model& model : m_models) {
         initializeModelGeometry(model);
