@@ -14,11 +14,13 @@
 #include <QTimer>
 #include "scene/scenedata.h"
 #include "camera.h"
+
 #include "scene/sceneparser.h"
 #include "scene/settings.h"
 #include "game_types.h"
 
 class Renderer //: public QOpenGLWidget
+
 {
 public:
     Renderer(/*QWidget *parent = nullptr*/);
@@ -110,7 +112,6 @@ private:
     GLuint m_fbo;
     GLuint m_defaultFBO;
     GLuint m_fbo_texture;
-
     GLuint m_texture_shader;
 
     GLuint m_fullscreen_vbo;

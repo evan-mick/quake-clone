@@ -293,7 +293,6 @@ void Renderer::generateShape() {
 
 }
 
-
 void Renderer::setUniforms(RenderObject& sp) {
 
     glm::vec4 cam_pos = glm::inverse(camera.getViewMatrix()) * glm::vec4(0, 0, 0, 1);//inverse(m_view) * glm::vec4(0, 0, 0, 1);

@@ -5,8 +5,9 @@
 
 #include <glm/glm.hpp>
 #include <GL/glew.h>
-//#include "GL/glew.h"
-//#include "glfw/glfw3.h"
+#define PARAM_1 10
+#define PARAM_2 10
+
 
 
 

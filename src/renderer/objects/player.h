@@ -38,7 +38,6 @@ private:
     void makeArms(glm::mat4 body_ctm);
     void insertGeometry(glm::mat4 ctm, PrimitiveType type, int index);
 
-
     glm::mat4 m_root_ctm;
 
     bool loaded;
