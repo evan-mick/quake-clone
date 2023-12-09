@@ -30,9 +30,14 @@ public:
     void saveViewportImage(std::string filePath);
     void initializeGL();                       // Called once at the start of the program
 
-    void paintGL();                            // Called whenever the OpenGL context changes or by an update() request
+    void drawStaticObs();
+    static void drawDynamicOb(struct ECS*, entity_t entity_id, float delta_seconds);
+
+    void drawScreen();
 
     void resizeGL(int width, int height);      // Called when window size changes
+
+    void startDraw();
 
     inline void setRatio(float x, float y) {
 //        m_devicePixelRatio = ratio;
@@ -50,6 +55,8 @@ protected:
 
 
 private:
+
+    void drawRenderOb(RenderObject& to_draw);
 
 //    void keyPressEvent(QKeyEvent *event) override;
 //    void keyReleaseEvent(QKeyEvent *event) override;

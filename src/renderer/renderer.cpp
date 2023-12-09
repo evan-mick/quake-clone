@@ -12,6 +12,8 @@
 #include "scene/sceneparser.h"
 #include "game_types.h"
 
+#include "glm/gtx/transform.hpp"
+
 
 
 // ================== Project 5: Lights, Camera
@@ -355,28 +357,150 @@ void Renderer::setUniforms(RenderObject& sp) {
 
 }
 
+void Renderer::drawDynamicOb(struct ECS* e, entity_t ent, float delta_seconds) {
+    Transform* trans = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
+    Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
+
+    RenderObject ob;
+    ob.ctm = glm::mat4(1);
+
+    ob.ctm = glm::translate(ob.ctm, trans->pos) * ob.ctm;
+    glm::rotate(ob.ctm, trans->rot.x, glm::vec3(1, 0, 0));
+    glm::rotate(ob.ctm, trans->rot.y, glm::vec3(0, 1, 0));
+    glm::rotate(ob.ctm, trans->rot.z, glm::vec3(0, 0, 1));
+    glm::scale(ob.ctm, trans->scale);
+
+    ob.primitive.type = static_cast<PrimitiveType>(rend->model_id);
+    ob.primitive.material = SceneMaterial();
+    ob.primitive.material.cAmbient = SceneColor(1, 1, 1, 1);
+    ob.primitive.material.cDiffuse = SceneColor(1, 1, 1, 1);
+    ob.primitive.material.cReflective = SceneColor(1, 1, 1, 1);
+    ob.primitive.material.cSpecular = SceneColor(1, 1, 1, 1);
 
 
-void Renderer::paintGL()
-{
+    default_render->drawRenderOb(ob);
 
-    if (m_mouseDown) {
-        // rotate cam based on delta x
+
+
+//    default_render.drawRenderOb();
+}
+
+
+void Renderer::drawScreen() {
+
+    // Draw to screen
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+    glViewport(0, 0, m_screen_width, m_screen_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    paintTexture(m_fbo_texture, true);
+
+    glUseProgram(0);
+
+}
+
+void Renderer::drawRenderOb(RenderObject& to_draw) {
+
+    int in = 0;
+
+    switch (to_draw.primitive.type) {
+    case PrimitiveType::PRIMITIVE_CUBE:
+        in = cube_in;
+        break;
+    case PrimitiveType::PRIMITIVE_SPHERE:
+        in = sphere_in;
+        break;
+    case PrimitiveType::PRIMITIVE_CYLINDER:
+        in = cylinder_in;
+        break;
+    case PrimitiveType::PRIMITIVE_CONE:
+        in = cone_in;
+        break;
+    default:
+        in = 0;
+        break;
+    }
+
+    // Bind Sphere Vertex Data
+    glBindVertexArray(m_vaos[in]);
+
+    setUniforms(to_draw);
+
+
+    // NOT PROPERLY INTEGRATED INTO LIGHTING CODE YET
+
+    int used = 0;
+    for (int i = 0; i < data.lights.size(); i++) {
+
+        SceneLightData lt = data.lights[i];
+
+        //            if (lt.type != LightType::LIGHT_DIRECTIONAL)
+        //                continue;
+
+        //            float fa = std::min(1.f, 1.f/(lt->function.x + (dist * lt->function.y) + (sqr_dist * light->function.z)));
+        // PASS IN all light data
+        // direction, color, etc.
+        GLint loc = glGetUniformLocation(m_shader, ("lights[" + std::to_string(used) + "]").c_str());
+        //            std::cout << "pos " << lt.pos[0] << " " << lt.pos[1] << " " << lt.pos[2] << std::endl;
+        glUniform4fv(loc, 1, &lt.pos[0]);
+
+
+        //            GLint loc = glGetUniformLocation(m_shader, ("light_dist[" + std::to_string(used) + "]").c_str());
+        //            glUniform1f(loc, glm::distance(lt.pos, sp.ctm * glm::vec4(0, 0, 0, 1)));
+
+        GLint dir = glGetUniformLocation(m_shader, ("light_dir[" + std::to_string(used) + "]").c_str());
+        glm::vec4 dir_vec = glm::normalize(lt.dir);
+        glUniform4fv(dir, 1, &dir_vec[0]);
+
+        GLint loc_fun = glGetUniformLocation(m_shader, ("light_fun[" + std::to_string(used) + "]").c_str());
+        //            std::cout << "func: " << lt.function.x << " " << lt.function.y << " " << lt.function.z << std::endl;
+        glUniform3fv(loc_fun, 1, &lt.function[0]);
+
+        GLint loc_in = glGetUniformLocation(m_shader, ("light_in[" + std::to_string(used) + "]").c_str());
+        glm::vec3 col_vec = lt.color;
+        glUniform3fv(loc_in, 1, &col_vec[0]);
+
+        GLint loc_type = glGetUniformLocation(m_shader, ("type[" + std::to_string(used) + "]").c_str());
+        glUniform1i(loc_type, static_cast<std::underlying_type_t<LightType>>(lt.type));
+        //            std::cout << "type " << static_cast<std::underlying_type_t<LightType>>(lt.type) << std::endl;
+        if (loc_type == -1) {
+            std::cout << "type not found" << std::endl;
+        }
+
+        GLint loc_angle = glGetUniformLocation(m_shader, ("angle[" + std::to_string(used) + "]").c_str());
+        if (loc_angle == -1) {
+            std::cout << "angle not found" << std::endl;
+        }
+        glUniform1f(loc_angle, lt.angle);
+
+        GLint loc_pnum = glGetUniformLocation(m_shader, ("penumbra[" + std::to_string(used) + "]").c_str());
+        if (loc_pnum == -1) {
+            std::cout << "penum not found" << std::endl;
+        }
+        glUniform1f(loc_pnum, lt.penumbra);
+
+        used++;
+
     }
 
 
-    // Clear screen color and depth before painting
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    GLint loc_in = glGetUniformLocation(m_shader, "light_num");
+    glUniform1i(loc_in, used);
+
+    if (loc_in == -1) {
+        std::cout << "light num err" << std::endl;
+    }
+
+    // Actually draw geo
+    glBindVertexArray(m_vaos[in]);
+    glDrawArrays(GL_TRIANGLES, 0, m_data[in].size() / 6);
+
+}
 
 
-    // TODO
-    // Paramter support (just regenerate meshes on setting changes)
-    // Multiple objects (generate VBO/VOA for each object, just a lot of code)
-    // Multiple lights (may need to also pass in light color data, and type)
-
+void Renderer::startDraw() {
     // Draw to FBO
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-//    std::cout << m_fbo << std::endl;
+    //    std::cout << m_fbo << std::endl;
 
     // Task 28: Call glViewport
     glViewport(0, 0, m_screen_width, m_screen_height);
@@ -387,113 +511,34 @@ void Renderer::paintGL()
     // Task 2: activate the shader program by calling glUseProgram with `m_shader`
     glUseProgram(m_shader);
 
+}
+void Renderer::drawStaticObs()
+{
+
+    if (m_mouseDown) {
+        // rotate cam based on delta x
+    }
+
+
+    // Clear screen color and depth before painting
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+    // TODO
+    // Paramter support (just regenerate meshes on setting changes)
+    // Multiple objects (generate VBO/VOA for each object, just a lot of code)
+    // Multiple lights (may need to also pass in light color data, and type)
+
+
 
     for (RenderObject sp : data.shapes) {
+        drawRenderOb(sp);
 
-        int in = 0;
-
-        switch (sp.primitive.type) {
-            case PrimitiveType::PRIMITIVE_CUBE:
-                in = cube_in;
-                break;
-            case PrimitiveType::PRIMITIVE_SPHERE:
-                in = sphere_in;
-                break;
-            case PrimitiveType::PRIMITIVE_CYLINDER:
-                in = cylinder_in;
-                break;
-            case PrimitiveType::PRIMITIVE_CONE:
-                in = cone_in;
-                break;
-            default:
-                in = 0;
-            break;
-        }
-
-        // Bind Sphere Vertex Data
-        glBindVertexArray(m_vaos[in]);
-
-        setUniforms(sp);
-
-
-        // NOT PROPERLY INTEGRATED INTO LIGHTING CODE YET
-
-        int used = 0;
-        for (int i = 0; i < data.lights.size(); i++) {
-
-            SceneLightData lt = data.lights[i];
-
-//            if (lt.type != LightType::LIGHT_DIRECTIONAL)
-//                continue;
-
-//            float fa = std::min(1.f, 1.f/(lt->function.x + (dist * lt->function.y) + (sqr_dist * light->function.z)));
-            // PASS IN all light data
-            // direction, color, etc.
-            GLint loc = glGetUniformLocation(m_shader, ("lights[" + std::to_string(used) + "]").c_str());
-//            std::cout << "pos " << lt.pos[0] << " " << lt.pos[1] << " " << lt.pos[2] << std::endl;
-            glUniform4fv(loc, 1, &lt.pos[0]);
-
-
-//            GLint loc = glGetUniformLocation(m_shader, ("light_dist[" + std::to_string(used) + "]").c_str());
-//            glUniform1f(loc, glm::distance(lt.pos, sp.ctm * glm::vec4(0, 0, 0, 1)));
-
-            GLint dir = glGetUniformLocation(m_shader, ("light_dir[" + std::to_string(used) + "]").c_str());
-            glm::vec4 dir_vec = glm::normalize(lt.dir);
-            glUniform4fv(dir, 1, &dir_vec[0]);
-
-            GLint loc_fun = glGetUniformLocation(m_shader, ("light_fun[" + std::to_string(used) + "]").c_str());
-//            std::cout << "func: " << lt.function.x << " " << lt.function.y << " " << lt.function.z << std::endl;
-            glUniform3fv(loc_fun, 1, &lt.function[0]);
-
-            GLint loc_in = glGetUniformLocation(m_shader, ("light_in[" + std::to_string(used) + "]").c_str());
-            glm::vec3 col_vec = lt.color;
-            glUniform3fv(loc_in, 1, &col_vec[0]);
-
-            GLint loc_type = glGetUniformLocation(m_shader, ("type[" + std::to_string(used) + "]").c_str());
-            glUniform1i(loc_type, static_cast<std::underlying_type_t<LightType>>(lt.type));
-//            std::cout << "type " << static_cast<std::underlying_type_t<LightType>>(lt.type) << std::endl;
-            if (loc_type == -1) {
-                std::cout << "type not found" << std::endl;
-            }
-
-            GLint loc_angle = glGetUniformLocation(m_shader, ("angle[" + std::to_string(used) + "]").c_str());
-            if (loc_angle == -1) {
-                std::cout << "angle not found" << std::endl;
-            }
-            glUniform1f(loc_angle, lt.angle);
-
-            GLint loc_pnum = glGetUniformLocation(m_shader, ("penumbra[" + std::to_string(used) + "]").c_str());
-            if (loc_pnum == -1) {
-                std::cout << "penum not found" << std::endl;
-            }
-            glUniform1f(loc_pnum, lt.penumbra);
-
-            used++;
-
-        }
-
-
-        GLint loc_in = glGetUniformLocation(m_shader, "light_num");
-        glUniform1i(loc_in, used);
-
-        if (loc_in == -1) {
-            std::cout << "light num err" << std::endl;
-        }
-
-        // Actually draw geo
-        glBindVertexArray(m_vaos[in]);
-        glDrawArrays(GL_TRIANGLES, 0, m_data[in].size() / 6);
 
     }
     glBindVertexArray(0);
 
-    // Draw to screen
-    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
-    glViewport(0, 0, m_screen_width, m_screen_height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    paintTexture(m_fbo_texture, true);
 
-    glUseProgram(0);
 }
 
 
@@ -679,7 +724,7 @@ void Renderer::saveViewportImage(std::string filePath) {
 
     // Clear and render your scene here
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    paintGL();
+    drawStaticObs();
 
     // Read pixels from framebuffer
     std::vector<unsigned char> pixels(fixedWidth * fixedHeight * 3);

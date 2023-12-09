@@ -38,7 +38,7 @@ void Game::startGame(bool server) {
 
     registerECSComponents(ecs);
 
-    ecs.registerSystemWithBitFlags(Physics::tryRunStep, phys.getRequiredFlags());
+
 
     std::cout << "ECS Setup Complete" << std::endl;
 
@@ -91,23 +91,37 @@ void Game::startGame(bool server) {
     Renderer render = Renderer();
     Renderer::default_render->setRatio(xscale, yscale);
 
+    registerECSSystems(ecs, phys, render);
+
+    entity_t ent = ecs.createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER });
+    Renderable* rend = static_cast<Renderable*>(ecs.getComponentData(ent, FLN_RENDER));
+    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+    Transform* trans = static_cast<Transform*>(ecs.getComponentData(ent, FLN_TRANSFORM));
+    trans->pos = glm::vec3(0, 0, 0);
+    trans->scale = glm::vec3(1, 1, 1);
+
+
 //    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
 //        Renderer::default_render->resizeGL(width, height);
 //    });
 
     while (m_running) {
 
-        glClear(GL_COLOR_BUFFER_BIT);
+//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        render.startDraw();
 
         ecs.update();
 
-        render.paintGL();
+        render.drawStaticObs();
+        render.drawScreen();
 
         // Swap front and back buffers
         glfwSwapBuffers(window);
 
         // Poll for and process events
         glfwPollEvents();
+
+
     }
     glfwTerminate();
 
@@ -116,9 +130,34 @@ void Game::startGame(bool server) {
 
 void Game::registerECSComponents(ECS& ecs) {
     ecs.registerComponent(FLN_PHYSICS, sizeof(PhysicsData));
-    ecs.registerComponent(FLN_PHYSICS, sizeof(CollisionData));
+    ecs.registerComponent(FLN_COLLISION, sizeof(CollisionData));
     ecs.registerComponent(FLN_TRANSFORM, sizeof(Transform));
     ecs.registerComponent(FLN_INPUT, sizeof(InputData));
     ecs.registerComponent(FLN_RENDER, sizeof(Renderable));
     ecs.registerComponent(FLN_TEST, sizeof(Test));
+}
+
+
+void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
+    ecs.registerSystemWithBitFlags(Physics::tryRunStep, phys.getRequiredFlags());
+    ecs.registerSystem(Renderer::drawDynamicOb, {FLN_TRANSFORM, FLN_RENDER});
+
+    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
+
+        std::cout << "thing" << std::endl;
+        PhysicsData* phys = static_cast<PhysicsData*>(e->getComponentData(ent, FLN_PHYSICS));
+        Transform* trans = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
+        Test* ts = static_cast<Test*>(e->getComponentData(ent, FLN_TEST));
+
+        ts->timer += delta;
+
+        trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
+
+
+
+
+
+
+    }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM});
+
 }
