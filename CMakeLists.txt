@@ -83,7 +83,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt::Xml
     StaticGLEW
     glfw
-#    StaticGLFW
+    StaticGLFW
 #    ${COCOA_LIBRARY}
 )
 

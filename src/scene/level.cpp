@@ -56,8 +56,8 @@ void Level::makeObstacles() {
 std::vector<Model> Level::getLevelModels() {
     std::vector<Model> res;
     for(int i=0;i<PRIM_COUNT;i++) {
-        std::vector<RenderObject *> objs;
-        objs.push_back(&m_geometry[i]);
+        std::vector<RenderObject> objs;
+        objs.push_back(m_geometry[i]);
         res.push_back((Model){.objects=objs});
     }
     return res;
