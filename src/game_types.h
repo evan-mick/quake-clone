@@ -49,8 +49,9 @@ constexpr uint16_t MAX_TYPES = MAX_TYPE_VAL + 1;
 const glm::vec3 GRAVITY { 0, -9.8f, 0 };
 
 
+typedef uint8_t input_t;
 struct InputData {
-    uint8_t dat;
+    input_t dat;
 };
 
 struct Transform {

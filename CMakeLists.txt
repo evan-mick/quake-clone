@@ -55,6 +55,7 @@ add_executable(${PROJECT_NAME}
     src/scene/scene_types.h src/scene/scenedata.h src/scene/scenefilereader.cpp src/scene/scenefilereader.h src/scene/sceneparser.cpp src/scene/sceneparser.h src/scene/settings.cpp src/scene/settings.h
     src/scene/level.h src/scene/level.cpp
     src/physics/aabb.h src/physics/aabb.cpp
+    src/input.h src/input.cpp
 
 )
 
@@ -62,7 +63,8 @@ add_executable(${PROJECT_NAME}
 add_subdirectory(glm)
 
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
-add_library(StaticGLEW STATIC glew/src/glew.c)
+add_library(StaticGLEW STATIC glew/src/glew.c
+    )
 include_directories(${PROJECT_NAME} PRIVATE glew/include)
 
 

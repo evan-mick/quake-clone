@@ -38,14 +38,10 @@ void Game::startGame(bool server) {
 
     registerECSComponents(ecs);
 
-
-
     std::cout << "ECS Setup Complete" << std::endl;
 
     // Initialize GLFW
     if (!glfwInit()) {
-//        perror("couldn't create window: ");
-//        fprintf(stderr, "Failed to create window\n");
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return;
     }
@@ -93,7 +89,7 @@ void Game::startGame(bool server) {
     Renderer render = Renderer();
     Renderer::default_render->setRatio(xscale, yscale);
 
-    registerECSSystems(ecs, phys, render);
+
 
     entity_t ent = ecs.createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER });
     Renderable* rend = static_cast<Renderable*>(ecs.getComponentData(ent, FLN_RENDER));
