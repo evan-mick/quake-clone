@@ -98,7 +98,7 @@ void Game::startGame(bool server) {
     registerInputs();
 
     Transform* trans = static_cast<Transform*>(ecs.getComponentData(ent, FLN_TRANSFORM));
-    trans->pos = glm::vec3(-1.f, -1.f, 0);
+    trans->pos = glm::vec3(0.f, 3.f, 0);
     trans->scale = glm::vec3(1, 1, 1);
 
 
@@ -176,17 +176,17 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
     ecs.registerSystemWithBitFlags(Physics::tryRunStep, phys.getRequiredFlags());
     ecs.registerSystem(Renderer::drawDynamicOb, {FLN_TRANSFORM, FLN_RENDER});
 
-    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
+//    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
 
-//        std::cout << "thing" << std::endl;
-        PhysicsData* phys = getPhys(e, ent);
-        Transform* trans = getTransform(e, ent);
-        Test* ts = getComponentData<Test>(e, ent, FLN_TEST);
+////        std::cout << "thing" << std::endl;
+//        PhysicsData* phys = getPhys(e, ent);
+//        Transform* trans = getTransform(e, ent);
+//        Test* ts = getComponentData<Test>(e, ent, FLN_TEST);
 
-        ts->timer += delta;
+//        ts->timer += delta;
 
-        trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
-    }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM});
+////        trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
+//    }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM});
 
     ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
 
@@ -195,16 +195,31 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         Transform* trans = getTransform(e, ent);
         Test* ts = getComponentData<Test>(e, ent, FLN_TEST);
         InputData* in = getComponentData<InputData>(e, ent, FLN_INPUT);
-        std::cout << "test " << ent << std::endl;
+//        std::cout << "test " << ent << std::endl;
 
         if (Input::isHeld(in->dat, IN_FORWARD)) {
-            std::cout << "hi" << std::endl;
+//            std::cout << "hi" << std::endl;
             phys->vel = glm::vec3(1, 1, 1);
         }
+        if (Input::isHeld(in->dat, IN_SHOOT) && !Input::isHeld(in->last_dat, IN_SHOOT)) {
+            int proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER});
+            getTransform(e, proj)->pos = trans->pos;
+            getTransform(e, proj)->scale = glm::vec3(.5f, .5f, .5f);
 
+            Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
+            rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+
+            glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), in->x_look, glm::vec3(0.0f, 1.0f, 0.0f));
+            rotationMatrix = glm::rotate(rotationMatrix, in->y_look, glm::vec3(0.0f, 0.0f, 1.0f));
+            getPhys(e, proj)->vel = rotationMatrix * glm::vec4(1, 1, 1, 1);
+
+        }
+
+
+        in->last_dat = in->dat;
         ts->timer += delta;
 
-        trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
+//        trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
     }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM, FLN_INPUT});
 
 }

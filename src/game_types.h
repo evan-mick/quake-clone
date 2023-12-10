@@ -51,6 +51,7 @@ const glm::vec3 GRAVITY { 0, -9.8f, 0 };
 typedef uint8_t input_t;
 struct InputData {
     input_t dat;
+    input_t last_dat;
     float x_look = 0.f;
     float y_look = 0.f;
 };
