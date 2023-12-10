@@ -18,7 +18,7 @@
 
 // ================== Project 5: Lights, Camera
 
-Renderer::Renderer(Camera* cam) : m_level(Level(15.f,5.f,15.f))
+Renderer::Renderer(Camera* cam) : m_level(Level(50.f,5.f,50.f))
     //: QOpenGLWidget(parent)
 {
 

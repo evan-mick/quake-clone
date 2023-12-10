@@ -93,10 +93,10 @@ void Player::makeBody(glm::mat4 root_ctm) {
 }
 
 void Player::makeNeck(glm::mat4 body_ctm) {
-    glm::mat4 neck = glm::translate(body_ctm,glm::vec3(0,.85,0));
-    neck = glm::scale(neck,glm::vec3(1,0.85,1));
+//    glm::mat4 neck = glm::translate(body_ctm,glm::vec3(0,.85,0));
+//    neck = glm::scale(neck,glm::vec3(1,0.85,1));
 
-    insertGeometry(neck,PrimitiveType::PRIMITIVE_CONE,NECK_I);
+//    insertGeometry(neck,PrimitiveType::PRIMITIVE_CONE,NECK_I);
 }
 
 void Player::makeArms(glm::mat4 body_ctm) {
