@@ -14,7 +14,6 @@ void Physics::Reset() {
     m_collisionOccured.clear();
 }
 
-
 void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
     if (!phys->m_frameRun) {
@@ -98,7 +97,6 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
         // STATIC OBJECTS HERE
         // Need to adjust based off scale n such
-
         if (phys->m_sceneData != nullptr) {
             for (RenderObject& ob : phys->m_sceneData->shapes) {
                 Transform trans {};
@@ -107,8 +105,18 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                 trans.scale.z = glm::length(glm::vec3(ob.ctm[2])); // Z-axis scale
                 trans.pos = glm::vec3(ob.ctm[3]);
 
-                if (phys->AABBtoAABBIntersect(getTransform(e, my_ent), physDat, &trans, nullptr, true)) {
-//                    std::cout << "COLL" << std::endl;
+                CollisionData* col = getComponentData<CollisionData>(e, my_ent, FLN_COLLISION);
+
+                if (phys->AABBtoAABBIntersect(getTransform(e, my_ent), physDat, &trans, nullptr, (col != nullptr))) {
+
+                    if (!e->entityHasComponent(my_ent, FLN_TYPE))
+                        continue;
+
+                    TypeData* type = getComponentData<TypeData>(e, my_ent, FLN_TYPE);
+                    if (type != nullptr && phys->m_typeToResponse[type->type] != nullptr) {
+                        phys->m_typeToResponse[type->type](e, my_ent, 0, true);
+                    }
+
                 }
 
             }
@@ -132,12 +140,20 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
             // offsets are not equal between both people, so might be weirdness based on ordering of entities
             // So for instance, because only "my_ent" is changing in function, lower numbered entities
             // will in theory be pushed around and not vice versa
+
+            // OF NOTE: collision logic will be used for both entities because everything cycled through
             if (phys->AABBtoAABBIntersect(getTransform(e, my_ent), physDat, getTransform(e, ent), nullptr, true)) {
 //                e->queueDestroyEntity(my_ent);
                 //          IF type registered
                 //              run collision logic on each entity for the registered type,
                 //              pass in both entity id
-                std::cout << "COLLISION" << std::endl;
+                if (!e->entityHasComponent(my_ent, FLN_TYPE))
+                    continue;
+
+                TypeData* type = getComponentData<TypeData>(e, my_ent, FLN_TYPE);
+                if (type != nullptr && phys->m_typeToResponse[type->type] != nullptr) {
+                    phys->m_typeToResponse[type->type](e, my_ent, ent, true);
+                }
             }
 
 

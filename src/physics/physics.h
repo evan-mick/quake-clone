@@ -16,7 +16,7 @@ const uint8_t COL_AABB = 1;
 const uint8_t COL_SPHERE = 2;
 
 // Pass in ecs and entity ids, then will return the translation offset (or will be zero if not colliding)
-typedef glm::vec3 (*collision_response_t)(struct ECS*, entity_t my_ent, entity_t other_ent);
+typedef glm::vec3 (*collision_response_t)(struct ECS*, entity_t my_ent, entity_t other_ent, bool world);
 
 
 //struct AABB {
