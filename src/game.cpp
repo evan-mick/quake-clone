@@ -107,17 +107,21 @@ void Game::startGame(bool server) {
 //    });
     glfwSetKeyCallback(window, Input::key_callback);
 
+    registerECSSystems(ecs, phys, render);
+
     while (m_running) {
 
-        Input::checkKeys(window);
-        if (Input::getHeld())
-            std::cout << "held " << Input::getHeld() << std::endl;
+//        Input::checkKeys(window);
+//        if (Input::getHeld())
+//            std::cout << "held " << Input::getHeld() << std::endl;
 
         getComponentData<InputData>(&ecs, ent, FLN_INPUT)->dat = Input::getHeld();
+
 //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         render.startDraw();
 
         ecs.update();
+        cam.updateFromEnt(&ecs, ent);
 
         render.drawStaticObs();
         render.drawScreen();
@@ -181,6 +185,7 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
         if (Input::isHeld(in->dat, IN_FORWARD)) {
             std::cout << "hi" << std::endl;
+            phys->vel = glm::vec3(1, 1, 1);
         }
 
         ts->timer += delta;

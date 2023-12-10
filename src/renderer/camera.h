@@ -2,11 +2,17 @@
 
 #include <glm/glm.hpp>
 #include "scene/scenedata.h"
+#include "core/ecs.h"
+#include "game_types.h"
 
 class Camera {
 public:
     Camera(int width, int height, const SceneCameraData &cameraData);
     Camera();
+
+
+
+
     // Returns the view matrix for the current camera settings.
     // You might also want to define another function that return the inverse of the view matrix.
     glm::mat4 getViewMatrix() const;
@@ -18,6 +24,8 @@ public:
     inline glm::mat4 getProjectionMatrix() {
         return projMat_;
     }
+
+
 
     // Returns the aspect ratio of the camera.
     float getAspectRatio() const;
@@ -41,6 +49,12 @@ public:
 
     glm::vec4 getUp() const;
 
+
+    inline void updateFromEnt(ECS* e, entity_t ent) {
+        Transform* trans = getTransform(e, ent);
+        updatePos(trans->pos);
+    }
+
     void updatePos(glm::vec3 pos);
     void updateRotation(float dX, float dY);
 
@@ -63,4 +77,7 @@ private:
 
     float sensitivityX = .3;
     float sensitivityY = .3;
+
+    bool following = false;
+    entity_t follow = 0;
 };

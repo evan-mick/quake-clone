@@ -35,7 +35,7 @@ public:
             if (state == GLFW_PRESS){
                 held |= held_change;
             } else if (state == GLFW_RELEASE) {
-                held &= ~(i << i);
+                held &= ~(1 << i);
             }
             std::cout << (int)held << std::endl;
         }
@@ -49,24 +49,24 @@ public:
         return (in & (1 << inputBitFlag));
     }
 
-    static void checkKeys(GLFWwindow* window) {
+//    static void checkKeys(GLFWwindow* window) {
 
-        for (int i = 0; i < keys.size(); i++) {
-            if (keys[i] == 0)
-                continue;
+//        for (int i = 0; i < keys.size(); i++) {
+//            if (keys[i] == 0)
+//                continue;
 
-            int state = glfwGetKey(window, keys[i]);
-            input_t held_change = -1;
-            held_change = held_change & (1 << i);
+//            int state = glfwGetKey(window, keys[i]);
+//            input_t held_change = -1;
+//            held_change = held_change & (1 << i);
 
-            if (state == GLFW_PRESS){
-                held &= held_change;
-            } else if (state == GLFW_RELEASE) {
-                held &= ~(i << i);
-            }
-        }
+//            if (state == GLFW_PRESS){
+//                held &= held_change;
+//            } else if (state == GLFW_RELEASE) {
+//                held &= ~(1 << i);
+//            }
+//        }
 
-    }
+//    }
 private:
     // input bit -> key int
     static inline std::array<int, sizeof(input_t) * 8> keys{};
