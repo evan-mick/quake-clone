@@ -19,6 +19,7 @@ private:
     bool m_server = false;
     void registerECSComponents(ECS& ecs);
     void registerECSSystems(ECS& ecs, Physics& phys, Renderer& render);
+    void registerInputs();
 };
 
 #endif // GAME_H

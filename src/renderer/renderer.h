@@ -24,7 +24,7 @@ class Renderer //: public QOpenGLWidget
 
 {
 public:
-    Renderer(/*QWidget *parent = nullptr*/);
+    Renderer(Camera* cam);
     void finish();                                      // Called on program exit
     void sceneChanged();
     void settingsChanged();
@@ -104,7 +104,7 @@ private:
 
     GLuint m_shader;
 
-    Camera camera = Camera();
+    Camera* camera;// = Camera();
 
     GLuint m_vbos[5] = {};
     GLuint m_vaos[5] = {};

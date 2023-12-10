@@ -55,7 +55,7 @@ add_executable(${PROJECT_NAME}
     src/scene/scene_types.h src/scene/scenedata.h src/scene/scenefilereader.cpp src/scene/scenefilereader.h src/scene/sceneparser.cpp src/scene/sceneparser.h src/scene/settings.cpp src/scene/settings.h
     src/scene/level.h src/scene/level.cpp
     src/physics/aabb.h src/physics/aabb.cpp
-    src/input.h src/input.cpp
+    src/input.h
 
 )
 

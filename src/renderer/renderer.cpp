@@ -18,10 +18,11 @@
 
 // ================== Project 5: Lights, Camera
 
-Renderer::Renderer(/*QWidget *parent*/) : m_level(Level(15.f,5.f,15.f))
+Renderer::Renderer(Camera* cam) : m_level(Level(15.f,5.f,15.f))
     //: QOpenGLWidget(parent)
 {
 
+    camera = cam;
     default_render = this;
     m_models = generateModelsMap();
     m_prev_mouse_pos = glm::vec2(DSCREEN_WIDTH/2, DSCREEN_HEIGHT/2);
@@ -333,7 +334,7 @@ void Renderer::generateShape() {
 
 void Renderer::setUniforms(RenderObject& sp) {
 
-    glm::vec4 cam_pos = glm::inverse(camera.getViewMatrix()) * glm::vec4(0, 0, 0, 1);//inverse(m_view) * glm::vec4(0, 0, 0, 1);
+    glm::vec4 cam_pos = glm::inverse(camera->getViewMatrix()) * glm::vec4(0, 0, 0, 1);//inverse(m_view) * glm::vec4(0, 0, 0, 1);
 
     GLint matrixLoc = glGetUniformLocation(m_shader, "model_matrix");
     GLint viewLoc = glGetUniformLocation(m_shader, "view_matrix");
@@ -365,8 +366,8 @@ void Renderer::setUniforms(RenderObject& sp) {
 
 
     // OBJECT SPACE NORMAL SOMEWHERE
-    auto view_mat = camera.getViewMatrix();
-    auto proj_mat = camera.getProjectionMatrix();
+    auto view_mat = camera->getViewMatrix();
+    auto proj_mat = camera->getProjectionMatrix();
 
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &(view_mat[0][0]));
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, &(proj_mat[0][0]));
@@ -642,8 +643,12 @@ void Renderer::sceneChanged() {
             data.shapes.push_back(obj);
         }
     }
+//    data = SceneParser::getSceneData();
 
-    camera = Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, data.cameraData);
+
+//    *camera = Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, m_level.);
+//    std::exchange(camera, Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, data.cameraData));
+
 //    camera = Camera(data.cameraData.up, data.cameraData.pos,
 //                    data.cameraData.look,
 //                    (float)size().width() / (float)size().height(),

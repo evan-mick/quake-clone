@@ -10,6 +10,7 @@
 //#include <QScreen>
 #include <iostream>
 //#include <QSettings>
+#include "input.h"
 
 #include "scene/sceneparser.h"
 
@@ -85,11 +86,10 @@ void Game::startGame(bool server) {
 //    SCENEparser.parse("../../resources/scenes/phong_total.json");
     SCENEparser.parse("../../resources/scenes/empty.json");
 
+    Camera cam = Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, SceneParser::getSceneData().cameraData);
 
-    Renderer render = Renderer();
+    Renderer render = Renderer(&cam);
     Renderer::default_render->setRatio(xscale, yscale);
-
-
 
     entity_t ent = ecs.createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER });
     Renderable* rend = static_cast<Renderable*>(ecs.getComponentData(ent, FLN_RENDER));
@@ -97,7 +97,7 @@ void Game::startGame(bool server) {
     rend->model_id = 5;
 
     Transform* trans = static_cast<Transform*>(ecs.getComponentData(ent, FLN_TRANSFORM));
-    trans->pos = glm::vec3(0, 0, 0);
+    trans->pos = glm::vec3(-1.f, -1.f, 0);
     trans->scale = glm::vec3(1, 1, 1);
 
 
@@ -137,6 +137,15 @@ void Game::registerECSComponents(ECS& ecs) {
     ecs.registerComponent(FLN_TEST, sizeof(Test));
 }
 
+void Game::registerInputs() {
+    Input::registerHeld(GLFW_KEY_W, IN_FORWARD);
+    Input::registerHeld(GLFW_KEY_S, IN_BACK);
+    Input::registerHeld(GLFW_KEY_A, IN_LEFT);
+    Input::registerHeld(GLFW_KEY_D, IN_RIGHT);
+    Input::registerHeld(GLFW_KEY_Z, IN_SHOOT);
+    Input::registerHeld(GLFW_KEY_SPACE, IN_JUMP);
+}
+
 
 void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
     ecs.registerSystemWithBitFlags(Physics::tryRunStep, phys.getRequiredFlags());
@@ -145,19 +154,25 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
     ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
 
 //        std::cout << "thing" << std::endl;
-        PhysicsData* phys = static_cast<PhysicsData*>(e->getComponentData(ent, FLN_PHYSICS));
-        Transform* trans = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
-        Test* ts = static_cast<Test*>(e->getComponentData(ent, FLN_TEST));
+        PhysicsData* phys = getPhys(e, ent);
+        Transform* trans = getTransform(e, ent);
+        Test* ts = getComponentData<Test>(e, ent, FLN_TEST);
 
         ts->timer += delta;
 
         trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
-
-
-
-
-
-
     }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM});
+
+    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
+
+        //        std::cout << "thing" << std::endl;
+        PhysicsData* phys = getPhys(e, ent);
+        Transform* trans = getTransform(e, ent);
+        Test* ts = getComponentData<Test>(e, ent, FLN_TEST);
+
+        ts->timer += delta;
+
+        trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
+    }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM, FLN_INPUT});
 
 }

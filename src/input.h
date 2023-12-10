@@ -17,6 +17,14 @@ public:
         return held;
     }
 
+    static inline bool isHeld(int inputBitFlag) {
+        return (held & (1 << inputBitFlag));
+    }
+
+    static inline bool isHeld(input_t in, int inputBitFlag) {
+        return (in & (1 << inputBitFlag));
+    }
+
     static void checkKeys(GLFWwindow* window) {
 
         for (int i = 0; i < keys.size(); i++) {
@@ -27,10 +35,8 @@ public:
             input_t held_change = -1;
             held_change = held_change & (1 << i);
 
-            if (state == GLFW_PRESS)
-            {
+            if (state == GLFW_PRESS){
                 held &= held_change;
-
             } else if (state == GLFW_RELEASE) {
                 held &= ~(i << i);
             }
