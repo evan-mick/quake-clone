@@ -102,7 +102,7 @@ private:
         m_collisionOccured.insert(first_check);
     }
 
-    bool AABBtoAABBIntersect(Transform* transform, Transform* otherTransform, bool slide);
+    bool AABBtoAABBIntersect(Transform* transform, PhysicsData* physics, Transform* otherTransform, PhysicsData* otherPhysics, bool slide);
 
 
 //    void runStep(struct ECS*, entity_t entity_id, float delta_seconds);

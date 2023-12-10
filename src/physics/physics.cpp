@@ -63,8 +63,28 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
         // I think this ordering is right?
         physDat->vel += physDat->accel;
-        transform->pos += physDat->vel * phys->m_tickTime +
-                          physDat->accel * phys->m_tickTime * phys->m_tickTime * 0.5f;
+
+        auto damp = [](float vel) -> float {
+            return abs(vel) > 0.05f ? vel : 0.0f;
+        };
+
+        glm::vec3 damped_vel = glm::vec3(damp(physDat->vel.x), damp(physDat->vel.y), damp(physDat->vel.z));
+        glm::vec3 damped_accel = glm::vec3(damp(physDat->accel.x), damp(physDat->accel.y), damp(physDat->accel.z));
+
+        // This exists so there is no jitter when the player (or any entity for that matter) is on the ground
+        if (physDat->grounded && damped_vel.y <= 0) {
+            damped_accel.y = 0;
+            damped_vel.y = 0;
+        } else if (damped_vel.y > 0) {
+            physDat->grounded = false;
+        }
+
+        if (glm::length(damped_vel) > 0)
+            transform->pos += damped_vel * phys->m_tickTime +
+                          damped_accel * phys->m_tickTime * phys->m_tickTime * 0.5f;
+
+
+
 
         if (transform->pos == (phys->m_previousTransforms[my_ent].pos))
             return;
@@ -87,8 +107,8 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                 trans.scale.z = glm::length(glm::vec3(ob.ctm[2])); // Z-axis scale
                 trans.pos = glm::vec3(ob.ctm[3]);
 
-                if (phys->AABBtoAABBIntersect(getTransform(e, my_ent), &trans, true)) {
-                    std::cout << "COLL" << std::endl;
+                if (phys->AABBtoAABBIntersect(getTransform(e, my_ent), physDat, &trans, nullptr, true)) {
+//                    std::cout << "COLL" << std::endl;
                 }
 
             }
@@ -112,7 +132,7 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
             // offsets are not equal between both people, so might be weirdness based on ordering of entities
             // So for instance, because only "my_ent" is changing in function, lower numbered entities
             // will in theory be pushed around and not vice versa
-            if (phys->AABBtoAABBIntersect(getTransform(e, my_ent), getTransform(e, ent), true)) {
+            if (phys->AABBtoAABBIntersect(getTransform(e, my_ent), physDat, getTransform(e, ent), nullptr, true)) {
 //                e->queueDestroyEntity(my_ent);
                 //          IF type registered
                 //              run collision logic on each entity for the registered type,
@@ -133,7 +153,7 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
     }
 }
 
-bool Physics::AABBtoAABBIntersect(Transform* transform, Transform* otherTransform, bool slide) {
+bool Physics::AABBtoAABBIntersect(Transform* transform, PhysicsData* physics, Transform* otherTransform, PhysicsData* otherPhysics, bool slide) {
 
 //    PhysicsData* physDat = static_cast<PhysicsData*>(e->getComponentData(ent, FLN_PHYSICS));
 //    Transform* transform = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
@@ -160,6 +180,8 @@ bool Physics::AABBtoAABBIntersect(Transform* transform, Transform* otherTransfor
     float ent_2_zmin = otherTransform->pos.z - otherTransform->scale.z/2;
     float ent_2_zmax = otherTransform->pos.z + otherTransform->scale.z/2;
 
+
+
     // Check for no overlap along each axis
     if (ent_1_xmax < ent_2_xmin || ent_1_xmin > ent_2_xmax ||
         ent_1_ymax < ent_2_ymin || ent_1_ymin > ent_2_ymax ||
@@ -178,12 +200,24 @@ bool Physics::AABBtoAABBIntersect(Transform* transform, Transform* otherTransfor
 
     float smallest = std::min(overlap_x, std::min(overlap_y, overlap_z));
 
-    if (smallest == overlap_x)
-        transform->pos.x -= overlap_x;
-    else if (smallest == overlap_y)
-        transform->pos.y -= overlap_y;
-    else if (smallest == overlap_z)
-        transform->pos.z -= overlap_z;
+
+
+    if (smallest == overlap_x) {
+        transform->pos.x -= copysign(overlap_x, physics->vel.x);
+        physics->vel.x = 0;
+    }
+    else if (smallest == overlap_y) {
+        transform->pos.y -= copysign(overlap_y, physics->vel.y);
+
+        if (physics->vel.y <= 0)
+            physics->grounded = true;
+
+        physics->vel.y = 0;
+    }
+    else if (smallest == overlap_z) {
+        transform->pos.z -= copysign(overlap_z, physics->vel.z);
+        physics->vel.z = 0;
+    }
     return true;
 }
 

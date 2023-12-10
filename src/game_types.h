@@ -68,6 +68,7 @@ inline Transform* getTransform(ECS* e, entity_t ent) {
 struct PhysicsData {
     glm::vec3 vel;
     glm::vec3 accel;
+    bool grounded = false;
 };
 inline PhysicsData* getPhys(ECS* e, entity_t ent) {
     return static_cast<PhysicsData*>(e->getComponentData(ent, FLN_PHYSICS));

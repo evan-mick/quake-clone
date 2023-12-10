@@ -205,6 +205,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         InputData* in = getComponentData<InputData>(e, ent, FLN_INPUT);
 //        std::cout << "test " << ent << std::endl;
 
+        phys->accel = glm::vec3(0, -.98f, 0);
+
         glm::mat4 forwardMatrix = glm::rotate(glm::mat4(1.0f), in->x_look + glm::radians(37.f), glm::vec3(0.0f, 1.0f, 0.0f));
         forwardMatrix = glm::translate(forwardMatrix, glm::vec3(5.0f, 0.0f, 0.0f));
         glm::vec3 forwardDirection = forwardMatrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -221,6 +223,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
             vel += forwardDirection;
         }
 
+
+
         if (Input::isHeld(in->dat, IN_RIGHT)) {
             vel += sideDirection;
 //            std::cout << "forward " << phys->vel.x << " " << phys->vel.y << " " << phys->vel.z << " " << in->x_look << std::endl;
@@ -228,11 +232,18 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
             vel += -sideDirection;
         }
 
-        if (vel != glm::vec3(0, 0, 0))
-            phys->vel = glm::normalize(vel) * 5.f;
+        glm::vec3 norm_vel = glm::normalize(vel) * 5.f;
+        if (vel != glm::vec3(0, 0, 0)) {
+            phys->vel.x = norm_vel.x;
+            phys->vel.z = norm_vel.z;
+        }
         else
-            phys->vel = glm::vec3(0, 0, 0);
+            phys->vel = glm::vec3(0, phys->vel.y, 0);
 
+
+        if (Input::isHeld(in->dat, IN_JUMP) && phys->grounded) {
+            phys->vel = glm::vec3(0, 10.f, 0);
+        }
 
 
         if (Input::isHeld(in->dat, IN_SHOOT) && !Input::isHeld(in->last_dat, IN_SHOOT)) {
