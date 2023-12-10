@@ -13,6 +13,7 @@
 #include "input.h"
 
 #include "scene/sceneparser.h"
+#include "glm/gtx/rotate_vector.hpp"
 
 //#include <GLFW/glfw3.h>
 #include <GL/glew.h>
@@ -82,16 +83,19 @@ void Game::startGame(bool server) {
         return;
     }
 
+
     SceneParser SCENEparser = SceneParser();
 //    SCENEparser.parse("../../resources/scenes/phong_total.json");
     SCENEparser.parse("../../resources/scenes/empty.json");
+
+    phys.setStaticObs(&SceneParser::getSceneData());
 
     Camera cam = Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, SceneParser::getSceneData().cameraData);
 
     Renderer render = Renderer(&cam);
     Renderer::default_render->setRatio(xscale, yscale);
 
-    entity_t ent = ecs.createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT });
+    entity_t ent = ecs.createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT, FLN_COLLISION });
     Renderable* rend = static_cast<Renderable*>(ecs.getComponentData(ent, FLN_RENDER));
     rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
 //    rend->model_id = 5;
@@ -100,6 +104,9 @@ void Game::startGame(bool server) {
     Transform* trans = static_cast<Transform*>(ecs.getComponentData(ent, FLN_TRANSFORM));
     trans->pos = glm::vec3(0.f, 3.f, 0);
     trans->scale = glm::vec3(1, 1, 1);
+
+    CollisionData* col = getComponentData<CollisionData>(&ecs, ent, FLN_COLLISION);
+    col->col_type = 1;
 
 
 //    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
@@ -198,21 +205,52 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         InputData* in = getComponentData<InputData>(e, ent, FLN_INPUT);
 //        std::cout << "test " << ent << std::endl;
 
+        glm::mat4 forwardMatrix = glm::rotate(glm::mat4(1.0f), in->x_look + glm::radians(37.f), glm::vec3(0.0f, 1.0f, 0.0f));
+        forwardMatrix = glm::translate(forwardMatrix, glm::vec3(5.0f, 0.0f, 0.0f));
+        glm::vec3 forwardDirection = forwardMatrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+        glm::mat4 sideMatrix = glm::rotate(glm::mat4(1.0f), in->x_look + glm::radians(127.f), glm::vec3(0.0f, 1.0f, 0.0f));
+        sideMatrix = glm::translate(sideMatrix, glm::vec3(5.0f, 0.0f, 0.0f));
+        glm::vec3 sideDirection = sideMatrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+        glm::vec3 vel = glm::vec3(0, 0, 0);
         if (Input::isHeld(in->dat, IN_FORWARD)) {
-//            std::cout << "hi" << std::endl;
-            phys->vel = glm::vec3(1, 1, 1);
+            vel += -forwardDirection;
+//            std::cout << "forward " << phys->vel.x << " " << phys->vel.y << " " << phys->vel.z << " " << in->x_look << std::endl;
+        } else if (Input::isHeld(in->dat, IN_BACK)) {
+            vel += forwardDirection;
         }
+
+        if (Input::isHeld(in->dat, IN_RIGHT)) {
+            vel += sideDirection;
+//            std::cout << "forward " << phys->vel.x << " " << phys->vel.y << " " << phys->vel.z << " " << in->x_look << std::endl;
+        } else if (Input::isHeld(in->dat, IN_LEFT)) {
+            vel += -sideDirection;
+        }
+
+        if (vel != glm::vec3(0, 0, 0))
+            phys->vel = glm::normalize(vel) * 5.f;
+        else
+            phys->vel = glm::vec3(0, 0, 0);
+
+
+
         if (Input::isHeld(in->dat, IN_SHOOT) && !Input::isHeld(in->last_dat, IN_SHOOT)) {
             int proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER});
             getTransform(e, proj)->pos = trans->pos;
-            getTransform(e, proj)->scale = glm::vec3(.5f, .5f, .5f);
+            getTransform(e, proj)->scale = glm::vec3(.15f, .15f, .15f);
 
             Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
             rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
 
+//            CollisionData* col = getComponentData<CollisionData>(e, ent, FLN_COLLISION);
+//            col->col_type = 1;
+
             glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), in->x_look, glm::vec3(0.0f, 1.0f, 0.0f));
             rotationMatrix = glm::rotate(rotationMatrix, in->y_look, glm::vec3(0.0f, 0.0f, 1.0f));
-            getPhys(e, proj)->vel = rotationMatrix * glm::vec4(1, 1, 1, 1);
+            getPhys(e, proj)->vel = rotationMatrix * glm::vec4(1, 1, 1, 1) * 5.f;
+//            std::cout << "look " << getPhys(e, proj)->vel.x << " " << getPhys(e, proj)->vel.y << " " << getPhys(e, proj)->vel.z << " " << in->x_look << std::endl;
+
 
         }
 

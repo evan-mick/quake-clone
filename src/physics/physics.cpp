@@ -51,7 +51,7 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
         // Convert the time point to a time_t object
         std::time_t currentTimeT = std::chrono::system_clock::to_time_t(currentTime);
 
-        std::cout << "phys: " << currentTimeT << " " << (int)my_ent << std::endl;
+//        std::cout << "phys: " << currentTimeT << " " << (int)my_ent << std::endl;
         // These are both required by run step, no null check needed, if null something is wrong
         PhysicsData* physDat = static_cast<PhysicsData*>(e->getComponentData(my_ent, FLN_PHYSICS));
         Transform* transform = static_cast<Transform*>(e->getComponentData(my_ent, FLN_TRANSFORM));
@@ -71,11 +71,28 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
         phys->m_previousTransforms[my_ent] = *transform;
 
-        // STATIC OBJECTS HERE
-        // Need to adjust based off scale n such
+
 
         if (!e->entityHasComponent(my_ent, FLN_COLLISION))
             return;
+
+        // STATIC OBJECTS HERE
+        // Need to adjust based off scale n such
+
+        if (phys->m_sceneData != nullptr) {
+            for (RenderObject& ob : phys->m_sceneData->shapes) {
+                Transform trans {};
+                trans.scale.x = glm::length(glm::vec3(ob.ctm[0])); // X-axis scale
+                trans.scale.y = glm::length(glm::vec3(ob.ctm[1])); // Y-axis scale
+                trans.scale.z = glm::length(glm::vec3(ob.ctm[2])); // Z-axis scale
+                trans.pos = glm::vec3(ob.ctm[3]);
+
+                if (phys->AABBtoAABBIntersect(getTransform(e, my_ent), &trans, true)) {
+                    std::cout << "COLL" << std::endl;
+                }
+
+            }
+        }
 
 
         // ECS objects, optimize later by only going to highest value
@@ -95,11 +112,12 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
             // offsets are not equal between both people, so might be weirdness based on ordering of entities
             // So for instance, because only "my_ent" is changing in function, lower numbered entities
             // will in theory be pushed around and not vice versa
-            if (phys->AABBtoAABBIntersect(e, my_ent, ent, true)) {
-
+            if (phys->AABBtoAABBIntersect(getTransform(e, my_ent), getTransform(e, ent), true)) {
+//                e->queueDestroyEntity(my_ent);
                 //          IF type registered
                 //              run collision logic on each entity for the registered type,
                 //              pass in both entity id
+                std::cout << "COLLISION" << std::endl;
             }
 
 
@@ -115,13 +133,13 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
     }
 }
 
-bool Physics::AABBtoAABBIntersect(ECS* e, entity_t ent, entity_t other_ent, bool slide) {
+bool Physics::AABBtoAABBIntersect(Transform* transform, Transform* otherTransform, bool slide) {
 
-    PhysicsData* physDat = static_cast<PhysicsData*>(e->getComponentData(ent, FLN_PHYSICS));
-    Transform* transform = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
+//    PhysicsData* physDat = static_cast<PhysicsData*>(e->getComponentData(ent, FLN_PHYSICS));
+//    Transform* transform = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
 
-    PhysicsData* otherPhysDat = static_cast<PhysicsData*>(e->getComponentData(other_ent, FLN_PHYSICS));
-    Transform* otherTransform = static_cast<Transform*>(e->getComponentData(other_ent, FLN_TRANSFORM));
+//    PhysicsData* otherPhysDat = static_cast<PhysicsData*>(e->getComponentData(other_ent, FLN_PHYSICS));
+//    Transform* otherTransform = static_cast<Transform*>(e->getComponentData(other_ent, FLN_TRANSFORM));
 
     // Assuming position is middle of primitive
     float ent_1_xmin = transform->pos.x - transform->scale.x/2;

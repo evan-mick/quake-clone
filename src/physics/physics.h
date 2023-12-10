@@ -4,6 +4,7 @@
 #include "core/ecs.h"
 #include "core/timer.h"
 #include "game_types.h"
+#include "scene/scenedata.h"
 #include <unordered_set>
 
 // https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
@@ -56,17 +57,24 @@ public:
         return requiredFlags;
     }
 
+    inline void setStaticObs(SceneData* data) {
+        m_sceneData = data;
+    }
+
     // Prepares internal data for the next tick
     void Reset();
 
     // The singleton
     static inline Physics* phys;
 
+
+
 private:
 
 
 
-
+//    std::vector<RenderObject>* m_staticObs = nullptr;
+    SceneData* m_sceneData = nullptr;
 
 
     // Arbitrary constructor, gets changed right away in physics constructor
@@ -94,7 +102,7 @@ private:
         m_collisionOccured.insert(first_check);
     }
 
-    bool AABBtoAABBIntersect(ECS* e, entity_t ent, entity_t other_ent, bool slide);
+    bool AABBtoAABBIntersect(Transform* transform, Transform* otherTransform, bool slide);
 
 
 //    void runStep(struct ECS*, entity_t entity_id, float delta_seconds);

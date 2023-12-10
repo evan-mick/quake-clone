@@ -73,7 +73,7 @@ private:
     int m_timer;                                        // Stores timer which attempts to run ~60 times per second
     QElapsedTimer m_elapsedTimer;                       // Stores timer which keeps track of actual time between frames
 
-    SceneData data = SceneData();
+    SceneData* data = nullptr;
 
     void bindBuff(std::vector<float>&& dat, int ind);
 

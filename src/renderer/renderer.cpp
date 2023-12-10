@@ -379,9 +379,11 @@ void Renderer::setUniforms(RenderObject& sp) {
         std::cout << "ka err" << std::endl;
     }
 
-    glUniform1f(glGetUniformLocation(m_shader, "ka"), data.globalData.ka);
-    glUniform1f(ka_in, data.globalData.kd);
-    glUniform1f(glGetUniformLocation(m_shader, "ks"), data.globalData.ks);
+    if (data) {
+        glUniform1f(glGetUniformLocation(m_shader, "ka"), data->globalData.ka);
+        glUniform1f(ka_in, data->globalData.kd);
+        glUniform1f(glGetUniformLocation(m_shader, "ks"), data->globalData.ks);
+    }
 
 
     // PASS IN MATERIAL PARAMETERS, such as ambient, diffuse, specular, shininess from material
@@ -481,57 +483,59 @@ void Renderer::drawRenderOb(RenderObject& to_draw) {
     // NOT PROPERLY INTEGRATED INTO LIGHTING CODE YET
 
     int used = 0;
-    for (int i = 0; i < data.lights.size(); i++) {
+    if (data) {
+        for (int i = 0; i < data->lights.size(); i++) {
 
-        SceneLightData lt = data.lights[i];
+            SceneLightData lt = data->lights[i];
 
-        //            if (lt.type != LightType::LIGHT_DIRECTIONAL)
-        //                continue;
+            //            if (lt.type != LightType::LIGHT_DIRECTIONAL)
+            //                continue;
 
-        //            float fa = std::min(1.f, 1.f/(lt->function.x + (dist * lt->function.y) + (sqr_dist * light->function.z)));
-        // PASS IN all light data
-        // direction, color, etc.
-        GLint loc = glGetUniformLocation(m_shader, ("lights[" + std::to_string(used) + "]").c_str());
-        //            std::cout << "pos " << lt.pos[0] << " " << lt.pos[1] << " " << lt.pos[2] << std::endl;
-        glUniform4fv(loc, 1, &lt.pos[0]);
+            //            float fa = std::min(1.f, 1.f/(lt->function.x + (dist * lt->function.y) + (sqr_dist * light->function.z)));
+            // PASS IN all light data
+            // direction, color, etc.
+            GLint loc = glGetUniformLocation(m_shader, ("lights[" + std::to_string(used) + "]").c_str());
+            //            std::cout << "pos " << lt.pos[0] << " " << lt.pos[1] << " " << lt.pos[2] << std::endl;
+            glUniform4fv(loc, 1, &lt.pos[0]);
 
 
-        //            GLint loc = glGetUniformLocation(m_shader, ("light_dist[" + std::to_string(used) + "]").c_str());
-        //            glUniform1f(loc, glm::distance(lt.pos, sp.ctm * glm::vec4(0, 0, 0, 1)));
+            //            GLint loc = glGetUniformLocation(m_shader, ("light_dist[" + std::to_string(used) + "]").c_str());
+            //            glUniform1f(loc, glm::distance(lt.pos, sp.ctm * glm::vec4(0, 0, 0, 1)));
 
-        GLint dir = glGetUniformLocation(m_shader, ("light_dir[" + std::to_string(used) + "]").c_str());
-        glm::vec4 dir_vec = glm::normalize(lt.dir);
-        glUniform4fv(dir, 1, &dir_vec[0]);
+            GLint dir = glGetUniformLocation(m_shader, ("light_dir[" + std::to_string(used) + "]").c_str());
+            glm::vec4 dir_vec = glm::normalize(lt.dir);
+            glUniform4fv(dir, 1, &dir_vec[0]);
 
-        GLint loc_fun = glGetUniformLocation(m_shader, ("light_fun[" + std::to_string(used) + "]").c_str());
-        //            std::cout << "func: " << lt.function.x << " " << lt.function.y << " " << lt.function.z << std::endl;
-        glUniform3fv(loc_fun, 1, &lt.function[0]);
+            GLint loc_fun = glGetUniformLocation(m_shader, ("light_fun[" + std::to_string(used) + "]").c_str());
+            //            std::cout << "func: " << lt.function.x << " " << lt.function.y << " " << lt.function.z << std::endl;
+            glUniform3fv(loc_fun, 1, &lt.function[0]);
 
-        GLint loc_in = glGetUniformLocation(m_shader, ("light_in[" + std::to_string(used) + "]").c_str());
-        glm::vec3 col_vec = lt.color;
-        glUniform3fv(loc_in, 1, &col_vec[0]);
+            GLint loc_in = glGetUniformLocation(m_shader, ("light_in[" + std::to_string(used) + "]").c_str());
+            glm::vec3 col_vec = lt.color;
+            glUniform3fv(loc_in, 1, &col_vec[0]);
 
-        GLint loc_type = glGetUniformLocation(m_shader, ("type[" + std::to_string(used) + "]").c_str());
-        glUniform1i(loc_type, static_cast<std::underlying_type_t<LightType>>(lt.type));
-        //            std::cout << "type " << static_cast<std::underlying_type_t<LightType>>(lt.type) << std::endl;
-        if (loc_type == -1) {
-            std::cout << "type not found" << std::endl;
+            GLint loc_type = glGetUniformLocation(m_shader, ("type[" + std::to_string(used) + "]").c_str());
+            glUniform1i(loc_type, static_cast<std::underlying_type_t<LightType>>(lt.type));
+            //            std::cout << "type " << static_cast<std::underlying_type_t<LightType>>(lt.type) << std::endl;
+            if (loc_type == -1) {
+                std::cout << "type not found" << std::endl;
+            }
+
+            GLint loc_angle = glGetUniformLocation(m_shader, ("angle[" + std::to_string(used) + "]").c_str());
+            if (loc_angle == -1) {
+                std::cout << "angle not found" << std::endl;
+            }
+            glUniform1f(loc_angle, lt.angle);
+
+            GLint loc_pnum = glGetUniformLocation(m_shader, ("penumbra[" + std::to_string(used) + "]").c_str());
+            if (loc_pnum == -1) {
+                std::cout << "penum not found" << std::endl;
+            }
+            glUniform1f(loc_pnum, lt.penumbra);
+
+            used++;
+
         }
-
-        GLint loc_angle = glGetUniformLocation(m_shader, ("angle[" + std::to_string(used) + "]").c_str());
-        if (loc_angle == -1) {
-            std::cout << "angle not found" << std::endl;
-        }
-        glUniform1f(loc_angle, lt.angle);
-
-        GLint loc_pnum = glGetUniformLocation(m_shader, ("penumbra[" + std::to_string(used) + "]").c_str());
-        if (loc_pnum == -1) {
-            std::cout << "penum not found" << std::endl;
-        }
-        glUniform1f(loc_pnum, lt.penumbra);
-
-        used++;
-
     }
 
 
@@ -581,9 +585,11 @@ void Renderer::drawStaticObs()
     // Multiple objects (generate VBO/VOA for each object, just a lot of code)
     // Multiple lights (may need to also pass in light color data, and type)
 
+    if (!data)
+        return;
 
 
-    for (RenderObject sp : data.shapes) {
+    for (RenderObject sp : data->shapes) {
         drawRenderOb(sp);
 
 
@@ -636,11 +642,11 @@ void Renderer::sceneChanged() {
         std::cout << "SCENE PARSER RENDERER ERROR" << std::endl;
         return;
     }
-    data = SceneParser::getSceneData();
+    data = &SceneParser::getSceneData();
     m_level.generateLevel();
     for(Model& mod : m_level.getLevelModels()) {
         for(RenderObject obj : mod.objects) {
-            data.shapes.push_back(obj);
+            data->shapes.push_back(obj);
         }
     }
 //    data = SceneParser::getSceneData();
