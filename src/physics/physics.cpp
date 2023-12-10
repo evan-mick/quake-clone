@@ -56,10 +56,6 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
         Transform* transform = static_cast<Transform*>(e->getComponentData(my_ent, FLN_TRANSFORM));
         assert(physDat != nullptr && transform != nullptr);
 
-
-
-
-
         // I think this ordering is right?
         physDat->vel += physDat->accel;
 

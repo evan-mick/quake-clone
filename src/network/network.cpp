@@ -260,7 +260,7 @@ int Network::connect(const char* ip, const char* port) {
 
         //client has authority over this
         m_hasAuthority[*entity_id] = true;
-        m_entityID = *entity_id;
+        m_myPlayerEntityID = *entity_id;
         
         // Create new Connection
         conn.last_rec_tick = welcomePacket.tick;

@@ -19,6 +19,8 @@
 #include <GL/glew.h>
 #include <glfw/glfw3.h>
 
+#include "game_create_helpers.h"
+
 
 Game::Game()
 {
@@ -35,90 +37,37 @@ void Game::startGame(bool server) {
     std::cout << "Phys ECS" << std::endl;
 
     // disabling network for now
-    // Network net = Network(server, &ecs);
+//    Network net = Network(server, &ecs);
 //    std::cout << "Net" << std::endl;
 
-    registerECSComponents(ecs);
+    setupWindow();
 
-    std::cout << "ECS Setup Complete" << std::endl;
-
-    // Initialize GLFW
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
-        return;
-    }
-
-    // Set GLFW to use OpenGL 3.3
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // Create a GLFW windowed mode window and its OpenGL context
-    GLFWwindow* window = glfwCreateWindow(DSCREEN_WIDTH, DSCREEN_HEIGHT, "Quake Clone", nullptr, nullptr);
-
-    if (!window) {
-        std::cerr << "Failed to create GLFW window" << std::endl;
-        const char* description;
-        glfwGetError(&description);
-
-        std::cout << description << std::endl;
-
-        glfwTerminate();
-        return;
-    }
-
-    // Make the window's context current
-    glfwMakeContextCurrent(window);
-//    gladLoadGL(glfwGetProcAddress);
-    glfwSwapInterval(1);
-
-    float xscale, yscale;
-    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-    glfwGetMonitorContentScale(monitor, &xscale, &yscale);
-
-    // Initialize GLEW
-    if (glewInit() != GLEW_OK) {
-        std::cerr << "Failed to initialize GLEW" << std::endl;
-        return;
-    }
-
-
+    // Parse setup
     SceneParser SCENEparser = SceneParser();
 //    SCENEparser.parse("../../resources/scenes/phong_total.json");
     SCENEparser.parse("../../resources/scenes/empty.json");
-
     phys.setStaticObs(&SceneParser::getSceneData());
-
     SceneParser::getSceneData().cameraData.heightAngle = FOV;
-//    SceneParser::getSceneData().cameraData. = FOV;
+
     Camera cam = Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, SceneParser::getSceneData().cameraData);
 
     Renderer render = Renderer(&cam);
-    Renderer::default_render->setRatio(xscale, yscale);
+    Renderer::default_render->setRatio(m_monitorXScale, m_monitorYScale);
 
-    entity_t ent = ecs.createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT, FLN_COLLISION });
-    Renderable* rend = static_cast<Renderable*>(ecs.getComponentData(ent, FLN_RENDER));
-//    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
-    rend->model_id = 5;
-    registerInputs();
 
-    Transform* trans = static_cast<Transform*>(ecs.getComponentData(ent, FLN_TRANSFORM));
-    trans->pos = glm::vec3(0.f, 3.f, 0);
-    trans->scale = glm::vec3(1, 2, 1);
 
-    CollisionData* col = getComponentData<CollisionData>(&ecs, ent, FLN_COLLISION);
-    col->col_type = 1;
+    registerECSComponents(ecs);
+    registerECSSystems(ecs, phys, render);
 
+    if (!m_server)
+        registerInputs();
+
+
+    entity_t ent = createPlayer(&ecs, glm::vec3(0, 3.f, 0));
 
 //    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
 //        Renderer::default_render->resizeGL(width, height);
 //    });
-    glfwSetKeyCallback(window, Input::key_callback);
-
-    registerECSSystems(ecs, phys, render);
-
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     float last_x_look = 0;
     float last_y_look = 0;
@@ -132,7 +81,7 @@ void Game::startGame(bool server) {
         in->dat = Input::getHeld();
 
         double xpos, ypos;
-        glfwGetCursorPos(window, &xpos, &ypos);
+        glfwGetCursorPos(m_window, &xpos, &ypos);
         in->x_look -= (xpos - last_x_look) * 1/100.f;
         in->y_look += (ypos - last_y_look) * 1/100.f;
         last_x_look = xpos;
@@ -153,7 +102,7 @@ void Game::startGame(bool server) {
         render.drawScreen();
 
         // Swap front and back buffers
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(m_window);
 
         // Poll for and process events
         glfwPollEvents();
@@ -165,12 +114,65 @@ void Game::startGame(bool server) {
 }
 
 
+void Game::setupWindow() {
+    // Initialize GLFW
+    if (!glfwInit()) {
+        std::cerr << "Failed to initialize GLFW" << std::endl;
+        return;
+    }
+
+    // Set GLFW to use OpenGL 3.3
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    // Create a GLFW windowed mode window and its OpenGL context
+    GLFWwindow* window = glfwCreateWindow(DSCREEN_WIDTH, DSCREEN_HEIGHT, "Quake Clone", nullptr, nullptr);
+    m_window = window;
+
+    if (!window) {
+        std::cerr << "Failed to create GLFW window" << std::endl;
+        const char* description;
+        glfwGetError(&description);
+
+        std::cout << description << std::endl;
+
+        glfwTerminate();
+        return;
+    }
+
+    // Make the window's context current
+    glfwMakeContextCurrent(window);
+    //    gladLoadGL(glfwGetProcAddress);
+    glfwSwapInterval(1);
+
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    glfwGetMonitorContentScale(monitor, &m_monitorXScale, &m_monitorYScale);
+
+    // Initialize GLEW
+    if (glewInit() != GLEW_OK) {
+        std::cerr << "Failed to initialize GLEW" << std::endl;
+        return;
+    }
+
+
+    glfwSetKeyCallback(window, Input::key_callback);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+}
+
+
 void Game::registerECSComponents(ECS& ecs) {
     ecs.registerComponent(FLN_PHYSICS, sizeof(PhysicsData));
     ecs.registerComponent(FLN_COLLISION, sizeof(CollisionData));
     ecs.registerComponent(FLN_TRANSFORM, sizeof(Transform));
     ecs.registerComponent(FLN_INPUT, sizeof(InputData));
-    ecs.registerComponent(FLN_RENDER, sizeof(Renderable));
+
+    if (!m_server)
+        ecs.registerComponent(FLN_RENDER, sizeof(Renderable));
+
     ecs.registerComponent(FLN_TEST, sizeof(Test));
 }
 
@@ -248,29 +250,14 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
             phys->vel = glm::vec3(0, 15.f, 0);
         }
 
-
         if (Input::isHeld(in->dat, IN_SHOOT) && !Input::isHeld(in->last_dat, IN_SHOOT)) {
-            int proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION});
-            getTransform(e, proj)->pos = trans->pos;
-            getTransform(e, proj)->scale = glm::vec3(.15f, .15f, .15f);
-
-            Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
-            rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
-
-            CollisionData* col = getComponentData<CollisionData>(e, proj, FLN_COLLISION);
-            col->col_type = -1;
-
-            glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), in->x_look, glm::vec3(0.0f, 1.0f, 0.0f));
-            rotationMatrix = glm::rotate(rotationMatrix, in->y_look, glm::vec3(0.0f, 0.0f, 1.0f));
-            getPhys(e, proj)->vel = rotationMatrix * glm::vec4(1, 1, 1, 1) * 10.f;
-//            getPhys(e, proj)->accel = glm::vec3(0, -.4f, 0);
+            int proj = createProjectile(e, trans->pos, glm::vec2(in->x_look, in->y_look));
         }
-
 
         in->last_dat = in->dat;
         ts->timer += delta;
 
-//        trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
+//        trans->pos = glm::vec3(2.f * glm::acos(ts->timer), trans->pos.y, trans->pos.z);
     }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM, FLN_INPUT});
 
 }

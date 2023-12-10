@@ -86,11 +86,14 @@ public:
     void updateTickBuffer(Packet packet, Connection* conn, unsigned int tick);
     void pushTickData(TickData td, Connection* conn);
     void mainLoop(float delta);
-    void getEntityID();
+
+    inline entity_t getMyPlayerEntityID() {
+        return m_myPlayerEntityID;
+    }
 
 
 private:
-    entity_t m_entityID = 0;
+    entity_t m_myPlayerEntityID = 0;
     bool m_isServer = false;
     ECS* m_ecs;
     std::atomic_bool m_shutdown; // equal sign needs to be removed and defined in the consructor I think
