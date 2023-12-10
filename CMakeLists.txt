@@ -49,7 +49,7 @@ add_executable(${PROJECT_NAME}
 #    src/renderer/mainwindow.h src/renderer/mainwindow.cpp
     src/renderer/AspectRatioWidget.hpp
 #    resources/shaders/default.frag resources/shaders/default.vert resources/shaders/texture.frag resources/shaders/texture.vert
-    src/renderer/rendermodel.h src/renderer/rendermodel.cpp
+
     src/core/timer.h
     src/physics/physics.h src/physics/physics.cpp
     src/scene/scene_types.h src/scene/scenedata.h src/scene/scenefilereader.cpp src/scene/scenefilereader.h src/scene/sceneparser.cpp src/scene/sceneparser.h src/scene/settings.cpp src/scene/settings.h
@@ -100,6 +100,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
    PRIVATE
      resources/shaders/texture.frag resources/shaders/texture.vert
      resources/scenes/phong_total.json
+     resources/scenes/empty.json
  )
 
 # GLEW: this provides support for Windows (including 64-bit)

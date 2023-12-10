@@ -18,31 +18,40 @@ void Player::assignModelID(u_int8_t id) {
     m_model_id = id;
 }
 
-Model Player::getModel() {
-    std::vector<RenderObject *> objects;
-    for(int i=0;i<PRIM_COUNT;i++) {
-        objects.push_back(&m_geometry[i]);
-    }
 
-    return {};
-//    return (Model){.objects=objects,.id=m_model_id};
+Model Player::getModel() {
+    std::vector<RenderObject> objects;
+    for(int i=0;i<PRIM_COUNT;i++) {
+        objects.push_back(m_geometry[i]);
+    }
+//    return {};
+    return (Model){.objects=objects};
 }
+
+void Player::transformPlayer(Transform *trans) {
+    rotatePlayer(trans->rot.x, glm::vec3(1, 0, 0));
+    rotatePlayer(trans->rot.y, glm::vec3(0, 1, 0));
+    rotatePlayer(trans->rot.z, glm::vec3(0, 0, 1));
+    relocatePlayer(trans->pos);
+    generateGeometry();
+}
+
 
 void Player::rotatePlayer(float angle, glm::vec3 axis) {
     m_root_ctm = glm::rotate(m_root_ctm,angle,axis);
-    generateGeometry();
+//    generateGeometry();
 }
 
 void Player::translatePlayer(glm::vec3 delta) {
     m_root_ctm = glm::translate(m_root_ctm,delta);
-    generateGeometry();
+//    generateGeometry();
 }
 
 void Player::relocatePlayer(glm::vec3 position) {
     m_root_ctm[3][0] = position[0];
     m_root_ctm[3][1] = position[1];
     m_root_ctm[3][2] = position[2];
-    generateGeometry();
+//    generateGeometry();
 }
 
 void Player::generateGeometry() {
@@ -52,6 +61,9 @@ void Player::generateGeometry() {
     makeLegs(root);
     loaded = true;
 }
+
+
+
 
 void Player::makeHead(glm::mat4 root_ctm) {
     glm::mat4 head_ctm = glm::translate(root_ctm,glm::vec3(0,2,0));

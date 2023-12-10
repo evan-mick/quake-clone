@@ -18,11 +18,12 @@
 
 // ================== Project 5: Lights, Camera
 
-Renderer::Renderer(/*QWidget *parent*/)
+Renderer::Renderer(/*QWidget *parent*/) : m_level(Level(15.f,5.f,15.f))
     //: QOpenGLWidget(parent)
 {
 
     default_render = this;
+    m_models = generateModelsMap();
     m_prev_mouse_pos = glm::vec2(DSCREEN_WIDTH/2, DSCREEN_HEIGHT/2);
     //setMouseTracking(true);
     //setFocusPolicy(Qt::StrongFocus);
@@ -229,9 +230,9 @@ void Renderer::initializeGL() {
     glBindVertexArray(0);
 
 
-
-
     std::cout << "shader: " << std::to_string(m_shader) << std::endl;
+
+
 
     generateShape();
 
@@ -240,7 +241,42 @@ void Renderer::initializeGL() {
     makeFBO();
 
     sceneChanged();
+
 }
+
+std::map<u_int8_t,Model> Renderer::generateModelsMap() {
+    std::map<u_int8_t,Model> models;
+
+    SceneMaterial level_mat;
+
+    level_mat.cAmbient = glm::vec4(0.5,0.5,0.5,1);
+    level_mat.cDiffuse = glm::vec4(.5);
+    level_mat.cSpecular = glm::vec4(.5);
+    level_mat.shininess = 1.0;
+
+    ScenePrimitive level_cube_prim = {.type = PrimitiveType::PRIMITIVE_CUBE,.material=level_mat};
+    ScenePrimitive level_cone_prim = {.type = PrimitiveType::PRIMITIVE_CONE,.material=level_mat};
+    ScenePrimitive level_cyl_prim = {.type = PrimitiveType::PRIMITIVE_CYLINDER,.material=level_mat};
+    ScenePrimitive level_sphere_prim = {.type = PrimitiveType::PRIMITIVE_SPHERE,.material=level_mat};
+
+    RenderObject level_cube = {.primitive=level_cube_prim,.ctm=glm::mat4(1.f)};
+    RenderObject level_cone = {.primitive=level_cone_prim,.ctm=glm::mat4(1.f)};
+    RenderObject level_cyl = {.primitive=level_cyl_prim,.ctm=glm::mat4(1.f)};
+    RenderObject level_sphere = {.primitive=level_sphere_prim,.ctm=glm::mat4(1.f)};
+
+    models.insert({0,(Model){.objects=std::vector<RenderObject>(1,level_cube)}});
+    models.insert({1,(Model){.objects=std::vector<RenderObject>(1,level_cone)}});
+    models.insert({2,(Model){.objects=std::vector<RenderObject>(1,level_cyl)}});
+    models.insert({3,(Model){.objects=std::vector<RenderObject>(1,level_sphere)}});
+
+    Player player;
+    player.generateGeometry();
+    models.insert({5,player.getModel()});
+
+    std::cout <<"Model map generated."<<std::endl;
+    return models;
+}
+
 
 
 // Task 31: Update the paintTexture function signature
@@ -361,29 +397,44 @@ void Renderer::drawDynamicOb(struct ECS* e, entity_t ent, float delta_seconds) {
     Transform* trans = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
     Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
 
-    RenderObject ob;
-    ob.ctm = glm::mat4(1);
-
-    ob.ctm = glm::translate(ob.ctm, trans->pos) * ob.ctm;
-    glm::rotate(ob.ctm, trans->rot.x, glm::vec3(1, 0, 0));
-    glm::rotate(ob.ctm, trans->rot.y, glm::vec3(0, 1, 0));
-    glm::rotate(ob.ctm, trans->rot.z, glm::vec3(0, 0, 1));
-    glm::scale(ob.ctm, trans->scale);
-
-    ob.primitive.type = static_cast<PrimitiveType>(rend->model_id);
-    ob.primitive.material = SceneMaterial();
-    ob.primitive.material.cAmbient = SceneColor(1, 1, 1, 1);
-    ob.primitive.material.cDiffuse = SceneColor(1, 1, 1, 1);
-    ob.primitive.material.cReflective = SceneColor(1, 1, 1, 1);
-    ob.primitive.material.cSpecular = SceneColor(1, 1, 1, 1);
 
 
-    default_render->drawRenderOb(ob);
+    if(rend->model_id==5) {//for player entity
+        Player p;
+        p.transformPlayer(trans);
+        for (RenderObject& ob : p.getModel().objects) {
+            default_render->drawRenderOb(ob);
+        }
+    } else {//for single-prim models associated
+        Model mod = default_render->m_models[rend->model_id];
 
+        for(RenderObject& ob : mod.objects) {
+
+    //    RenderObject ob;
+    //    ob.ctm = glm::mat4(1);
+
+        ob.ctm = glm::translate(ob.ctm, trans->pos);
+        glm::rotate(ob.ctm, trans->rot.x, glm::vec3(1, 0, 0));
+        glm::rotate(ob.ctm, trans->rot.y, glm::vec3(0, 1, 0));
+        glm::rotate(ob.ctm, trans->rot.z, glm::vec3(0, 0, 1));
+        glm::scale(ob.ctm, trans->scale);
+
+    //    ob.primitive.type = static_cast<PrimitiveType>(rend->model_id);
+    //    ob.primitive.material = SceneMaterial();
+    //    ob.primitive.material.cAmbient = SceneColor(1, 1, 1, 1);
+    //    ob.primitive.material.cDiffuse = SceneColor(1, 1, 1, 1);
+    //    ob.primitive.material.cReflective = SceneColor(1, 1, 1, 1);
+    //    ob.primitive.material.cSpecular = SceneColor(1, 1, 1, 1);
+
+
+        default_render->drawRenderOb(ob);
+        }
+    }
 
 
 //    default_render.drawRenderOb();
 }
+
 
 
 void Renderer::drawScreen() {
@@ -585,6 +636,12 @@ void Renderer::sceneChanged() {
         return;
     }
     data = SceneParser::getSceneData();
+    m_level.generateLevel();
+    for(Model& mod : m_level.getLevelModels()) {
+        for(RenderObject obj : mod.objects) {
+            data.shapes.push_back(obj);
+        }
+    }
 
     camera = Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, data.cameraData);
 //    camera = Camera(data.cameraData.up, data.cameraData.pos,

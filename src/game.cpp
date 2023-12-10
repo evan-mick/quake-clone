@@ -86,7 +86,9 @@ void Game::startGame(bool server) {
     }
 
     SceneParser SCENEparser = SceneParser();
-    SCENEparser.parse("../../resources/scenes/phong_total.json");
+//    SCENEparser.parse("../../resources/scenes/phong_total.json");
+    SCENEparser.parse("../../resources/scenes/empty.json");
+
 
     Renderer render = Renderer();
     Renderer::default_render->setRatio(xscale, yscale);
@@ -95,7 +97,9 @@ void Game::startGame(bool server) {
 
     entity_t ent = ecs.createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER });
     Renderable* rend = static_cast<Renderable*>(ecs.getComponentData(ent, FLN_RENDER));
-    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+//    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+    rend->model_id = 5;
+
     Transform* trans = static_cast<Transform*>(ecs.getComponentData(ent, FLN_TRANSFORM));
     trans->pos = glm::vec3(0, 0, 0);
     trans->scale = glm::vec3(1, 1, 1);
@@ -144,7 +148,7 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
     ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
 
-        std::cout << "thing" << std::endl;
+//        std::cout << "thing" << std::endl;
         PhysicsData* phys = static_cast<PhysicsData*>(e->getComponentData(ent, FLN_PHYSICS));
         Transform* trans = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
         Test* ts = static_cast<Test*>(e->getComponentData(ent, FLN_TEST));

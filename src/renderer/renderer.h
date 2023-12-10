@@ -14,7 +14,8 @@
 #include <QTimer>
 #include "scene/scenedata.h"
 #include "camera.h"
-
+#include "objects/player.h"
+#include "scene/level.h"
 #include "scene/sceneparser.h"
 #include "scene/settings.h"
 #include "game_types.h"
@@ -32,12 +33,14 @@ public:
 
     void drawStaticObs();
     static void drawDynamicOb(struct ECS*, entity_t entity_id, float delta_seconds);
+    static std::map<u_int8_t,Model> generateModelsMap();
 
     void drawScreen();
 
     void resizeGL(int width, int height);      // Called when window size changes
 
     void startDraw();
+    std::map<u_int8_t,Model> m_models;
 
     inline void setRatio(float x, float y) {
 //        m_devicePixelRatio = ratio;
@@ -57,6 +60,7 @@ protected:
 private:
 
     void drawRenderOb(RenderObject& to_draw);
+    void drawDynamicModel(struct ECS* e, entity_t ent, float delta_seconds);
 
 //    void keyPressEvent(QKeyEvent *event) override;
 //    void keyReleaseEvent(QKeyEvent *event) override;
@@ -106,12 +110,18 @@ private:
     GLuint m_vaos[5] = {};
     std::vector<float> m_data[5] = {};
 
+    SceneMaterial m_level_mat;
+
+
+
     int sphere_in = static_cast<int>(PrimitiveType::PRIMITIVE_SPHERE);
     int cube_in = static_cast<int>(PrimitiveType::PRIMITIVE_CUBE);
     int cone_in = static_cast<int>(PrimitiveType::PRIMITIVE_CONE);
     int cylinder_in = static_cast<int>(PrimitiveType::PRIMITIVE_CYLINDER);
 
     bool init_gen = false;
+
+    Level m_level;
 
 
     void makeFBO();
