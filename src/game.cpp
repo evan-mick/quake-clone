@@ -109,19 +109,33 @@ void Game::startGame(bool server) {
 
     registerECSSystems(ecs, phys, render);
 
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    float last_x_look = 0;
+    float last_y_look = 0;
+
     while (m_running) {
 
 //        Input::checkKeys(window);
 //        if (Input::getHeld())
 //            std::cout << "held " << Input::getHeld() << std::endl;
+        InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
+        in->dat = Input::getHeld();
 
-        getComponentData<InputData>(&ecs, ent, FLN_INPUT)->dat = Input::getHeld();
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        in->x_look -= (xpos - last_x_look) * 1/100.f;
+        in->y_look += (ypos - last_y_look) * 1/100.f;
+        last_x_look = xpos;
+        last_y_look = ypos;
+//         getComponentData<InputData>(&ecs, ent, FLN_INPUT)-> = Input::getHeld();
 
 //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         render.startDraw();
 
         ecs.update();
         cam.updateFromEnt(&ecs, ent);
+        cam.setRotation(in->x_look, in->y_look);
 
         render.drawStaticObs();
         render.drawScreen();

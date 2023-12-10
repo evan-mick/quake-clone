@@ -52,11 +52,13 @@ public:
 
     inline void updateFromEnt(ECS* e, entity_t ent) {
         Transform* trans = getTransform(e, ent);
+
         updatePos(trans->pos);
     }
 
     void updatePos(glm::vec3 pos);
     void updateRotation(float dX, float dY);
+    void setRotation(float x, float y);
 
     void rotateCam(float dX,float dY);
     glm::mat4 rotateCamX(float dX);

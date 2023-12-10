@@ -20,6 +20,10 @@ public:
         return held;
     }
 
+    static inline glm::vec2 getLookOffset() {
+        return glm::vec2(x_look, y_look);
+    }
+
     static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
     {
 //        std::cout << "callback " << key << " " << action << std::endl;
@@ -71,6 +75,8 @@ private:
     // input bit -> key int
     static inline std::array<int, sizeof(input_t) * 8> keys{};
     static inline input_t held = 0;
+    static inline float x_look = 0;
+    static inline float y_look = 0;
 
 };
 

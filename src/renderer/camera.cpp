@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include "camera.h"
 #include <iostream>
+#include "glm/gtx/transform.hpp""
 
 
 Camera::Camera(int width, int height, const SceneCameraData& cameraData) {
@@ -52,7 +53,19 @@ void Camera::updateRotation(float dX, float dY) {
     look_ = rotateCamX(dX) * rotateCamY(dY) * look_;
     viewMatrix_ = calculateViewMatrix(pos_,glm::vec3(look_),glm::vec3(up_));
     inverseViewMatrix_ = glm::inverse(viewMatrix_);
+}
 
+void Camera::setRotation(float x, float y) {
+//    look_ = rotateCamX(x) * rotateCamY(y) * glm::vec4(0, 0, 0, 1);
+
+
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), x, glm::vec3(0.0f, 1.0f, 0.0f));
+    rotationMatrix = glm::rotate(rotationMatrix, y, glm::vec3(0.0f, 0.0f, 1.0f));
+
+    look_ = rotationMatrix * glm::vec4(1, 1, 1, 0);
+
+    viewMatrix_ = calculateViewMatrix(pos_,glm::vec3(look_),glm::vec3(up_));
+    inverseViewMatrix_ = glm::inverse(viewMatrix_);
 }
 
 void Camera::updatePos(glm::vec3 updated) {
