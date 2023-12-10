@@ -11,7 +11,7 @@
 #include <iostream>
 //#include <QSettings>
 #include "input.h"
-
+#include <algorithm>
 #include "scene/sceneparser.h"
 #include "glm/gtx/rotate_vector.hpp"
 
@@ -99,8 +99,8 @@ void Game::startGame(bool server) {
 
     entity_t ent = ecs.createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT, FLN_COLLISION });
     Renderable* rend = static_cast<Renderable*>(ecs.getComponentData(ent, FLN_RENDER));
-    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
-//    rend->model_id = 5;
+//    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+    rend->model_id = 5;
     registerInputs();
 
     Transform* trans = static_cast<Transform*>(ecs.getComponentData(ent, FLN_TRANSFORM));
@@ -137,6 +137,8 @@ void Game::startGame(bool server) {
         in->y_look += (ypos - last_y_look) * 1/100.f;
         last_x_look = xpos;
         last_y_look = ypos;
+
+        in->y_look = std::clamp(in->y_look, 0.2f, 3.0f);
 //         getComponentData<InputData>(&ecs, ent, FLN_INPUT)-> = Input::getHeld();
 
 //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -209,6 +211,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
         phys->accel = glm::vec3(0, -.98f, 0);
 
+        trans->rot.y = in->x_look-glm::radians(53.f);
+
         // Needed the 37 degree offset?? no clue why, it would be consistently slightly off whenever I moved it
         glm::mat4 forwardMatrix = glm::rotate(glm::mat4(1.0f), in->x_look + glm::radians(37.f), glm::vec3(0.0f, 1.0f, 0.0f));
         forwardMatrix = glm::translate(forwardMatrix, glm::vec3(5.0f, 0.0f, 0.0f));
@@ -231,7 +235,7 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
             vel += -sideDirection;
         }
 
-        glm::vec3 norm_vel = glm::normalize(vel) * 5.f;
+        glm::vec3 norm_vel = glm::normalize(vel) * 10.f;
         if (vel != glm::vec3(0, 0, 0)) {
             phys->vel.x = norm_vel.x;
             phys->vel.z = norm_vel.z;
@@ -241,7 +245,7 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
 
         if (Input::isHeld(in->dat, IN_JUMP) && phys->grounded) {
-            phys->vel = glm::vec3(0, 10.f, 0);
+            phys->vel = glm::vec3(0, 15.f, 0);
         }
 
 
