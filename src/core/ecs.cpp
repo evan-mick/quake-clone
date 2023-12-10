@@ -40,6 +40,8 @@ entity_t ECS::createEntityWithBitFlags(flags_t flags) {
     if (m_nextUnallocEntity >= MAX_ENTITY)
         return -1;
 
+    std::cout << m_nextUnallocEntity << " next pre " << std::endl;
+
     // Register entity
     entity_t ent_id = m_nextUnallocEntity;
     m_entities[ent_id] = flags;
@@ -56,6 +58,8 @@ entity_t ECS::createEntityWithBitFlags(flags_t flags) {
         m_nextUnallocEntity++;
     }
     while (m_nextUnallocEntity < MAX_ENTITY && m_entities[m_nextUnallocEntity] != 0);
+
+    std::cout << m_nextUnallocEntity << " next post " << std::endl;
 
     return ent_id;
 }

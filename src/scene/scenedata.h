@@ -5,8 +5,9 @@
 
 #include <glm/glm.hpp>
 #include <GL/glew.h>
-//#include "GL/glew.h"
-//#include "glfw/glfw3.h"
+#define PARAM_1 10
+#define PARAM_2 10
+
 
 
 
@@ -158,6 +159,15 @@ struct RenderObject {
     int vertCount = -1;
 };
 
+enum class ModelType {
+    CUBE,
+    CONE,
+    CYLINDER,
+    SPHERE,
+    MESH,
+    PLAYER
+};
+
 struct SceneData {
     SceneGlobalData globalData;
     SceneCameraData cameraData;
@@ -167,9 +177,14 @@ struct SceneData {
 };
 
 struct Model {
-    std::vector<RenderObject *> objects;
-    uint8_t id;
+    std::vector<RenderObject> objects;
 };
+
+static void transformModel(Model* mod, glm::mat4 ctm) {
+    for(RenderObject& obj : mod->objects) {
+        obj.ctm = ctm * obj.ctm;
+    }
+}
 
 // Struct which contains data for a transformation.
 struct SceneTransformation {

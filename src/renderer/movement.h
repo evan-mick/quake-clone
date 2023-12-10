@@ -2,6 +2,7 @@
 #define MOVEMENT_H
 
 #include "camera.h"
+#include "objects/player.h"
 
 class Movement
 {

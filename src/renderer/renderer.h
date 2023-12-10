@@ -1,5 +1,6 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#pragma once
+
+// Defined before including GLEW to suppress deprecation messages on macOS
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
 #endif
@@ -11,74 +12,55 @@
 #include <QOpenGLWidget>
 #include <QTime>
 #include <QTimer>
-#include "scene/sceneparser.h"
-#include "camera.h"
-#include "movement.h"
-#include "rendermodel.h"
-#include "objects/player.h"
-#include "core/ecs.h"
-
 #include "scene/scenedata.h"
-#include "GL/glew.h"
-
-
-/* Structure
- * - Shapes folder with primitives
- *
- * Objects with "type" flag can then get model and collision data
- *
- * Other considerations
- * - camera
- *
- * FLOW:
- * Player input registered before render system
- * Renderable registered as close to last system (has to be after everything that would affect it)
- *
- * ON UPDATE:
- * Clear screen (FUNCTION FOR RENDERER)
- * Input, Physics, movement, etc. all updated
- * Dynamic objects render (FUNCTION FOR RENDERER)
- * - everything with renderable data
- * - "ID" decides what primitives to create and where
- * - POTENTIALLY: two passes, first one to register what primitives will go where, then each primitive is rendered in batches
- *      - if we use this approach, then render system could just add dynamic
- *          objects to primitive sections and they'd be rendered along with static objects so its all bound together.
- * Renderer "render static objects" gets called end of the frame (FUNCTION FOR RENDERER)
- * - Z-buffer should automatically take care of all of this
- *
- */
+#include "camera.h"
+#include "objects/player.h"
+#include "scene/level.h"
+#include "scene/sceneparser.h"
+#include "scene/settings.h"
+#include "game_types.h"
 
 class Renderer //: public QOpenGLWidget
+
 {
 public:
-//    Renderer(QWidget *parent = nullptr);
-    Renderer();
+    Renderer(Camera* cam);
     void finish();                                      // Called on program exit
     void sceneChanged();
     void settingsChanged();
     void saveViewportImage(std::string filePath);
-    void clearScreen();
+    void initializeGL();                       // Called once at the start of the program
 
-    void beginFrame();
+    void drawStaticObs();
+    static void drawDynamicOb(struct ECS*, entity_t entity_id, float delta_seconds);
+    static std::map<u_int8_t,Model> generateModelsMap();
 
-    static void ecsEntityRender(ECS* e, entity_t ent, float delta);
+    void drawScreen();
 
-    void initializeScene(/*SceneParser* parser*/);
-    void initializeGL();
+    void resizeGL(int width, int height);      // Called when window size changes
 
-    void renderFrame();
+    void startDraw();
+    std::map<u_int8_t,Model> m_models;
 
+    inline void setRatio(float x, float y) {
+//        m_devicePixelRatio = ratio;
+        ratio_x = x;
+        ratio_y = y;
+        resizeGL(DSCREEN_WIDTH * ratio_x, DSCREEN_HEIGHT * ratio_y);
+    }
+
+    static inline Renderer* default_render;
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
 
 protected:
-                        // Called once at the start of the program
-    void paintGL();                            // Called whenever the OpenGL context changes or by an update() request
-    void resizeGL(int width, int height);      // Called when window size changes
+
+
 
 private:
 
-    static inline Renderer* m_renderer;
+    void drawRenderOb(RenderObject& to_draw);
+    void drawDynamicModel(struct ECS* e, entity_t ent, float delta_seconds);
 
 //    void keyPressEvent(QKeyEvent *event) override;
 //    void keyReleaseEvent(QKeyEvent *event) override;
@@ -86,55 +68,80 @@ private:
 //    void mouseReleaseEvent(QMouseEvent *event) override;
 //    void mouseMoveEvent(QMouseEvent *event) override;
 //    void timerEvent(QTimerEvent *event) override;
-//    void initializeScene(std::string filepath);
-
-    void handleMovement(float deltaTime);
-    void makeFBO();
-    void paintGeometry();
-    void paintTexture(GLuint texture, bool includePost);
-    void insertModel(std::vector<RenderObject>& objects, u_int8_t id, bool isStatic);
-    std::vector<RenderObject *> inline getModelObjectsList(std::vector<RenderObject>& shapes) {
-        std::vector<RenderObject *> res;
-        for(RenderObject& shape : shapes) {
-            res.push_back(&shape);
-        }
-        return res;
-    };
 
     // Tick Related Variables
     int m_timer;                                        // Stores timer which attempts to run ~60 times per second
     QElapsedTimer m_elapsedTimer;                       // Stores timer which keeps track of actual time between frames
+
+    SceneData* data = nullptr;
+
+    void bindBuff(std::vector<float>&& dat, int ind);
+
+    void generateShape();
+
+
+    Settings old_settings = {};
+
+    int m_screen_width = 0;
+    int m_screen_height = 0;
+
+    int m_o_scrn_width = 0;
+    int m_o_scrn_height = 0;
+
+    void paintTexture(GLuint texture, bool post_process);
+
 
     // Input Related Variables
     bool m_mouseDown = false;                           // Stores state of left mouse button
     glm::vec2 m_prev_mouse_pos;                         // Stores mouse position
     std::unordered_map<Qt::Key, bool> m_keyMap;         // Stores whether keys are pressed or not
 
-    //RenderData
-    SceneData m_metaData;
+    // Device Correction Variables
+//    int m_devicePixelRatio;
+    float ratio_x;
+    float ratio_y;
+
+
     GLuint m_shader;
-    GLuint m_texture_shader;
-    GLuint m_fullscreen_vbo;
-    GLuint m_fullscreen_vao;
+
+    Camera* camera;// = Camera();
+
+    GLuint m_vbos[5] = {};
+    GLuint m_vaos[5] = {};
+    std::vector<float> m_data[5] = {};
+
+    SceneMaterial m_level_mat;
+
+
+
+    int sphere_in = static_cast<int>(PrimitiveType::PRIMITIVE_SPHERE);
+    int cube_in = static_cast<int>(PrimitiveType::PRIMITIVE_CUBE);
+    int cone_in = static_cast<int>(PrimitiveType::PRIMITIVE_CONE);
+    int cylinder_in = static_cast<int>(PrimitiveType::PRIMITIVE_CYLINDER);
+
+    bool init_gen = false;
+
+    Level m_level;
+
+
+    void makeFBO();
     GLuint m_fbo_renderbuffer;
     GLuint m_fbo;
-    GLuint m_defaultFBO = 2;
-    int m_fbo_width;
-    int m_fbo_height;
+    GLuint m_defaultFBO;
     GLuint m_fbo_texture;
-    Camera m_camera;
-    bool parsed_ = false;
-    int lightVBO_ = -1;
-    Player m_player;
-    std::vector<Model> m_models;
+    GLuint m_texture_shader;
 
-    u_int8_t m_model_count = 0;
+    GLuint m_fullscreen_vbo;
+    GLuint m_fullscreen_vao;
 
-    // Device Correction Variables
-    float m_devicePixelRatio;
-    bool parsed;
-    std::string prevFile;
-    int lightCount;
+    void setUniforms(RenderObject& sp);
 
+
+
+
+
+//    GLuint m_shader;     // Stores id of shader program
+//    GLuint m_sphere_vbo; // Stores id of vbo
+//    GLuint m_sphere_vao; // Stores id of vao
+//    std::vector<float> m_sphereData;
 };
-#endif // RENDERER_H

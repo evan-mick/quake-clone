@@ -9,7 +9,7 @@ Player::Player()
     sign = 1;
     m_root_ctm = glm::mat4(1.f);
     m_material.cAmbient = glm::vec4(0.5,0.5,0.5,1);
-    m_material.cDiffuse = glm::vec4(1);
+    m_material.cDiffuse = glm::vec4(1,0,0,1);
     m_material.cSpecular = glm::vec4(1);
     m_material.shininess = 1.0;
 }
@@ -18,29 +18,40 @@ void Player::assignModelID(u_int8_t id) {
     m_model_id = id;
 }
 
-Model Player::getModel() {
-    std::vector<RenderObject *> objects;
-    for(int i=0;i<PRIM_COUNT;i++) {
-        objects.push_back(&m_geometry[i]);
-    }
 
-    return (Model){.objects=objects,.id=m_model_id};
+Model Player::getModel() {
+    std::vector<RenderObject> objects;
+    for(int i=0;i<PRIM_COUNT;i++) {
+        objects.push_back(m_geometry[i]);
+    }
+//    return {};
+    return (Model){.objects=objects};
 }
+
+void Player::transformPlayer(Transform *trans) {
+    rotatePlayer(trans->rot.x, glm::vec3(1, 0, 0));
+    rotatePlayer(trans->rot.y, glm::vec3(0, 1, 0));
+    rotatePlayer(trans->rot.z, glm::vec3(0, 0, 1));
+    relocatePlayer(trans->pos);
+    generateGeometry();
+}
+
 
 void Player::rotatePlayer(float angle, glm::vec3 axis) {
     m_root_ctm = glm::rotate(m_root_ctm,angle,axis);
-    generateGeometry();
+//    generateGeometry();
 }
 
 void Player::translatePlayer(glm::vec3 delta) {
     m_root_ctm = glm::translate(m_root_ctm,delta);
-    generateGeometry();
+//    generateGeometry();
 }
 
 void Player::relocatePlayer(glm::vec3 position) {
     m_root_ctm[3][0] = position[0];
     m_root_ctm[3][1] = position[1];
     m_root_ctm[3][2] = position[2];
+//    generateGeometry();
 }
 
 void Player::generateGeometry() {
@@ -50,6 +61,9 @@ void Player::generateGeometry() {
     makeLegs(root);
     loaded = true;
 }
+
+
+
 
 void Player::makeHead(glm::mat4 root_ctm) {
     glm::mat4 head_ctm = glm::translate(root_ctm,glm::vec3(0,2,0));
@@ -79,10 +93,10 @@ void Player::makeBody(glm::mat4 root_ctm) {
 }
 
 void Player::makeNeck(glm::mat4 body_ctm) {
-    glm::mat4 neck = glm::translate(body_ctm,glm::vec3(0,.85,0));
-    neck = glm::scale(neck,glm::vec3(1,0.85,1));
+//    glm::mat4 neck = glm::translate(body_ctm,glm::vec3(0,.85,0));
+//    neck = glm::scale(neck,glm::vec3(1,0.85,1));
 
-    insertGeometry(neck,PrimitiveType::PRIMITIVE_CONE,NECK_I);
+//    insertGeometry(neck,PrimitiveType::PRIMITIVE_CONE,NECK_I);
 }
 
 void Player::makeArms(glm::mat4 body_ctm) {
@@ -117,7 +131,7 @@ void Player::stepLegs(float deltaTime) {
 
         m_geometry[LEFT_LEG_I].ctm = rotatedLeft * m_left_ctm;
         m_geometry[RIGHT_LEG_I].ctm = rotatedRight * m_right_ctm;
-        stepArms(m_leg_angle / 2.f);
+        stepArms(-m_leg_angle / 2.f);
     }
 }
 
@@ -136,7 +150,7 @@ void Player::stepArms(float angle) {
 
 void Player::startAnimation() {
     if(loaded) {
-        m_left_ctm = m_geometry[LEFT_LEG_I].ctm;
+        m_left_ctm =  m_geometry[LEFT_LEG_I].ctm;
         m_right_ctm = m_geometry[RIGHT_LEG_I].ctm;
         m_left_arm_ctm = m_geometry[LEFT_ARM_I].ctm;
         m_right_arm_ctm = m_geometry[RIGHT_ARM_I].ctm;
@@ -150,7 +164,7 @@ void Player::stopAnimation() {
     if(loaded) {
         walking = false;
         m_geometry[LEFT_LEG_I].ctm = m_left_ctm;
-        m_geometry[LEFT_LEG_I].ctm = m_right_ctm;
+        m_geometry[LEFT_LEG_I].ctm =  m_right_ctm;
         m_geometry[LEFT_ARM_I].ctm = m_left_arm_ctm;
         m_geometry[RIGHT_ARM_I].ctm = m_right_arm_ctm;
         m_leg_angle = 0;

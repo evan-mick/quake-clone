@@ -25,6 +25,19 @@ public:
 //        m_timesRun = 0; should this be reset?
     }
 
+    // Returns whether or not timer is complete
+    inline bool finished() {
+        if (m_time > 0.0f)
+            return false;
+        return true;
+    }
+
+    // Returns whether or not timer is complete, then resets it
+    inline void reset() {
+        m_time += m_rate;
+        m_timesRun++;
+    }
+
     // Returns whether or not timer is complete, then resets it
     inline bool finishedThenResetTime() {
         if (m_time > 0.0f)

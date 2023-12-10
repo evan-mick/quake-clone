@@ -49,10 +49,13 @@ add_executable(${PROJECT_NAME}
 #    src/renderer/mainwindow.h src/renderer/mainwindow.cpp
     src/renderer/AspectRatioWidget.hpp
 #    resources/shaders/default.frag resources/shaders/default.vert resources/shaders/texture.frag resources/shaders/texture.vert
-    src/renderer/rendermodel.h src/renderer/rendermodel.cpp
+
     src/core/timer.h
     src/physics/physics.h src/physics/physics.cpp
     src/scene/scene_types.h src/scene/scenedata.h src/scene/scenefilereader.cpp src/scene/scenefilereader.h src/scene/sceneparser.cpp src/scene/sceneparser.h src/scene/settings.cpp src/scene/settings.h
+    src/scene/level.h src/scene/level.cpp
+    src/physics/aabb.h src/physics/aabb.cpp
+    src/input.h
 
 )
 
@@ -60,7 +63,8 @@ add_executable(${PROJECT_NAME}
 add_subdirectory(glm)
 
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
-add_library(StaticGLEW STATIC glew/src/glew.c)
+add_library(StaticGLEW STATIC glew/src/glew.c
+    )
 include_directories(${PROJECT_NAME} PRIVATE glew/include)
 
 
@@ -98,6 +102,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
    PRIVATE
      resources/shaders/texture.frag resources/shaders/texture.vert
      resources/scenes/phong_total.json
+     resources/scenes/empty.json
  )
 
 # GLEW: this provides support for Windows (including 64-bit)

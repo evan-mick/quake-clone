@@ -21,20 +21,21 @@ constexpr uint32_t FLN_TESTKILL = 29;
 constexpr uint32_t FLN_TEST = 30;
 
 
-const uint32_t DSCREEN_WIDTH = 800;
-const uint32_t DSCREEN_HEIGHT = 600;
+const uint32_t DSCREEN_WIDTH = 1600;
+const uint32_t DSCREEN_HEIGHT = 1200;
+constexpr float RAW_FOV = 90;
+constexpr float FOV = glm::radians(RAW_FOV); //* (float)DSCREEN_HEIGHT/(float)DSCREEN_WIDTH;
 
-// COMPONENT BIT FLAGS
-//constexpr u_int32_t FL_INPUT = 1;
-//constexpr u_int32_t FL_TRANSFORM = 1 << (FLN_TRANSFORM);
-//constexpr u_int32_t FL_RENDER = 1 << (FLN_RENDER);
-//constexpr u_int32_t FL_PHYSICS = 1 << (FLN_PHYSICS);
-
-//constexpr u_int32_t FL_TESTKILL = 1 << (FLN_TESTKILL);
-//constexpr u_int32_t FL_TEST = 1 << (FLN_TEST);
+// INPUT FLAGS
+const int IN_FORWARD = 0;
+const int IN_BACK = 1;
+const int IN_LEFT = 2;
+const int IN_RIGHT = 3;
+const int IN_SHOOT = 4;
+const int IN_JUMP = 5;
 
 // GAME LOGIC CONSTANTS
-const uint8_t TICKS_PER_SECOND = 20;
+const uint8_t TICKS_PER_SECOND = 60;
 constexpr float TICK_RATE = 1.f/TICKS_PER_SECOND;
 
 
@@ -49,8 +50,12 @@ constexpr uint16_t MAX_TYPES = MAX_TYPE_VAL + 1;
 const glm::vec3 GRAVITY { 0, -9.8f, 0 };
 
 
+typedef uint8_t input_t;
 struct InputData {
-    uint8_t dat;
+    input_t dat;
+    input_t last_dat;
+    float x_look = 0.f;
+    float y_look = 0.f;
 };
 
 struct Transform {
@@ -58,15 +63,26 @@ struct Transform {
     glm::vec3 scale;
     glm::vec3 rot;
 };
+inline Transform* getTransform(ECS* e, entity_t ent) {
+    return static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
+}
 
 struct PhysicsData {
     glm::vec3 vel;
     glm::vec3 accel;
+    bool grounded = false;
 };
+inline PhysicsData* getPhys(ECS* e, entity_t ent) {
+    return static_cast<PhysicsData*>(e->getComponentData(ent, FLN_PHYSICS));
+}
 
 struct CollisionData {
     int8_t col_type; // Positive => physical, Negative => trigger, abs(col_type) => collision type
 };
+inline CollisionData* getCollisionData(ECS* e, entity_t ent) {
+    return static_cast<CollisionData*>(e->getComponentData(ent, FLN_COLLISION));
+}
+
 
 struct Projectile {
     float speed;
@@ -75,6 +91,11 @@ struct Projectile {
 struct Renderable {
     uint8_t model_id;
 };
+
+template <typename T>
+inline T* getComponentData(ECS* e, entity_t ent, uint32_t flag) {
+    return static_cast<T*>(e->getComponentData(ent, flag));
+}
 
 //const int test = sizeof(PhysicsData) + sizeof(Transform) + sizeof(InputData) + sizeof(Renderable);
 //const int test2 = sizeof(Transform) + sizeof(Projectile) + sizeof(Renderable);

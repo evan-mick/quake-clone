@@ -2,6 +2,8 @@
 #define GAME_H
 
 #include "core/ecs.h"
+#include "renderer/renderer.h"
+#include "physics/physics.h"
 
 // Responsible for compiling all of the separate systems
 // ECS, network, renderer, physics, etc.
@@ -16,6 +18,8 @@ private:
     bool m_running = true;
     bool m_server = false;
     void registerECSComponents(ECS& ecs);
+    void registerECSSystems(ECS& ecs, Physics& phys, Renderer& render);
+    void registerInputs();
 };
 
 #endif // GAME_H

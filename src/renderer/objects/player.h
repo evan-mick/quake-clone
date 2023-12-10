@@ -1,6 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include "game_types.h"
 #include "scene/scenedata.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -12,7 +13,6 @@
 #define RIGHT_LEG_I 4
 #define LEFT_ARM_I 5
 #define RIGHT_ARM_I 6
-#include "renderer/rendermodel.h"
 
 class Player
 {
@@ -20,6 +20,7 @@ public:
     Player();
     void assignModelID(u_int8_t id);
     Model getModel();
+    void transformPlayer(Transform *trans);
     void generateGeometry();
     void startAnimation();
     void stepLegs(float deltaTime);
@@ -30,6 +31,7 @@ public:
     void relocatePlayer(glm::vec3 position);
     std::array<RenderObject,PRIM_COUNT> m_geometry;
     float m_leg_angle = 0;
+    static Model getPlayerModel();
 private:
     void makeHead(glm::mat4 root_ctm);
     void makeLegs(glm::mat4 root_ctm);
@@ -37,7 +39,6 @@ private:
     void makeNeck(glm::mat4 body_ctm);
     void makeArms(glm::mat4 body_ctm);
     void insertGeometry(glm::mat4 ctm, PrimitiveType type, int index);
-
 
     glm::mat4 m_root_ctm;
 

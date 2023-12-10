@@ -4,6 +4,7 @@
 #include "core/ecs.h"
 #include "core/timer.h"
 #include "game_types.h"
+#include "scene/scenedata.h"
 #include <unordered_set>
 
 // https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
@@ -15,7 +16,7 @@ const uint8_t COL_AABB = 1;
 const uint8_t COL_SPHERE = 2;
 
 // Pass in ecs and entity ids, then will return the translation offset (or will be zero if not colliding)
-typedef glm::vec3 (*collision_response_t)(struct ECS*, entity_t my_ent, entity_t other_ent);
+typedef glm::vec3 (*collision_response_t)(struct ECS*, entity_t my_ent, entity_t other_ent, bool world);
 
 
 //struct AABB {
@@ -35,6 +36,13 @@ public:
     // Creates Physics object, of note, this is a singleton
     Physics(float tickTime);
 
+
+    static inline void startFrame() {
+        phys->m_frameRun = false;
+        if (phys->m_timer.finished())
+            phys->m_timer.reset();
+    }
+
     // Attempts to run a step with the physics singleton
     static void tryRunStep(struct ECS*, entity_t entity_id, float delta_seconds);
 
@@ -49,21 +57,32 @@ public:
         return requiredFlags;
     }
 
+    inline void setStaticObs(SceneData* data) {
+        m_sceneData = data;
+    }
+
     // Prepares internal data for the next tick
     void Reset();
+
+    // The singleton
+    static inline Physics* phys;
+
+
 
 private:
 
 
 
+//    std::vector<RenderObject>* m_staticObs = nullptr;
+    SceneData* m_sceneData = nullptr;
 
-    // The singleton
-    static inline Physics* phys;
 
     // Arbitrary constructor, gets changed right away in physics constructor
     Timer m_timer = Timer(1/20.f);
     float m_tickTime;
     flags_t requiredFlags = (1 << FLN_PHYSICS) | (1 << FLN_TRANSFORM);
+
+    bool m_frameRun = false;
 
     // Arbitrary limit on number of types, once again, here so we can use arrays
     std::array<collision_response_t, MAX_TYPES> m_typeToResponse;
@@ -83,7 +102,7 @@ private:
         m_collisionOccured.insert(first_check);
     }
 
-    bool AABBtoAABBIntersect(ECS* e, entity_t ent, entity_t other_ent, bool slide);
+    bool AABBtoAABBIntersect(Transform* transform, PhysicsData* physics, Transform* otherTransform, PhysicsData* otherPhysics, bool slide);
 
 
 //    void runStep(struct ECS*, entity_t entity_id, float delta_seconds);

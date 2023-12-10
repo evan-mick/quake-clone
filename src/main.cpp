@@ -18,11 +18,6 @@ int main(int argc, char *argv[]) {
     bool server = (argc > 1 && strcmp(argv[1], "s"));
     Game game = Game();
     game.startGame(server);
-
-
-//        int return_val = a.exec();
-//        w.finish();
-//        return return_val;
 }
 
 
@@ -45,14 +40,11 @@ void test_main() {
     tst->timer = 1.f;
     tst->ticks = 10;
 
-
     system_t test = [](ECS* e, entity_t ent, float delta) {
 
         Test* test = static_cast<Test*>(e->getComponentData(ent, FLN_TEST));
 
-
         test->timer -= delta;
-
 
         if (test->timer < 0) {
 
