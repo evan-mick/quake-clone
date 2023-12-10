@@ -1,4 +1,6 @@
 #include "physics.h"
+#include <chrono>
+#include <iostream>
 
 Physics::Physics(float tickTime)
 {
@@ -14,7 +16,11 @@ void Physics::Reset() {
 
 
 void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
-    phys->m_timer.increment(delta_seconds);
+
+    if (!phys->m_frameRun) {
+        phys->m_timer.increment(delta_seconds);
+        phys->m_frameRun = true;
+    }
 
     // Run the simulation
     // IF current entity has moved since last tick (last_pos != current_pos)
@@ -38,21 +44,32 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
 
 
-    if (phys->m_timer.finishedThenResetTime()) {
+    if (phys->m_timer.finished()) {
+
+        auto currentTime = std::chrono::system_clock::now();
+
+        // Convert the time point to a time_t object
+        std::time_t currentTimeT = std::chrono::system_clock::to_time_t(currentTime);
+
+        std::cout << "phys: " << currentTimeT << " " << (int)my_ent << std::endl;
         // These are both required by run step, no null check needed, if null something is wrong
         PhysicsData* physDat = static_cast<PhysicsData*>(e->getComponentData(my_ent, FLN_PHYSICS));
         Transform* transform = static_cast<Transform*>(e->getComponentData(my_ent, FLN_TRANSFORM));
         assert(physDat != nullptr && transform != nullptr);
 
-        if (transform->pos == (phys->m_previousTransforms[my_ent].pos))
-            return;
 
-        phys->m_previousTransforms[my_ent] = *transform;
+
+
 
         // I think this ordering is right?
         physDat->vel += physDat->accel;
         transform->pos += physDat->vel * phys->m_tickTime +
                           physDat->accel * phys->m_tickTime * phys->m_tickTime * 0.5f;
+
+        if (transform->pos == (phys->m_previousTransforms[my_ent].pos))
+            return;
+
+        phys->m_previousTransforms[my_ent] = *transform;
 
         // STATIC OBJECTS HERE
         // Need to adjust based off scale n such

@@ -35,6 +35,13 @@ public:
     // Creates Physics object, of note, this is a singleton
     Physics(float tickTime);
 
+
+    static inline void startFrame() {
+        phys->m_frameRun = false;
+        if (phys->m_timer.finished())
+            phys->m_timer.reset();
+    }
+
     // Attempts to run a step with the physics singleton
     static void tryRunStep(struct ECS*, entity_t entity_id, float delta_seconds);
 
@@ -52,18 +59,22 @@ public:
     // Prepares internal data for the next tick
     void Reset();
 
+    // The singleton
+    static inline Physics* phys;
+
 private:
 
 
 
 
-    // The singleton
-    static inline Physics* phys;
+
 
     // Arbitrary constructor, gets changed right away in physics constructor
     Timer m_timer = Timer(1/20.f);
     float m_tickTime;
     flags_t requiredFlags = (1 << FLN_PHYSICS) | (1 << FLN_TRANSFORM);
+
+    bool m_frameRun = false;
 
     // Arbitrary limit on number of types, once again, here so we can use arrays
     std::array<collision_response_t, MAX_TYPES> m_typeToResponse;

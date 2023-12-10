@@ -33,7 +33,7 @@ const int IN_SHOOT = 4;
 const int IN_JUMP = 5;
 
 // GAME LOGIC CONSTANTS
-const uint8_t TICKS_PER_SECOND = 20;
+const uint8_t TICKS_PER_SECOND = 40;
 constexpr float TICK_RATE = 1.f/TICKS_PER_SECOND;
 
 
