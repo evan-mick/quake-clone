@@ -21,10 +21,11 @@ Network::Network(bool server, ECS* ecs, const char* ip)
     m_shutdown = false;
 
     // Initialize Tick Rate
-    m_timer.setAndResetTimer(1/20.f); // 20 ticks per second
+    m_timer.setAndResetTimer(TICK_RATE); // 60 ticks per second
     
     // Initialize server
     if (server) {
+
 
         // Server has authority over everything by default
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
@@ -51,10 +52,18 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         m_listenThread = std::thread([this]() { this->clientListen(); });
     }
 
-    while (!m_shutdown) {
+}
+
+void Network::mainLoop(float delta) {
+
+    if (!m_shutdown) {
+        
+        m_timer.increment(delta);
 
         // Wait for tick
-        while (!m_timer.finishedThenResetTime()) { }
+        if (!m_timer.finishedThenResetTime()) { 
+            return;
+        }
 
         // Get tick
         unsigned int tick = m_timer.getTimesRun();
@@ -62,8 +71,9 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         // Pop tick buffers and deserialize into ECS
         onTick(tick);
     }
-}
 
+    
+}
 
 void Network::serverListen(const char* ip, const char* port) {
 
@@ -90,6 +100,9 @@ void Network::serverListen(const char* ip, const char* port) {
             int entity_id = m_ecs->createEntity({FLN_PHYSICS, FLN_TRANSFORM, FLN_TEST, FLN_TESTKILL});
             char* welcome_entity_id = new char[sizeof(entity_id)];
             memcpy(welcome_entity_id, &entity_id, sizeof(entity_id));
+            
+            // Add stuff about client authority 
+            m_hasAuthority[entity_id] = false; 
 
             // Make new Connection
             Connection conn;
@@ -243,7 +256,12 @@ int Network::connect(const char* ip, const char* port) {
         // Create new Connection
         Connection conn;
         char* entity_id = welcomePacket.data;
-        memcpy(&conn.entity, entity_id, sizeof(conn.entity));
+        assert(entity_id != nullptr);
+
+        //client has authority over this
+        m_hasAuthority[*entity_id] = true;
+        m_entityID = *entity_id;
+        
         // Create new Connection
         conn.last_rec_tick = welcomePacket.tick;
         conn.socket = sockfd;

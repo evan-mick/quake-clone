@@ -14,7 +14,7 @@
 #include <queue>
 #include <thread>
 #include <mutex>
-
+#include "../game_types.h"
 #include <sys/socket.h>
 #include <netdb.h>
 
@@ -85,8 +85,12 @@ public:
     // int initClient(const char* ip, const char* port);
     void updateTickBuffer(Packet packet, Connection* conn, unsigned int tick);
     void pushTickData(TickData td, Connection* conn);
+    void mainLoop(float delta);
+    void getEntityID();
+
 
 private:
+    entity_t m_entityID = 0;
     bool m_isServer = false;
     ECS* m_ecs;
     std::atomic_bool m_shutdown; // equal sign needs to be removed and defined in the consructor I think
@@ -110,8 +114,8 @@ private:
     int setupUDPConn(const char* address, const char* port);
 
     // Tick stuff
-    Timer m_timer = Timer(1/20.f);
-    float m_tickRate = 1/20.f;
+    Timer m_timer = Timer(TICK_RATE);
+    float m_tickRate = TICK_RATE;
 };
 
 #endif // NETWORK_H
