@@ -96,10 +96,10 @@ void Network::serverListen(const char* ip, const char* port) {
         struct sockaddr clientAddr {};
         socklen_t clientAddrLen = sizeof(clientAddr);
 
-        char* rec_buff = new char[1400];
+        char* rec_buff = new char[FULL_PACKET];
         
         // Receive packet
-        int bytesReceived = recvfrom(serverSocket, rec_buff, 1400, 0, &clientAddr, &clientAddrLen);
+        int bytesReceived = recvfrom(serverSocket, rec_buff, FULL_PACKET, 0, &clientAddr, &clientAddrLen);
         if (bytesReceived < 0) {
             // Handle error
             std::cout << "Packet received error: " << serverSocket << " " << bytesReceived << std::endl;
@@ -133,7 +133,6 @@ void Network::serverListen(const char* ip, const char* port) {
             char ip[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, &(conn->ip), ip, INET_ADDRSTRLEN);
             conn->socket = setupUDPConn(ip, std::to_string(conn->port).c_str());
-
 
 
             // Add to connestions map
@@ -225,24 +224,24 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
     // Iterate through all connections, pop once per tick
 //    m_connectionMutex.lock();
     std::lock_guard<std::mutex> lock(m_connectionMutex);
-    for (auto& conn : m_connectionMap) { 
+    for (auto& [ip, conn] : m_connectionMap) {
 
         TickData data;
-        conn.second->tick_buffer.mutex.lock();
+        conn->tick_buffer.mutex.lock();
 
-        if (!conn.second->tick_buffer.buffer.empty()) {
+        if (!conn->tick_buffer.buffer.empty()) {
 
             // Pop data
-            data = conn.second->tick_buffer.buffer.front();
-            conn.second->tick_buffer.buffer.pop();
+            data = conn->tick_buffer.buffer.front();
+            conn->tick_buffer.buffer.pop();
 
             // Deserialize data into ECS
-            ecs->deserializeIntoData(data.data, sizeof(data.data), nullptr);
+            ecs->deserializeIntoData(data.data, FULL_PACKET, nullptr);
 
             // Delete data
             delete[] data.data;
         }
-        conn.second->tick_buffer.mutex.unlock();
+        conn->tick_buffer.mutex.unlock();
     }
 
 //    m_connectionMutex.unlock();
@@ -297,10 +296,10 @@ int Network::connect(const char* ip, const char* port) {
 
     // Wait for Welcome packet
 //    Packet welcomePacket;
-    char* buff = new char[1400];
+    char* buff = new char[FULL_PACKET];
 
     // Listen on that port for a welcome packet
-    int bytes = recvfrom(sockfd, buff, 1400, 0, (struct sockaddr *)&servAddr, &servAddr_len);
+    int bytes = recvfrom(sockfd, buff, FULL_PACKET, 0, (struct sockaddr *)&servAddr, &servAddr_len);
     Packet pack = *((Packet*) buff);
 
 
@@ -412,11 +411,11 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
 
     // Instantiate new TickData
     TickData* td = new TickData;
-    char* tick_data = new char[1400];
+    char* tick_data;
 
     // Serialize data
     int data_written = ecs->serializeData(&tick_data);
-    assert(data_written <= 1400);
+    assert(data_written <= FULL_PACKET);
     td->data = tick_data;
     td->tick = tick;
     
@@ -454,22 +453,22 @@ void Network::clientListen() {
         // Iterate through all connections and find the server (should only be one)
         std::lock_guard<std::mutex> lock(m_connectionMutex);
 
-        for (auto& conn : this->m_connectionMap) {
+        for (auto& [ip, conn] : this->m_connectionMap) {
 
-            std::cout << " conn " << conn.first << " " << (long)(conn.second) << std::endl;
+            std::cout << " conn " << ip << " " << (long)(conn) << std::endl;
 
             // This is the server
-            if (conn.second->entity == -1) {
+            if (conn->entity == -1) {
 
-                int servSocket = conn.second->socket;
+                int servSocket = conn->socket;
 
                 // Construct packet
 //                Packet packet;
-                char* buff = new char[1400];
-                memset(buff, 0, 1400);
+                char* buff = new char[FULL_PACKET];
+                memset(buff, 0, FULL_PACKET);
 
-                uint32_t serverIP = conn.second->ip;
-                uint16_t serverPort = conn.second->port;
+                uint32_t serverIP = conn->ip;
+                uint16_t serverPort = conn->port;
 
                 // Receive packet
                 struct sockaddr_in servAddr;
@@ -478,17 +477,19 @@ void Network::clientListen() {
                 servAddr.sin_family = AF_INET;
                 servAddr.sin_port = serverPort;
                 std::cout << "Attempting to receive " << servSocket << std::endl;
-                recvfrom(servSocket, (char*)&buff, 1400, 0, (struct sockaddr *)&servAddr, &servAddr_len);
+                int bytes = recvfrom(servSocket, buff, FULL_PACKET, 0, (struct sockaddr *)&servAddr, &servAddr_len);
 
+                std::cout << "Received: " << bytes << std::endl;
                 Packet packet = *((Packet*) buff);
 
                 // Process packet
                 if (packet.command == 'D') {
+                    std::cout << "D Command" << std::endl;
                     // Populate data based on received Packet
                     unsigned int tick = m_timer.getTimesRun();
-                    updateTickBuffer(buff, conn.second, tick);
+                    updateTickBuffer(buff + sizeof(Packet), conn, tick);
                 }
-                delete[] buff;
+//                delete[] buff;
                 break;
             }
         }

@@ -101,7 +101,8 @@ void Game::startGame(bool server, const char* ip) {
 
     while (m_running) {
 
-        net->deserializeAllDataIntoECS(&ecs);
+        if (net)
+            net->deserializeAllDataIntoECS(&ecs);
 
 //        Input::checkKeys(window);
 //        if (Input::getHeld())
@@ -142,7 +143,8 @@ void Game::startGame(bool server, const char* ip) {
             glfwPollEvents();
         }
 
-        net->mainLoop(ecs.getRecentDelta());
+        if (net)
+            net->mainLoop(ecs.getRecentDelta());
     }
     glfwTerminate();
 

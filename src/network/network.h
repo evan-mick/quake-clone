@@ -64,6 +64,8 @@ struct Connection {
 //    return (a.tick < b.tick);
 //}
 
+const int FULL_PACKET = 1400;
+
 
 
 class Network
