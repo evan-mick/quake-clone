@@ -105,7 +105,7 @@ void Game::startGame(bool server, const char* ip) {
 
     while (m_running) {
 
-        if (net) {
+        if (net) 
             net->deserializeAllDataIntoECS(&ecs);
 
         //        Input::checkKeys(window);
@@ -159,7 +159,7 @@ void Game::startGame(bool server, const char* ip) {
         if (net)
             net->broadcastOnTick(ecs.getRecentDelta());
             // std::cout << "tick broadcasted (game)" << std::endl;
-        }
+        
     }
     glfwTerminate();
 
