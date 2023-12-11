@@ -6,7 +6,9 @@
 
 /* TODO:
     
-    -- Deal with client authority
+    -- Deal with client authority in deserialize
+    -- Subscribe to events (Evan)
+    
 
 */
 
