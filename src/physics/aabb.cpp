@@ -13,10 +13,6 @@ AABB::AABB(float points[6]){
     }
 }
 
-AABB::AABB() : points_{0,0,0,0,0,0} {
-
-}
-
 bool AABB::intersects(Ray ray, float& tVal){
     tVal = std::numeric_limits<float>::max();
     for (int i=0;i<3;i++) {

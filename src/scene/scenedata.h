@@ -1,5 +1,6 @@
 #pragma once
 
+#include "QtGui/qimage.h"
 #include <vector>
 #include <string>
 
@@ -9,7 +10,13 @@
 #define PARAM_2 10
 
 
-
+struct SceneTexture{
+    GLuint tex;
+    QImage image;
+    int width;
+    int height;
+    int slot;
+};
 
 
 // Enum of the types of virtual lights that might be in the scene

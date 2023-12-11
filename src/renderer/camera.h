@@ -52,7 +52,7 @@ public:
 
     inline void updateFromEnt(ECS* e, entity_t ent) {
         Transform* trans = getTransform(e, ent);
-        updatePos(trans->pos+glm::vec3(0.0,2.2,0));
+        updatePos(trans->pos+glm::vec3(0,2.2,0));
     }
 
     void updatePos(glm::vec3 pos);

@@ -54,6 +54,8 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
         // These are both required by run step, no null check needed, if null something is wrong
         PhysicsData* physDat = static_cast<PhysicsData*>(e->getComponentData(my_ent, FLN_PHYSICS));
         Transform* transform = static_cast<Transform*>(e->getComponentData(my_ent, FLN_TRANSFORM));
+        Renderable* rend = static_cast<Renderable*>(e->getComponentData(my_ent, FLN_RENDER));
+
         assert(physDat != nullptr && transform != nullptr);
 
         // I think this ordering is right?
