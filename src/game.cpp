@@ -27,7 +27,7 @@ Game::Game()
 
 }
 
-void Game::startGame(bool server) {
+void Game::startGame(bool server, const char* ip) {
 
     std::cout << "Starting Game" << std::endl;
     m_server = server;
@@ -37,10 +37,15 @@ void Game::startGame(bool server) {
     std::cout << "Phys ECS" << std::endl;
 
     // disabling network for now
-//    Network net = Network(server, &ecs);
-//    std::cout << "Net" << std::endl;
+    if (!strcmp(ip, "\n") || server) {
+        Network net = Network(server, &ecs, ip);
+        std::cout << "Network setup: " << (server ? "server" : "client connecting to" + std::string(ip)) << std::endl;
+    } else {
+        std::cout << "No Networking" << std::endl;
+    }
 
-    setupWindow();
+    if (!server)
+        setupWindow();
 
     // Parse setup
     SceneParser SCENEparser = SceneParser();
@@ -52,7 +57,9 @@ void Game::startGame(bool server) {
     Camera cam = Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, SceneParser::getSceneData().cameraData);
 
     Renderer render = Renderer(&cam);
-    Renderer::default_render->setRatio(m_monitorXScale, m_monitorYScale);
+
+    if (!server)
+        Renderer::default_render->setRatio(m_monitorXScale, m_monitorYScale);
 
 
 
@@ -63,7 +70,9 @@ void Game::startGame(bool server) {
         registerInputs();
 
 
-    entity_t ent = createPlayer(&ecs, glm::vec3(0, 3.f, 0));
+    entity_t ent;
+    if (!m_server)
+        ent = createPlayer(&ecs, glm::vec3(0, 3.f, 0));
 
 //    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
 //        Renderer::default_render->resizeGL(width, height);
@@ -77,35 +86,41 @@ void Game::startGame(bool server) {
 //        Input::checkKeys(window);
 //        if (Input::getHeld())
 //            std::cout << "held " << Input::getHeld() << std::endl;
-        InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
-        in->dat = Input::getHeld();
+        if (!m_server) {
+            InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
+            in->dat = Input::getHeld();
 
-        double xpos, ypos;
-        glfwGetCursorPos(m_window, &xpos, &ypos);
-        in->x_look -= (xpos - last_x_look) * 1/100.f;
-        in->y_look += (ypos - last_y_look) * 1/100.f;
-        last_x_look = xpos;
-        last_y_look = ypos;
+            double xpos, ypos;
+            glfwGetCursorPos(m_window, &xpos, &ypos);
+            in->x_look -= (xpos - last_x_look) * 1/100.f;
+            in->y_look += (ypos - last_y_look) * 1/100.f;
+            last_x_look = xpos;
+            last_y_look = ypos;
 
-        in->y_look = std::clamp(in->y_look, 0.2f, 3.0f);
-//         getComponentData<InputData>(&ecs, ent, FLN_INPUT)-> = Input::getHeld();
+            in->y_look = std::clamp(in->y_look, 0.2f, 3.0f);
+    //         getComponentData<InputData>(&ecs, ent, FLN_INPUT)-> = Input::getHeld();
 
-//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        render.startDraw();
+    //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            render.startDraw();
+        }
+        // Main simulation logic
         Physics::phys->startFrame();
-
         ecs.update();
-        cam.updateFromEnt(&ecs, ent);
-        cam.setRotation(in->x_look, in->y_look);
 
-        render.drawStaticObs();
-        render.drawScreen();
+        if (!m_server) {
+            InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
+            cam.updateFromEnt(&ecs, ent);
+            cam.setRotation(in->x_look, in->y_look);
 
-        // Swap front and back buffers
-        glfwSwapBuffers(m_window);
+            render.drawStaticObs();
+            render.drawScreen();
 
-        // Poll for and process events
-        glfwPollEvents();
+            // Swap front and back buffers
+            glfwSwapBuffers(m_window);
+
+            // Poll for and process events
+            glfwPollEvents();
+        }
 
 
     }

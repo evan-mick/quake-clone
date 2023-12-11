@@ -15,7 +15,7 @@ class Game
 public:
     Game();
 
-    void startGame(bool server);
+    void startGame(bool server, const char* ip);
 private:
     bool m_running = true;
     bool m_server = false;

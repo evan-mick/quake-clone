@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include "../game_types.h"
+#include <iostream>
 
 /* TODO:
     
@@ -25,8 +26,6 @@ Network::Network(bool server, ECS* ecs, const char* ip)
     
     // Initialize server
     if (server) {
-
-
         // Server has authority over everything by default
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
 
@@ -79,7 +78,8 @@ void Network::serverListen(const char* ip, const char* port) {
 
     int serverSocket = setupUDPConn(ip, port); 
     if (serverSocket < 0) {
-        throw std::runtime_error("Unable to set up UDP connection for server");
+        std::cout << "Unable to set up UDP connection for server" << std::endl;
+        return;
     }
 
     while (!m_shutdown) {
@@ -140,7 +140,8 @@ void Network::serverListen(const char* ip, const char* port) {
 
             // If not found, throw error
             if (conn == nullptr) {
-                throw std::runtime_error("Connection not found in the map");
+                std::cout << "Connection not found in the map" << std::endl;
+                continue;
             } 
 
             // Edit the connection to update last received tick
