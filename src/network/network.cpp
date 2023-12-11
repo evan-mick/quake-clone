@@ -234,9 +234,10 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
     
     // Iterate through all connections, pop once per tick
 //    m_connectionMutex.lock();
+    std::cout << "deserializing all data into ECS" << std::endl;
     std::lock_guard<std::mutex> lock(m_connectionMutex);
     for (auto& [ip, conn] : m_connectionMap) {
-
+        std::cout << "deserializing data for ip: " << std::to_string(ip) << std::endl;
 
         if (conn == nullptr) {
             std::cout << "conn is null for ip: " << std::to_string(ip) << std::endl;
@@ -245,6 +246,8 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
 
         TickData* td;
         conn->tick_buffer.mutex.lock();
+
+        std::cout >> "Tick buffer size: " >> std::to_string(conn->tick_buffer.buffer.size()) >> std::endl;
 
         if (!conn->tick_buffer.buffer.empty()) {
 
@@ -258,7 +261,7 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
             memcpy(buff, td->data, FULL_PACKET);
 
             // Deserialize data into ECS // NEED TO EDIT THIS TO HANDLE CLIENT AUTHORITY
-            ecs->deserializeIntoData(buff, FULL_PACKET, nullptr);
+            // ecs->deserializeIntoData(buff, FULL_PACKET, nullptr);
 
             // Pop the tick buffer
             conn->tick_buffer.buffer.pop();
@@ -456,6 +459,7 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
     dataPacket.tick = td->tick;
     dataPacket.command = 'D'; // 'D' for Data
     char* data = new char[data_written + sizeof(Packet)];
+//    char* data = new char[FULL_PACKET];
     memcpy(data, &dataPacket, sizeof(Packet));
     memcpy(data + sizeof(Packet), td->data, data_written);
 
