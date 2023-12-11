@@ -54,7 +54,8 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         // Attempt to connect to server
         int clientSetup = connect(ip, DEFAULT_PORT); 
         if (clientSetup != 0) {
-            throw std::runtime_error("Client initialization failed");
+            std::cout << "CLIENT INTIALIZATION FAILED" << std::endl;
+//            throw std::runtime_error("Client initialization failed");
         }
 
         std::cout << "Connection Established" << std::endl;
@@ -574,7 +575,7 @@ void Network::editConnection(uint32_t ip, unsigned int tick) {
 
     std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map after getting the connection
     if (conn == nullptr) {
-        throw std::runtime_error("Connection not found in the map");
+        std::cout << "Connection not found in the map" << std::endl;
     }
     conn->last_rec_tick = tick;
 }
