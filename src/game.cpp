@@ -285,13 +285,49 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
             vel += -sideDirection;
         }
 
-        glm::vec3 norm_vel = glm::normalize(vel) * 10.f;
+        // TO BE IMPROVED, the actual quake accel code, doesn't really work rn
+        glm::vec3 norm_vel = glm::normalize(vel) * 5.f;
         if (vel != glm::vec3(0, 0, 0)) {
             phys->vel.x = norm_vel.x;
             phys->vel.z = norm_vel.z;
+
+            float current = glm::dot(phys->vel, norm_vel);
+            float wishspeed = 10.f;
+            float addspeed = wishspeed - current;
+            float accelspeed = .1f * delta * wishspeed;
+            if (addspeed > 0) {
+                if (accelspeed > addspeed) {
+                    accelspeed = addspeed;
+                }
+                phys->accel.x = norm_vel.x * accelspeed;
+                phys->accel.z = norm_vel.z * accelspeed;
+            }
+
         }
         else
             phys->vel = glm::vec3(0, phys->vel.y, 0);
+
+//        int			i;
+//        float		addspeed, accelspeed, currentspeed;
+
+
+        /*currentspeed = DotProduct (pm->ps->velocity, wishdir);
+        addspeed = wishspeed - currentspeed;
+        if (addspeed <= 0) {
+            return;
+        }
+        accelspeed = accel*pml.frametime*wishspeed;
+        if (accelspeed > addspeed) {
+            accelspeed = addspeed;
+        }
+
+        for (i=0 ; i<3 ; i++) {
+            pm->ps->velocity[i] += accelspeed*wishdir[i];
+        }*/
+
+
+
+
 
 
         if (Input::isHeld(in->dat, IN_JUMP) && phys->grounded) {
