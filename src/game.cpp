@@ -38,7 +38,7 @@ void Game::startGame(bool server, const char* ip) {
 
     // disabling network for now
     if (std::string(ip) != "" || server) {
-        std::cout << "Network setup: " << (server ? "server" : "client connecting to" + std::string(ip)) << std::endl;
+        std::cout << "Network setup: " << (server ? "server" : "client connecting to " + std::string(ip)) << std::endl;
         Network net = Network(server, &ecs, ip);
         std::cout << "Network setup attempt complete" << std::endl;
     } else {

@@ -2,8 +2,9 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include "../game_types.h"
+#include "game_types.h"
 #include <iostream>
+#include "game_create_helpers.h"
 
 /* TODO:
     
@@ -77,28 +78,36 @@ void Network::mainLoop(float delta) {
 
 void Network::serverListen(const char* ip, const char* port) {
 
-    int serverSocket = setupUDPConn(ip, port); 
+    // Null addr means listen socket
+    int serverSocket = setupUDPConn(nullptr, port);
     if (serverSocket < 0) {
         std::cout << "Unable to set up UDP connection for server" << std::endl;
         return;
     }
 
     while (!m_shutdown) {
-        Packet packet;
-        struct sockaddr clientAddr;
+
+        struct sockaddr clientAddr {};
         socklen_t clientAddrLen = sizeof(clientAddr);
+
+        char* rec_buff = new char[1400];
         
         // Receive packet
-        int bytesReceived = recvfrom(serverSocket, (char*)&packet, sizeof(packet), 0, &clientAddr, &clientAddrLen);
+        int bytesReceived = recvfrom(serverSocket, rec_buff, 1400, 0, &clientAddr, &clientAddrLen);
         if (bytesReceived < 0) {
             // Handle error
+            std::cout << "Packet received error: " << serverSocket << " " << bytesReceived << std::endl;
+            perror("server error: ");
             continue;
         }
 
+        std::cout << "Packet received successfully with size: " << bytesReceived << std::endl;
+
+        Packet packet = *((Packet*)rec_buff);
         // Process received packet
         if (packet.command == 'H') { // 'H' for Hello
             // Create entity for client
-            int entity_id = m_ecs->createEntity({FLN_PHYSICS, FLN_TRANSFORM, FLN_TEST, FLN_TESTKILL});
+            entity_t entity_id = createPlayer(m_ecs, glm::vec3(0, 3.f, 0));//m_ecs->createEntity({FLN_PHYSICS, FLN_TRANSFORM, FLN_TEST, FLN_TESTKILL});
             char* welcome_entity_id = new char[sizeof(entity_id)];
             memcpy(welcome_entity_id, &entity_id, sizeof(entity_id));
             
@@ -106,28 +115,42 @@ void Network::serverListen(const char* ip, const char* port) {
             m_hasAuthority[entity_id] = false; 
 
             // Make new Connection
-            Connection conn;
-            conn.last_rec_tick = packet.tick;
-            conn.socket = serverSocket;
-            conn.entity = entity_id;
-            conn.ip = (uint32_t)((struct sockaddr_in*)&clientAddr)->sin_addr.s_addr;
-            conn.port = (uint16_t)((struct sockaddr_in*)&clientAddr)->sin_port;
+            Connection* conn = new Connection();
+            conn->last_rec_tick = packet.tick;
+
+            conn->entity = entity_id;
+            conn->ip = (uint32_t)((struct sockaddr_in*)&clientAddr)->sin_addr.s_addr;
+            conn->port = (uint16_t)((struct sockaddr_in*)&clientAddr)->sin_port;
             uint32_t clientIP = ((struct sockaddr_in*)&clientAddr)->sin_addr.s_addr;
 
+            // Create send socket to new connection
+            char ip[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &(conn->ip), ip, INET_ADDRSTRLEN);
+            conn->socket = setupUDPConn(ip, std::to_string(conn->port).c_str());
+
+
+
             // Add to connestions map
-            addConnection(clientIP, &conn);
+            this->addConnection(clientIP, conn);
+            std::cout << "connection added" << std::endl;
 
             // Construct welcome packet
             Packet welcomePacket;
             welcomePacket.tick = m_timer.getTimesRun(); 
             welcomePacket.command = 'W'; // 'W' for Welcome
-            welcomePacket.data = welcome_entity_id;
+//            welcomePacket.data = welcome_entity_id;
+
+            char* send_buff = new char[sizeof(Packet) + sizeof(entity_t)];
+            memcpy(send_buff, &welcomePacket, sizeof(Packet));
+            memcpy(send_buff + sizeof(Packet), &welcome_entity_id, sizeof(entity_t));
 
             // Send welcome packet
-            sendto(serverSocket, (char*)&welcomePacket, sizeof(welcomePacket), 0, &clientAddr, clientAddrLen);
+            sendto(serverSocket, send_buff, sizeof(Packet) + sizeof(entity_t), 0, &clientAddr, clientAddrLen);
+            std::cout << "welcome packet sent" << std::endl;
 
             // Clean up
             delete[] welcome_entity_id;
+            delete[] send_buff;
 
         } else if (packet.command == 'D') { // 'D' for Data
             // Get tick at which packet was received
@@ -149,17 +172,28 @@ void Network::serverListen(const char* ip, const char* port) {
             editConnection(conn->ip, tick);
 
             // Populate data based on received Packet
-            updateTickBuffer(packet, conn, tick);
+            updateTickBuffer(rec_buff + sizeof(Packet), conn, tick);
         }
+        delete[] rec_buff;
     }
     close(serverSocket);
+    for (auto& [key, val] : m_connectionMap) {
+        close(val->socket);
+    }
 }
 
 void Network::addConnection(uint32_t ip, Connection* conn) {
 
     // Add connection to map
-    std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map
-    m_connectionMap[ip] = conn;
+//    std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map
+
+    if (m_connectionMutex.try_lock()) {
+        m_connectionMap[ip] = conn;
+        m_connectionMutex.unlock();
+        return;
+    }
+    std::cout << "add connection failed, try lock failed" << std::endl;
+
 }
 
 Connection* Network::getConnection(uint32_t ip) {
@@ -238,7 +272,7 @@ int Network::connect(const char* ip, const char* port) {
     Packet helloPacket;
     helloPacket.tick = m_timer.getTimesRun(); 
     helloPacket.command = 'H'; // 'H' for Hello
-    helloPacket.data = nullptr; 
+//    helloPacket.data = nullptr;
 
     struct sockaddr_in servAddr;
     socklen_t servAddr_len = sizeof(servAddr);
@@ -249,23 +283,27 @@ int Network::connect(const char* ip, const char* port) {
     sendto(sockfd, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, servAddr_len);
 
     // Wait for Welcome packet
-    Packet welcomePacket;
+//    Packet welcomePacket;
+    char* buff = new char[1400];
 
     // Listen on that port for a welcome packet
-    recvfrom(sockfd, (char*)&welcomePacket, sizeof(welcomePacket), 0, (struct sockaddr *)&servAddr, &servAddr_len);
+    int bytes = recvfrom(sockfd, buff, 1400, 0, (struct sockaddr *)&servAddr, &servAddr_len);
+    Packet pack = *((Packet*) buff);
 
-    if (welcomePacket.command == 'W') {
+    std::cout << "Potential welcome packet received bytes read " << bytes << std::endl;
+
+    if (pack.command == 'W') {
         // Create new Connection
         Connection conn;
-        char* entity_id = welcomePacket.data;
-        assert(entity_id != nullptr);
+        entity_t entity_id = *((entity_t*)buff + sizeof(Packet));
+        //assert(entity_id != nullptr);
 
         //client has authority over this
-        m_hasAuthority[*entity_id] = true;
-        m_myPlayerEntityID = *entity_id;
+        m_hasAuthority[entity_id] = true;
+        m_myPlayerEntityID = entity_id;
         
         // Create new Connection
-        conn.last_rec_tick = welcomePacket.tick;
+        conn.last_rec_tick = pack.tick;
         conn.socket = sockfd;
         conn.entity = -1; // -1 for server
         conn.ip = (uint32_t)((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
@@ -330,16 +368,17 @@ int Network::setupUDPConn(const char* address, const char* port) {
     // Create a listening socket for the server on default port
     for (p = servinfo; p != NULL; p = p->ai_next) {
         if ((sock = socket(p->ai_family, p->ai_socktype,
-                p->ai_protocol)) == -1) {
+                           p->ai_protocol)) < 0) {
             perror("server: socket");
             continue;
         }
         
-        if (bind(sock, p->ai_addr, p->ai_addrlen) == -1) {
+        if (bind(sock, p->ai_addr, p->ai_addrlen) < 0) {
             close(sock);
             perror("server: bind");
             continue;
         }
+        std::cout << "socket bound " << sock << std::endl;
         break;
     }
 
@@ -348,8 +387,8 @@ int Network::setupUDPConn(const char* address, const char* port) {
         return -2;
     }
 
-    freeaddrinfo(servinfo); 
-    return 0;
+    freeaddrinfo(servinfo);
+    return sock;
 }
 
 
@@ -370,8 +409,9 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
     dataPacket.tick = td->tick;
     dataPacket.command = 'D'; // 'D' for Data
     char* data = new char[data_written];
-    memcpy(data, td->data, data_written);
-    dataPacket.data = data;
+    memcpy(data, &dataPacket, sizeof(Packet));
+    memcpy(data + sizeof(Packet), td->data, data_written);
+//    dataPacket.data = data;
 
     // Send data to server
     struct sockaddr_in connAddr;
@@ -379,7 +419,7 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
     connAddr.sin_addr.s_addr = conn->ip;
     connAddr.sin_family = AF_INET;
     connAddr.sin_port = conn->port;
-    sendto(conn->socket, (char*)&dataPacket, sizeof(dataPacket), 0, (struct sockaddr *)&connAddr, connAddr_len);
+    sendto(conn->socket, (char*)&data, sizeof(dataPacket) + data_written, 0, (struct sockaddr *)&connAddr, connAddr_len);
 
     // Clean up
     delete[] data;
@@ -405,7 +445,10 @@ void Network::clientListen() {
                 servSocket = conn.second->socket;
 
                 // Construct packet
-                Packet packet;
+//                Packet packet;
+                char* buff = new char[1400];
+                memset(buff, 0, 1400);
+
                 uint32_t serverIP = conn.second->ip;
                 uint16_t serverPort = conn.second->port;
 
@@ -415,13 +458,14 @@ void Network::clientListen() {
                 servAddr.sin_addr.s_addr = serverIP;
                 servAddr.sin_family = AF_INET;
                 servAddr.sin_port = serverPort;
-                recvfrom(servSocket, (char*)&packet, sizeof(packet), 0, (struct sockaddr *)&servAddr, &servAddr_len);
+                recvfrom(servSocket, (char*)&buff, 1400, 0, (struct sockaddr *)&servAddr, &servAddr_len);
+                Packet packet = *((Packet*) buff);
 
                 // Process packet
                 if (packet.command == 'D') {
                     // Populate data based on received Packet
                     unsigned int tick = m_timer.getTimesRun();
-                    updateTickBuffer(packet, conn.second, tick);
+                    updateTickBuffer(buff, conn.second, tick);
                 }
                 break;
             }
@@ -431,15 +475,16 @@ void Network::clientListen() {
     }
 }
 
-void Network::updateTickBuffer(Packet packet, Connection* conn, unsigned int tick) {
+void Network::updateTickBuffer(char* data, Connection* conn, unsigned int tick) {
 
     // Populate data based on received Packet
     TickData td;
     td.tick = tick;
-    size_t dataSize = sizeof(packet.data); 
-    char* dataPtr = new char[dataSize]; 
-    memcpy(dataPtr, packet.data, dataSize);
-    td.data = dataPtr;
+    td.data = data;
+//    size_t dataSize = sizeof(packet.data);
+//    char* dataPtr = new char[dataSize];
+//    memcpy(dataPtr, packet.data, dataSize);
+//    td.data = dataPtr;
 
     // Push data into tick buffer
     pushTickData(td, conn);
