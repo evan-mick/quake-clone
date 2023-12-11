@@ -510,15 +510,13 @@ void Network::clientListen() {
                     // Populate data based on received Packet
                     unsigned int tick = m_timer.getTimesRun();
                     updateTickBuffer(data, conn, tick);
-                    delete[] buff;
-                    delete[] data;
+                    
                 } else {
                     std::cout << "Unknown command" << std::endl;
-                    delete[] buff;
-                    delete[] data;
-                    continue;
                 }
-                break;
+                delete[] buff;
+                delete[] data;
+                continue;
             }
         }
     }
