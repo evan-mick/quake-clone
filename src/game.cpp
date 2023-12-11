@@ -1,3 +1,6 @@
+
+
+
 //
 
 #include "game.h"
@@ -55,7 +58,7 @@ void Game::startGame(bool server, const char* ip) {
 
     // Parse setup
     SceneParser SCENEparser = SceneParser();
-//    SCENEparser.parse("../../resources/scenes/phong_total.json");
+    //    SCENEparser.parse("../../resources/scenes/phong_total.json");
     SCENEparser.parse("../../resources/scenes/empty.json");
     phys.setStaticObs(&SceneParser::getSceneData());
     SceneParser::getSceneData().cameraData.heightAngle = FOV;
@@ -76,7 +79,7 @@ void Game::startGame(bool server, const char* ip) {
 
     if (!server)
         render.setRatio(m_monitorXScale, m_monitorYScale);
-//        render.resizeGL(DSCREEN_WIDTH,DSCREEN_HEIGHT);
+    //        render.resizeGL(DSCREEN_WIDTH,DSCREEN_HEIGHT);
 
     registerECSComponents(ecs);
     registerECSSystems(ecs, phys, render);
@@ -91,9 +94,9 @@ void Game::startGame(bool server, const char* ip) {
     else if (!m_server)
         ent = net->getMyPlayerEntityID();
 
-//    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
-//        Renderer::default_render->resizeGL(width, height);
-//    });
+    //    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
+    //        Renderer::default_render->resizeGL(width, height);
+    //    });
 
     float last_x_look = 0;
     float last_y_look = 0;
@@ -103,11 +106,13 @@ void Game::startGame(bool server, const char* ip) {
         if (net)
             net->deserializeAllDataIntoECS(&ecs);
 
-//        Input::checkKeys(window);
-//        if (Input::getHeld())
-//            std::cout << "held " << Input::getHeld() << std::endl;
+        //        Input::checkKeys(window);
+        //        if (Input::getHeld())
+        //            std::cout << "held " << Input::getHeld() << std::endl;
+        InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
+
         if (!m_server) {
-            InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
+//            InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
             in->dat = Input::getHeld();
 
             double xpos, ypos;
@@ -118,9 +123,9 @@ void Game::startGame(bool server, const char* ip) {
             last_y_look = ypos;
 
             in->y_look = std::clamp(in->y_look, 0.2f, 3.0f);
-    //         getComponentData<InputData>(&ecs, ent, FLN_INPUT)-> = Input::getHeld();
+            //         getComponentData<InputData>(&ecs, ent, FLN_INPUT)-> = Input::getHeld();
 
-    //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             render.startDraw();
         }
         // Main simulation logic
@@ -128,7 +133,6 @@ void Game::startGame(bool server, const char* ip) {
         ecs.update();
 
         if (!m_server) {
-            InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
             cam.updateFromEnt(&ecs, ent);
             cam.setRotation(in->x_look, in->y_look);
 
@@ -183,7 +187,7 @@ void Game::setupWindow() {
     //    gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(1);
 
-//    float xscale, yscale;
+    //    float xscale, yscale;
     int realWidth,realHeight;
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     glfwGetWindowContentScale(window, &m_monitorXScale,&m_monitorYScale);
@@ -212,7 +216,7 @@ void Game::registerECSComponents(ECS& ecs) {
     ecs.registerComponent(FLN_TRANSFORM, sizeof(Transform));
     ecs.registerComponent(FLN_INPUT, sizeof(InputData));
 
-//    if (!m_server)
+    //    if (!m_server)
     ecs.registerComponent(FLN_RENDER, sizeof(Renderable));
 
     ecs.registerComponent(FLN_TEST, sizeof(Test));
@@ -236,17 +240,17 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
             renderer.drawDynamicOb(e, ent, delta);
         } , {FLN_TRANSFORM, FLN_RENDER});
 
-//    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
+    //    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
 
-////        std::cout << "thing" << std::endl;
-//        PhysicsData* phys = getPhys(e, ent);
-//        Transform* trans = getTransform(e, ent);
-//        Test* ts = getComponentData<Test>(e, ent, FLN_TEST);
+    ////        std::cout << "thing" << std::endl;
+    //        PhysicsData* phys = getPhys(e, ent);
+    //        Transform* trans = getTransform(e, ent);
+    //        Test* ts = getComponentData<Test>(e, ent, FLN_TEST);
 
-//        ts->timer += delta;
+    //        ts->timer += delta;
 
-////        trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
-//    }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM});
+    ////        trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
+    //    }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM});
 
     ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
 
@@ -255,7 +259,7 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         Transform* trans = getTransform(e, ent);
         Test* ts = getComponentData<Test>(e, ent, FLN_TEST);
         InputData* in = getComponentData<InputData>(e, ent, FLN_INPUT);
-//        std::cout << "test " << ent << std::endl;
+        //        std::cout << "test " << ent << std::endl;
 
         phys->accel = glm::vec3(0, -.98f, 0);
 
@@ -307,8 +311,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         else
             phys->vel = glm::vec3(0, phys->vel.y, 0);
 
-//        int			i;
-//        float		addspeed, accelspeed, currentspeed;
+        //        int			i;
+        //        float		addspeed, accelspeed, currentspeed;
 
 
         /*currentspeed = DotProduct (pm->ps->velocity, wishdir);
@@ -341,7 +345,7 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         in->last_dat = in->dat;
         ts->timer += delta;
 
-//        trans->pos = glm::vec3(2.f * glm::acos(ts->timer), trans->pos.y, trans->pos.z);
+        //        trans->pos = glm::vec3(2.f * glm::acos(ts->timer), trans->pos.y, trans->pos.z);
     }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM, FLN_INPUT});
 
 }

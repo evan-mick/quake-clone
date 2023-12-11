@@ -132,6 +132,7 @@ void Renderer::makeFBO() {
     glGenRenderbuffers(1, &m_fbo_renderbuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, m_fbo_renderbuffer);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_screen_width, m_screen_height);
+
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     // Task 18: Generate and bind an FBO
@@ -399,7 +400,8 @@ void Renderer::paintTexture(GLuint texture, bool post_process, int slot, float o
     } else {
         glDisable(GL_DEPTH_TEST);
     }
-
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(1.0f, 1.0f);
 
     glUseProgram(m_texture_shader);
 
@@ -423,6 +425,8 @@ void Renderer::paintTexture(GLuint texture, bool post_process, int slot, float o
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
     glUseProgram(0);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+
 
     if(slot>=m_texture_map.size()) {
         glDisable(GL_BLEND);
@@ -580,7 +584,6 @@ void Renderer::drawScreen() {
         std::cerr << "OpenGL error: " << error << std::endl;
     }
 
-
     glUseProgram(0);
 
 }
@@ -727,7 +730,9 @@ void Renderer::drawStaticObs()
 
 
     }
-    glBindVertexArray(0);
+
+
+//    glBindVertexArray(0);
 
 
 }
