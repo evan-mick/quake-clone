@@ -197,13 +197,14 @@ void Network::addConnection(uint32_t ip, Connection* conn) {
     // Add connection to map
     // std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map
 
-    if (m_connectionMutex.try_lock()) {
+    m_connectionMutex.lock();
+    if (m_connectionMap.find(ip) == m_connectionMap.end()) {
         m_connectionMap[ip] = conn;
-        m_connectionMutex.unlock();
-        return;
+        std::cout << "connection added to map" << std::endl;
     } else {
-        m_connectionMap[ip] = conn;
+        std::cout << "connection already exists in map" << std::endl;
     }
+    m_connectionMutex.unlock();
 //    std::cout << "add connection failed, try lock failed" << std::endl;
 
 }
