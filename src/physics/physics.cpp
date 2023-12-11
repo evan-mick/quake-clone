@@ -58,10 +58,6 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
         assert(physDat != nullptr && transform != nullptr);
 
-
-
-
-
         // I think this ordering is right?
         physDat->vel += physDat->accel;
 

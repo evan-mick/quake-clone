@@ -14,7 +14,7 @@
 #include <queue>
 #include <thread>
 #include <mutex>
-
+#include "../game_types.h"
 #include <sys/socket.h>
 #include <netdb.h>
 
@@ -27,7 +27,7 @@ const int MAX_PLAYERS = 4;
 struct Packet {
     unsigned int tick;
     char command;
-    char* data;
+//    char* data;
 };
 
 struct TickData {
@@ -83,14 +83,21 @@ public:
     
     void onTick(unsigned int tick);
     // int initClient(const char* ip, const char* port);
-    void updateTickBuffer(Packet packet, Connection* conn, unsigned int tick);
+    void updateTickBuffer(char* data, Connection* conn, unsigned int tick);
     void pushTickData(TickData td, Connection* conn);
+    void mainLoop(float delta);
+
+    inline entity_t getMyPlayerEntityID() {
+        return m_myPlayerEntityID;
+    }
+
 
 private:
+    entity_t m_myPlayerEntityID = 0;
     bool m_isServer = false;
     ECS* m_ecs;
     std::atomic_bool m_shutdown; // equal sign needs to be removed and defined in the consructor I think
-    std::mutex m_connectionMutex;
+    std::mutex m_connectionMutex = std::mutex();
     // ONLY RELEVENT TO CLIENTS AS OF NOW
     // what should server be receiving? should this be in connection?
     std::priority_queue<Gamestate, std::vector<Gamestate>, Gamestate> m_recentGamestates;
@@ -110,8 +117,8 @@ private:
     int setupUDPConn(const char* address, const char* port);
 
     // Tick stuff
-    Timer m_timer = Timer(1/20.f);
-    float m_tickRate = 1/20.f;
+    Timer m_timer = Timer(TICK_RATE);
+    float m_tickRate = TICK_RATE;
 };
 
 #endif // NETWORK_H

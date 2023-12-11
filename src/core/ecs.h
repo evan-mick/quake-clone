@@ -89,6 +89,10 @@ public:
         return (m_entities[ent] != 0);
     }
 
+    inline bool isComponentRegistered(int flag_num) {
+        return m_component_registered[flag_num];
+    }
+
 private:
 
     struct SystemData {

@@ -14,10 +14,9 @@ void test_main();
 int main(int argc, char *argv[]) {
 
 
-
-    bool server = (argc > 1 && strcmp(argv[1], "s"));
+    bool server = (argc > 1 && std::string(argv[1]) == "s");
     Game game = Game();
-    game.startGame(server);
+    game.startGame(server, (argc > 2 ? argv[2] : ""));
 }
 
 

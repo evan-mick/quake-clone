@@ -68,7 +68,8 @@ entity_t ECS::createEntity(std::initializer_list<int> flag_numbers) {
     int input_flag = 0;
 
     for (int flag : flag_numbers) {
-        input_flag = input_flag | (1 << flag);
+        if (m_component_registered[flag])
+            input_flag = input_flag | (1 << flag);
     }
 
     return createEntityWithBitFlags(input_flag);
