@@ -76,8 +76,7 @@ void Game::startGame(bool server, const char* ip) {
 
     if (!server)
         render.setRatio(m_monitorXScale, m_monitorYScale);
-
-
+//        render.resizeGL(DSCREEN_WIDTH,DSCREEN_HEIGHT);
 
     registerECSComponents(ecs);
     registerECSSystems(ecs, phys, render);
@@ -184,10 +183,10 @@ void Game::setupWindow() {
     //    gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(1);
 
-    float xscale, yscale;
+//    float xscale, yscale;
     int realWidth,realHeight;
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-    glfwGetWindowContentScale(window, &xscale, &yscale);
+    glfwGetWindowContentScale(window, &m_monitorXScale,&m_monitorYScale);
     std::cout <<" window is" << realWidth <<","<<realHeight << std::endl;
 
 
