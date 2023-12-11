@@ -264,7 +264,6 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
         conn->tick_buffer.mutex.lock();
 
 
-
         if (!conn->tick_buffer.buffer.empty()) {
             std::cout << "Tick buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
             std::cout << "conn ip: " << std::to_string(ip) << " " << std::to_string((long)(conn)) << std::endl;
