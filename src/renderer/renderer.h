@@ -24,7 +24,8 @@ class Renderer //: public QOpenGLWidget
 
 {
 public:
-    Renderer(Camera* cam);
+//    Renderer();
+    Renderer(Camera* cam, bool fullSetup);
     void finish();                                      // Called on program exit
     void sceneChanged();
     void settingsChanged();
@@ -32,8 +33,11 @@ public:
     void initializeGL();                       // Called once at the start of the program
 
     void drawStaticObs();
-    static void drawDynamicOb(struct ECS*, entity_t entity_id, float delta_seconds);
+    void drawDynamicOb(struct ECS*, entity_t entity_id, float delta_seconds);
     static std::map<u_int8_t,Model> generateModelsMap();
+    static std::map<QString,SceneTexture> generateTexturesMap();
+
+    void loadTextures();
 
     void drawScreen();
 
@@ -49,7 +53,7 @@ public:
         resizeGL(DSCREEN_WIDTH * ratio_x, DSCREEN_HEIGHT * ratio_y);
     }
 
-    static inline Renderer* default_render;
+//    static inline Renderer* default_render;
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
 
@@ -88,7 +92,8 @@ private:
     int m_o_scrn_width = 0;
     int m_o_scrn_height = 0;
 
-    void paintTexture(GLuint texture, bool post_process);
+    void paintTexture(GLuint texture, bool post_process, float opacity);
+    void paintTexture(GLuint texture, bool post_process, int slot, float opacity);
 
 
     // Input Related Variables
@@ -96,10 +101,16 @@ private:
     glm::vec2 m_prev_mouse_pos;                         // Stores mouse position
     std::unordered_map<Qt::Key, bool> m_keyMap;         // Stores whether keys are pressed or not
 
+    std::map<QString,SceneTexture> m_texture_map;
+
     // Device Correction Variables
 //    int m_devicePixelRatio;
     float ratio_x;
     float ratio_y;
+
+    QString m_texturePaths[2] = {"crosshair.png"};
+
+
 
 
     GLuint m_shader;
@@ -121,7 +132,7 @@ private:
 
     bool init_gen = false;
 
-    Level m_level;
+//    Level m_level;
 
 
     void makeFBO();

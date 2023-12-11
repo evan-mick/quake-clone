@@ -56,6 +56,7 @@ add_executable(${PROJECT_NAME}
     src/scene/level.h src/scene/level.cpp
     src/physics/aabb.h src/physics/aabb.cpp
     src/input.h
+    src/game_create_helpers.h
 
 )
 

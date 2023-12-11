@@ -37,14 +37,14 @@ public:
     Physics(float tickTime);
 
 
-    static inline void startFrame() {
-        phys->m_frameRun = false;
-        if (phys->m_timer.finished())
-            phys->m_timer.reset();
+    inline void startFrame() {
+        m_frameRun = false;
+        if (m_timer.finished())
+            m_timer.reset();
     }
 
     // Attempts to run a step with the physics singleton
-    static void tryRunStep(struct ECS*, entity_t entity_id, float delta_seconds);
+    void tryRunStep(struct ECS*, entity_t entity_id, float delta_seconds);
 
     // Registers a type -> response correlation
     // When entities with [type] collide with something, they will run [response]
@@ -63,9 +63,6 @@ public:
 
     // Prepares internal data for the next tick
     void Reset();
-
-    // The singleton
-    static inline Physics* phys;
 
 
 

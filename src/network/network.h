@@ -27,7 +27,7 @@ const int MAX_PLAYERS = 4;
 struct Packet {
     unsigned int tick;
     char command;
-    char* data;
+//    char* data;
 };
 
 struct TickData {
@@ -64,6 +64,8 @@ struct Connection {
 //    return (a.tick < b.tick);
 //}
 
+const int FULL_PACKET = 1400;
+
 
 
 class Network
@@ -83,14 +85,21 @@ public:
     
     void onTick(unsigned int tick);
     // int initClient(const char* ip, const char* port);
-    void updateTickBuffer(Packet packet, Connection* conn, unsigned int tick);
+    void updateTickBuffer(char* data, Connection* conn, unsigned int tick);
     void pushTickData(TickData td, Connection* conn);
     void mainLoop(float delta);
-    void getEntityID();
+
+    inline entity_t getMyPlayerEntityID() {
+        return m_myPlayerEntityID;
+    }
+
+    inline void setAuthority(entity_t ent) {
+        m_hasAuthority[ent] = true;
+    }
 
 
 private:
-    entity_t m_entityID = 0;
+    entity_t m_myPlayerEntityID = 0;
     bool m_isServer = false;
     ECS* m_ecs;
     std::atomic_bool m_shutdown; // equal sign needs to be removed and defined in the consructor I think
@@ -101,6 +110,7 @@ private:
 
     // To store what entities they have authority over
     std::array<int, MAX_ENTITY> m_hasAuthority{};
+
 
     std::array<Connection, MAX_PLAYERS> m_connections{}; // not using this atm
     std::unordered_map<uint32_t, Connection*> m_connectionMap{};

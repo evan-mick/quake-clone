@@ -11,7 +11,7 @@ ECS::ECS()
 void ECS::update() {
     // TODO: delta
     std::chrono::time_point<std::chrono::steady_clock>  now = std::chrono::steady_clock::now();
-    float deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(now - m_lastUpdate).count() / 1000000.0f;
+    m_deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(now - m_lastUpdate).count() / 1000000.0f;
     m_lastUpdate = now;
 
     for (SystemData& data : m_systems) {
@@ -19,7 +19,7 @@ void ECS::update() {
         for (size_t ent = 0; ent < MAX_ENTITY; ent++) {
             flags_t flags = m_entities[ent];
             if ((flags & data.req_flags) == data.req_flags)
-                data.func(this, (entity_t)ent, deltaTime);
+                data.func(this, (entity_t)ent, m_deltaTime);
         }
     }
     destroyQueuedEntities();
@@ -60,6 +60,7 @@ entity_t ECS::createEntityWithBitFlags(flags_t flags) {
     while (m_nextUnallocEntity < MAX_ENTITY && m_entities[m_nextUnallocEntity] != 0);
 
     std::cout << m_nextUnallocEntity << " next post " << std::endl;
+    doBroadcast(m_onCreateEntityBroadcast, ent_id);
 
     return ent_id;
 }
@@ -68,8 +69,10 @@ entity_t ECS::createEntity(std::initializer_list<int> flag_numbers) {
     int input_flag = 0;
 
     for (int flag : flag_numbers) {
-        input_flag = input_flag | (1 << flag);
+        if (m_component_registered[flag])
+            input_flag = input_flag | (1 << flag);
     }
+
 
     return createEntityWithBitFlags(input_flag);
 
