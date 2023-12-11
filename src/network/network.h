@@ -27,7 +27,7 @@ const int MAX_PLAYERS = 4;
 struct Packet {
     unsigned int tick;
     char command;
-//    char* data;
+    // char* data;
 };
 
 struct TickData {
@@ -56,7 +56,7 @@ struct Connection {
     int socket;
     uint16_t port;
     uint32_t ip;
-    int entity; // if the other side is the server, -1, otherwise keep entity_id of the player
+    entity_t entity; // if the other side is the server, -1, otherwise keep entity_id of the player
     TickBuffer tick_buffer;
 };
 

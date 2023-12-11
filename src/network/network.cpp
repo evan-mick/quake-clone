@@ -9,9 +9,8 @@
 
 /* TODO:
     
-    -- Deal with client authority in deserialize
-    -- Subscribe to events (Evan)
-    
+    -- INSTANTIATE CLIENT AUTHORITY MAP
+    -- USE CLIENT AUTHORITY MAP TO DETERMINE IF CLIENT HAS AUTHORITY OVER ENTITY IN DESERIALIZEALLDATAINTOECS
 
 */
 
@@ -231,21 +230,33 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
 //    m_connectionMutex.lock();
     std::lock_guard<std::mutex> lock(m_connectionMutex);
     for (auto& [ip, conn] : m_connectionMap) {
+        std::cout << "conn ip: " << std::to_string(ip) << " " << std::to_string((long)(conn)) << std::endl;
+        std::cout << "entity: " << std::to_string((unsigned int)conn->entity) << std::endl; // This might error
 
-        TickData data;
+        if (conn == nullptr) {
+            std::cout << "conn is null for ip: " << std::to_string(ip) << std::endl;
+            continue;
+        }
+
+        TickData td;
         conn->tick_buffer.mutex.lock();
 
         if (!conn->tick_buffer.buffer.empty()) {
 
-            // Pop data
-            data = conn->tick_buffer.buffer.front();
+            // Get the first element in the tick buffer
+            td = conn->tick_buffer.buffer.front();
+
+            char* buff = new char[FULL_PACKET];
+            memcpy(buff, td.data, FULL_PACKET);
+
+            // Deserialize data into ECS // NEED TO EDIT THIS TO HANDLE CLIENT AUTHORITY
+            ecs->deserializeIntoData(buff, FULL_PACKET, nullptr);
+
+            // Pop the tick buffer
             conn->tick_buffer.buffer.pop();
 
-            // Deserialize data into ECS
-            ecs->deserializeIntoData(data.data, FULL_PACKET, nullptr);
-
             // Delete data
-            delete[] data.data;
+            delete[] buff;
         }
         conn->tick_buffer.mutex.unlock();
     }
@@ -419,7 +430,7 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
 
     // Serialize data
     int data_written = ecs->serializeData(&tick_data);
-    assert(data_written <= FULL_PACKET);
+    assert(data_written <= FULL_PACKET - sizeof(Packet));
     td->data = tick_data;
     td->tick = tick;
     
@@ -476,18 +487,27 @@ void Network::clientListen() {
                 servAddr.sin_addr.s_addr = serverIP;
                 servAddr.sin_family = AF_INET;
                 servAddr.sin_port = serverPort;
+
                 std::cout << "Attempting to receive " << servSocket << std::endl;
                 int bytes = recvfrom(servSocket, buff, FULL_PACKET, 0, (struct sockaddr *)&servAddr, &servAddr_len);
+                std::cout << "Received: " << std::to_string(bytes) << std::endl;
+                
+                // Read into packet
+                Packet packet;
+                memcpy(&packet, buff, sizeof(Packet));
 
-                std::cout << "Received: " << bytes << std::endl;
-                Packet packet = *((Packet*) buff);
+                // Separate data from packet
+                char* data = new char[bytes - sizeof(Packet)];
+                memcpy(data, buff + sizeof(Packet), bytes - sizeof(Packet));
 
                 // Process packet
                 if (packet.command == 'D') {
                     std::cout << "D Command" << std::endl;
                     // Populate data based on received Packet
                     unsigned int tick = m_timer.getTimesRun();
-                    updateTickBuffer(buff + sizeof(Packet), conn, tick);
+                    updateTickBuffer(data, conn, tick);
+                } else {
+                    std::cout << "Unknown command" << std::endl;
                 }
 //                delete[] buff;
                 break;
@@ -503,11 +523,7 @@ void Network::updateTickBuffer(char* data, Connection* conn, unsigned int tick) 
     // Populate data based on received Packet
     TickData td;
     td.tick = tick;
-    td.data = data;
-//    size_t dataSize = sizeof(packet.data);
-//    char* dataPtr = new char[dataSize];
-//    memcpy(dataPtr, packet.data, dataSize);
-//    td.data = dataPtr;
+    memcpy(&td.data, data, FULL_PACKET - sizeof(Packet));
 
     // Push data into tick buffer
     pushTickData(td, conn);
