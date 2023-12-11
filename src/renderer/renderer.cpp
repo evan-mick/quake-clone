@@ -38,6 +38,7 @@ Renderer::Renderer(Camera* cam, bool fullSetup)
     m_keyMap[Qt::Key_D]       = false;
     m_keyMap[Qt::Key_Control] = false;
     m_keyMap[Qt::Key_Space]   = false;
+    data = &SceneParser::getSceneData();
     initializeGL();
 
     // If you must use this function, do not edit anything above this
