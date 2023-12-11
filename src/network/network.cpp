@@ -493,6 +493,9 @@ void Network::clientListen() {
                 int bytes = recvfrom(servSocket, buff, FULL_PACKET, 0, (struct sockaddr *)&servAddr, &servAddr_len);
                 std::cout << "Received: " << std::to_string(bytes) << std::endl;
                 
+                assert(bytes <= FULL_PACKET);
+                assert(bytes > 0);
+
                 // Read into packet
                 Packet packet;
                 memcpy(&packet, buff, sizeof(Packet));
@@ -507,15 +510,17 @@ void Network::clientListen() {
                     // Populate data based on received Packet
                     unsigned int tick = m_timer.getTimesRun();
                     updateTickBuffer(data, conn, tick);
+                    delete[] buff;
+                    delete[] data;
                 } else {
                     std::cout << "Unknown command" << std::endl;
+                    delete[] buff;
+                    delete[] data;
+                    continue;
                 }
-//                delete[] buff;
                 break;
             }
         }
-
-//        m_connectionMutex.unlock();
     }
 }
 
@@ -551,7 +556,7 @@ void Network::editConnection(uint32_t ip, unsigned int tick) {
 void Network::pushTickData(TickData* td, Connection* conn) {
 
     // Lock the tick buffer
-    conn->tick_buffer.mutex.lock(); 
+    conn->tick_buffer.mutex.lock();
 
     std::cout << "pushing tick data" << std::endl;
     std::cout << "buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
@@ -562,6 +567,7 @@ void Network::pushTickData(TickData* td, Connection* conn) {
 
     // Unlock the tick buffer
     conn->tick_buffer.mutex.unlock();
+    
 }
 
 void Network::onTick(unsigned int tick) {
