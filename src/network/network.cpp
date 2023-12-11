@@ -91,6 +91,8 @@ void Network::serverListen(const char* ip, const char* port) {
         return;
     }
 
+    std::cout << "Server now listening on socket: " << std::to_string(serverSocket) << std::endl;
+
     while (!m_shutdown) {
 
         struct sockaddr clientAddr {};
@@ -512,7 +514,7 @@ void Network::clientListen() {
                     updateTickBuffer(data, conn, tick);
                     
                 } else {
-                    std::cout << "Unknown command" << std::endl;
+                    std::cout << "Unknown command: " << std::to_string(packet.command) << std::endl;
                 }
                 delete[] buff;
                 delete[] data;
@@ -553,6 +555,7 @@ void Network::editConnection(uint32_t ip, unsigned int tick) {
 
 void Network::pushTickData(TickData* td, Connection* conn) {
 
+    std::cout << "locking tick data mutex" << std::endl;
     // Lock the tick buffer
     conn->tick_buffer.mutex.lock();
 
@@ -565,6 +568,7 @@ void Network::pushTickData(TickData* td, Connection* conn) {
 
     // Unlock the tick buffer
     conn->tick_buffer.mutex.unlock();
+    std::cout << "tick data mutex unlocked" << std::endl;
     
 }
 
