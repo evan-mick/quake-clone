@@ -111,10 +111,10 @@ void Game::startGame(bool server, const char* ip) {
         //        Input::checkKeys(window);
         //        if (Input::getHeld())
         //            std::cout << "held " << Input::getHeld() << std::endl;
-        InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
+        //InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
 
         if (!m_server) {
-//            InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
+            InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
             in->dat = Input::getHeld();
 
             double xpos, ypos;
@@ -136,6 +136,7 @@ void Game::startGame(bool server, const char* ip) {
          ecs.update();
 
         if (!m_server) {
+            InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
             cam.updateFromEnt(&ecs, ent);
             cam.setRotation(in->x_look, in->y_look);
 
