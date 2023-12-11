@@ -109,7 +109,7 @@ private:
     std::priority_queue<Gamestate, std::vector<Gamestate>, Gamestate> m_recentGamestates;
 
     // To store what entities they have authority over
-    std::array<int, MAX_ENTITY> m_hasAuthority{};
+    std::array<bool, MAX_ENTITY> m_hasAuthority{};
 
 
     std::array<Connection, MAX_PLAYERS> m_connections{}; // not using this atm
