@@ -88,8 +88,10 @@ void Game::startGame(bool server, const char* ip) {
     entity_t ent;
     if (!net)
         ent = createPlayer(&ecs, glm::vec3(0, 10.f, 0));
-    else if (!m_server)
+    else if (!m_server) {
         ent = net->getMyPlayerEntityID();
+        std::cout<< "player ent: " << std::to_string(ent) << std::endl;
+    }
 
 //    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
 //        Renderer::default_render->resizeGL(width, height);
@@ -100,14 +102,22 @@ void Game::startGame(bool server, const char* ip) {
 
     while (m_running) {
 
-        if (net)
+        if (net && m_server) {
             net->deserializeAllDataIntoECS(&ecs);
-
+            // if (!m_server)
+            //      std::cout << "deserialize finished for client (game)" << std::endl;
+        }
 //        Input::checkKeys(window);
 //        if (Input::getHeld())
 //            std::cout << "held " << Input::getHeld() << std::endl;
         if (!m_server) {
+            // std::cout << "first input data block start" << std::endl;
+
             InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
+            // if (in == nullptr) {
+            //     std::cout << "null input data 1 for client" << std::endl;
+            //     continue;
+            // }
             in->dat = Input::getHeld();
 
             double xpos, ypos;
@@ -122,28 +132,38 @@ void Game::startGame(bool server, const char* ip) {
 
     //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             render.startDraw();
+            // std::cout << "first input data block end" << std::endl;
         }
         // Main simulation logic
         phys.startFrame();
         ecs.update();
 
         if (!m_server) {
+            // std::cout << "second input data block start" << std::endl;
             InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
+            // if (in == nullptr) {
+            //     std::cout << "null input data 2 for client" << std::endl;
+            //     continue;
+            // }
+            // std::cout << "1" << std::endl;
             cam.updateFromEnt(&ecs, ent);
             cam.setRotation(in->x_look, in->y_look);
-
+            // std::cout << "2" << std::endl;
             render.drawStaticObs();
             render.drawScreen();
-
+            // std::cout << "3" << std::endl;
             // Swap front and back buffers
             glfwSwapBuffers(m_window);
-
+            // std::cout << "4" << std::endl;
             // Poll for and process events
             glfwPollEvents();
+            // std::cout << "second input data block end" << std::endl;
         }
 
-        if (net)
+        if (net) {
             net->broadcastOnTick(ecs.getRecentDelta());
+            // std::cout << "tick broadcasted (game)" << std::endl;
+        }
     }
     glfwTerminate();
 
