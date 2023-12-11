@@ -262,7 +262,7 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
         }
 
         TickData* td;
-        conn->tick_buffer.mutex.lock();
+//        conn->tick_buffer.mutex.lock();
 
 
         if (!conn->tick_buffer.buffer.empty()) {
@@ -285,7 +285,7 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
             // Delete data
             delete[] buff;
         }
-        conn->tick_buffer.mutex.unlock();
+//        conn->tick_buffer.mutex.unlock();
     }
 
 //    m_connectionMutex.unlock();
@@ -602,11 +602,11 @@ void Network::pushTickData(TickData* td, Connection* conn) {
     conn->tick_buffer.mutex.lock();
 
     std::cout << "pushing tick data" << std::endl;
-    std::cout << "buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
+//    std::cout << "buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
     // Push data into tick buffer
     conn->tick_buffer.buffer.push(td);
-    std::cout << "pushed tick data" << std::endl;
-    std::cout << "buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
+//    std::cout << "pushed tick data" << std::endl;
+//    std::cout << "buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
 
     // Unlock the tick buffer
     conn->tick_buffer.mutex.unlock();
