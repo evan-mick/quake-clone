@@ -11,6 +11,8 @@
 #include "objects/Cone.h"
 #include "scene/sceneparser.h"
 #include "game_types.h"
+#include <QString>
+#include <QFileInfo>
 
 #include "glm/gtx/transform.hpp"
 
@@ -28,6 +30,7 @@ Renderer::Renderer(Camera* cam, bool fullSetup)
     camera = cam;
     default_render = this;
     m_models = generateModelsMap();
+
     m_prev_mouse_pos = glm::vec2(DSCREEN_WIDTH/2, DSCREEN_HEIGHT/2);
     //setMouseTracking(true);
     //setFocusPolicy(Qt::StrongFocus);
@@ -72,6 +75,11 @@ void Renderer::finish() {
     glDeleteVertexArrays(5, &(m_vaos[0]));
 
     glDeleteTextures(1, &m_fbo_texture);
+
+    for (auto it = m_texture_map.begin(); it != m_texture_map.end(); ++it) {
+        glDeleteTextures(1,&it->second.tex);
+    }
+
 
 //    this->doneCurrent();
 }
@@ -179,6 +187,7 @@ void Renderer::initializeGL() {
 
     // Tells OpenGL how big the screen is
     glViewport(0, 0, m_screen_width, m_screen_height);
+    m_models = generateModelsMap();
 
 
     m_shader = ShaderLoader::createShaderProgram("../../resources/shaders/default.vert", "../../resources/shaders/default.frag");
@@ -190,6 +199,9 @@ void Renderer::initializeGL() {
         std::cout << "err " << m_texture_shader << std::endl;
     }
     glUniform1i(texLoc, 0);
+
+    m_texture_map = generateTexturesMap();
+    loadTextures();
 
     // FULLSCREEN QUAD CODE
     std::vector<GLfloat> fullscreen_quad_data =
@@ -282,32 +294,142 @@ std::map<u_int8_t,Model> Renderer::generateModelsMap() {
     return models;
 }
 
+std::map<QString,SceneTexture> Renderer::generateTexturesMap() {
+    std::map<QString,SceneTexture> res;
 
+    QString crosshair_path("../../resources/textures/crosshair.png");
+    SceneTexture crosshair;
+    crosshair.width = 1600;
+    crosshair.height = 1200;
+    crosshair.image = QImage(crosshair_path).convertToFormat(QImage::Format_RGBA8888).mirrored();
+    res.insert({crosshair_path,crosshair});
+    return res;
+}
 
-// Task 31: Update the paintTexture function signature
-void Renderer::paintTexture(GLuint texture, bool post_process){
+void Renderer::loadTextures() {
+    int slot=1;
+    std::cout << "size: " << m_texture_map.size() << std::endl;
+    std::cout << "rx"<<ratio_x << std::endl;
+    std::cout << "ry"<<ratio_y << std::endl;
     glUseProgram(m_texture_shader);
-    // Task 32: Set your bool uniform on whether or not to filter the texture drawn
+
+
+    for (auto it = m_texture_map.begin(); it != m_texture_map.end(); ++it) {
+        SceneTexture *texture = &it->second;
+        glActiveTexture(GL_TEXTURE1);
+        glGenTextures(1,&texture->tex);
+        glBindTexture(GL_TEXTURE_2D,texture->tex);
+//        texture->image = texture->image.scaled(ratio_x*1600,ratio_y*1200);
+//        texture->image = texture->image.scaled(m_screen_width,m_screen_height);
+        glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,texture->image.width(),texture->image.height(),0,GL_RGBA,GL_UNSIGNED_BYTE,texture->image.bits());
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glBindTexture(GL_TEXTURE_2D,0);
+
+        texture->slot = slot;
+
+
+        std::cout <<"image width: "<<texture->image.width() << std::endl;
+
+        //pass texture slot uniform
+        QFileInfo fileInfo(it->first);
+        QString filename = fileInfo.fileName();
+        filename.chop(4);
+
+        //uniform name is image path w/o file extension name
+        GLint texLoc = glGetUniformLocation(m_texture_shader, "tex");
+        if (texLoc == -1) {
+            std::cout << "err loading " << filename.toStdString()<< "," << m_texture_shader << std::endl;
+        } else {
+            std::cout << "loaded " << filename.toStdString()<< " into slot " << slot << std::endl;
+        }
+        glUniform1i(texLoc, slot);
+        slot++;
+
+    }
+    glUseProgram(0);
+}
+
+
+
+void Renderer::paintTexture(GLuint texture, bool post_process, float opacity){
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glUseProgram(m_texture_shader);
+
     glUniform1i(glGetUniformLocation(m_texture_shader, "filt"), settings.perPixelFilter);
     glUniform1i(glGetUniformLocation(m_texture_shader, "box_blur"), settings.kernelBasedFilter);
 
-//    glUniform1i(glGetUniformLocation(m_texture_shader, "gray_scale"), settings.kernelBasedFilter);
-
-
-    glm::vec2 uv_traverse = glm::vec2(1.f/m_o_scrn_width, 1.f/m_o_scrn_height);
-    glUniform2fv(glGetUniformLocation(m_texture_shader, "uv_traverse"), 1, &uv_traverse[0]);
-
+    glm::vec2 uv_traverse = glm::vec2(1.f / m_o_scrn_width, 1.f / m_o_scrn_height);
+    glUniform2fv(glGetUniformLocation(m_texture_shader, "uv"), 1, &uv_traverse[0]);
+    glUniform1f(glGetUniformLocation(m_texture_shader, "opacity"), 0.5f);
 
     glBindVertexArray(m_fullscreen_vao);
-    // Task 10: Bind "texture" to slot 0
-    // FIRST PART I"M UNSURE ABOUT
-    glActiveTexture(GL_TEXTURE0);
+
+//    glActiveTexture(GL_TEXTURE0);
+//    glBindTexture(GL_TEXTURE_2D, texture);
+
+
+//    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+
+
+//    glBindTexture(GL_TEXTURE_2D, 0);
+//    glDisable(GL_BLEND);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D,m_texture_map.begin()->second.tex);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glBindVertexArray(0);
+    glUseProgram(0);
+
+
+}
+
+void Renderer::paintTexture(GLuint texture, bool post_process, int slot, float opacity){
+    if(slot==0) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_DEPTH_TEST);
+    } else {
+        glDisable(GL_DEPTH_TEST);
+    }
+
+
+    glUseProgram(m_texture_shader);
+
+    glUniform1i(glGetUniformLocation(m_texture_shader, "tex"), slot);
+    glUniform1i(glGetUniformLocation(m_texture_shader, "filt"), settings.perPixelFilter);
+    glUniform1i(glGetUniformLocation(m_texture_shader, "box_blur"), settings.kernelBasedFilter);
+
+    glm::vec2 uv_traverse = glm::vec2(1.f / m_o_scrn_width, 1.f / m_o_scrn_height);
+    glUniform2fv(glGetUniformLocation(m_texture_shader, "uv"), 1, &uv_traverse[0]);
+
+    glBindVertexArray(m_fullscreen_vao);
+
+    glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, texture);
 
+    // Task 33: Pass the opacity value to the shader
+    glUniform1f(glGetUniformLocation(m_texture_shader, "opacity"), opacity);
+
     glDrawArrays(GL_TRIANGLES, 0, 6);
+
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
     glUseProgram(0);
+
+    if(slot>=m_texture_map.size()) {
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+    }
 }
 
 
@@ -450,7 +572,16 @@ void Renderer::drawScreen() {
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
     glViewport(0, 0, m_screen_width, m_screen_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    paintTexture(m_fbo_texture, true);
+    paintTexture(m_fbo_texture, true,0,1.f);
+    for (auto it = m_texture_map.begin(); it != m_texture_map.end(); ++it) {
+        paintTexture(it->second.tex, false,it->second.slot,1.f);
+    }
+
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL error: " << error << std::endl;
+    }
+
 
     glUseProgram(0);
 

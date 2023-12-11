@@ -182,8 +182,12 @@ void Game::setupWindow() {
     //    gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(1);
 
+    float xscale, yscale;
+    int realWidth,realHeight;
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-    glfwGetMonitorContentScale(monitor, &m_monitorXScale, &m_monitorYScale);
+    glfwGetWindowContentScale(window, &xscale, &yscale);
+    std::cout <<" window is" << realWidth <<","<<realHeight << std::endl;
+
 
     // Initialize GLEW
     if (glewInit() != GLEW_OK) {
@@ -192,9 +196,11 @@ void Game::setupWindow() {
     }
 
 
+
     glfwSetKeyCallback(window, Input::key_callback);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 
 }
 
@@ -250,7 +256,9 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
         phys->accel = glm::vec3(0, -.98f, 0);
 
-        trans->rot.y = in->x_look-glm::radians(53.f);
+
+        trans->rot.y = in->x_look - glm::radians(53.f);
+
 
         // Needed the 37 degree offset?? no clue why, it would be consistently slightly off whenever I moved it
         glm::mat4 forwardMatrix = glm::rotate(glm::mat4(1.0f), in->x_look + glm::radians(37.f), glm::vec3(0.0f, 1.0f, 0.0f));
