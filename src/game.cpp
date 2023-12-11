@@ -87,8 +87,10 @@ void Game::startGame(bool server, const char* ip) {
 
 
     entity_t ent;
-    if (!m_server)
+    if (!net)
         ent = createPlayer(&ecs, glm::vec3(0, 10.f, 0));
+    else if (!m_server)
+        ent = net->getMyPlayerEntityID();
 
 //    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
 //        Renderer::default_render->resizeGL(width, height);

@@ -34,10 +34,10 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
 
         // Open listen thread and accept connections
-        m_listenThread = std::thread([this, ip]() { 
+//        m_listenThread = std::thread([this, ip]() {
             this->serverListen(ip, DEFAULT_PORT); 
-        });
-        m_listenThread.detach();
+//        });
+//        m_listenThread.detach();
     }
 
     // Initialize client
@@ -273,6 +273,8 @@ int Network::connect(const char* ip, const char* port) {
     struct addrinfo hints {}, *servinfo, *p;
     int rv;
 
+    std::cout << "Connect start" << std::endl;
+
     // Set up UDP connection
 //    memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_INET;
@@ -311,6 +313,12 @@ int Network::connect(const char* ip, const char* port) {
     servAddr.sin_addr.s_addr = ((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
     servAddr.sin_family = AF_INET;
     servAddr.sin_port = ((struct sockaddr_in*)p->ai_addr)->sin_port;
+
+//    struct sockaddr_in servAddr;
+//    socklen_t servAddr_len = sizeof(servAddr);
+//    inet_pton(AF_INET, ip, &servAddr.sin_addr);
+//    servAddr.sin_family = AF_INET;
+//    servAddr.sin_port = std::stoi(port);//((struct sockaddr_in*)p->ai_addr)->sin_port;
 
     sendto(sockfd, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, servAddr_len);
 
@@ -421,7 +429,7 @@ int Network::setupUDPConn(const char* address, const char* port) {
         return -2;
     }
 
-    freeaddrinfo(servinfo);
+//    freeaddrinfo(servinfo);
     return sock;
 }
 
