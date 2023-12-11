@@ -33,6 +33,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         m_listenThread = std::thread([this, ip]() { 
             this->serverListen(ip, DEFAULT_PORT); 
         });
+        m_listenThread.detach();
     }
 
     // Initialize client

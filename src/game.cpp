@@ -37,9 +37,10 @@ void Game::startGame(bool server, const char* ip) {
     std::cout << "Phys ECS" << std::endl;
 
     // disabling network for now
-    if (!strcmp(ip, "\n") || server) {
-        Network net = Network(server, &ecs, ip);
+    if (std::string(ip) != "" || server) {
         std::cout << "Network setup: " << (server ? "server" : "client connecting to" + std::string(ip)) << std::endl;
+        Network net = Network(server, &ecs, ip);
+        std::cout << "Network setup attempt complete" << std::endl;
     } else {
         std::cout << "No Networking" << std::endl;
     }
@@ -54,9 +55,19 @@ void Game::startGame(bool server, const char* ip) {
     phys.setStaticObs(&SceneParser::getSceneData());
     SceneParser::getSceneData().cameraData.heightAngle = FOV;
 
+    // Putting this here for now, needs to move, but should def not be in renderer
+    auto m_level(Level(50.f,5.f,50.f));
+    auto data = &SceneParser::getSceneData();
+    m_level.generateLevel();
+    for(Model& mod : m_level.getLevelModels()) {
+        for(RenderObject obj : mod.objects) {
+            data->shapes.push_back(obj);
+        }
+    }
+
     Camera cam = Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, SceneParser::getSceneData().cameraData);
 
-    Renderer render = Renderer(&cam);
+    Renderer render = Renderer(&cam, !server);
 
     if (!server)
         Renderer::default_render->setRatio(m_monitorXScale, m_monitorYScale);

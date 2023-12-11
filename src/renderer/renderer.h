@@ -24,7 +24,8 @@ class Renderer //: public QOpenGLWidget
 
 {
 public:
-    Renderer(Camera* cam);
+//    Renderer();
+    Renderer(Camera* cam, bool fullSetup);
     void finish();                                      // Called on program exit
     void sceneChanged();
     void settingsChanged();
@@ -121,7 +122,7 @@ private:
 
     bool init_gen = false;
 
-    Level m_level;
+//    Level m_level;
 
 
     void makeFBO();

@@ -18,9 +18,12 @@
 
 // ================== Project 5: Lights, Camera
 
-Renderer::Renderer(Camera* cam) : m_level(Level(50.f,5.f,50.f))
+Renderer::Renderer(Camera* cam, bool fullSetup)
     //: QOpenGLWidget(parent)
 {
+
+    if (!fullSetup)
+        return;
 
     camera = cam;
     default_render = this;
@@ -642,13 +645,13 @@ void Renderer::sceneChanged() {
         std::cout << "SCENE PARSER RENDERER ERROR" << std::endl;
         return;
     }
-    data = &SceneParser::getSceneData();
-    m_level.generateLevel();
-    for(Model& mod : m_level.getLevelModels()) {
-        for(RenderObject obj : mod.objects) {
-            data->shapes.push_back(obj);
-        }
-    }
+//    data = &SceneParser::getSceneData();
+//    m_level.generateLevel();
+//    for(Model& mod : m_level.getLevelModels()) {
+//        for(RenderObject obj : mod.objects) {
+//            data->shapes.push_back(obj);
+//        }
+//    }
 //    data = SceneParser::getSceneData();
 
 
