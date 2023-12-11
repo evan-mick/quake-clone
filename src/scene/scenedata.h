@@ -164,6 +164,10 @@ struct RenderObject {
     GLuint vbo;
     GLuint vao;
     int vertCount = -1;
+
+    bool operator==(const RenderObject& other) const {
+        return this->ctm == other.ctm && primitive.type==primitive.type;
+    }
 };
 
 enum class ModelType {
