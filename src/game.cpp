@@ -50,8 +50,6 @@ void Game::startGame(bool server, const char* ip) {
         std::cout << "No Networking" << std::endl;
     }
 
-
-
     if (!server)
         setupWindow();
 
@@ -77,7 +75,7 @@ void Game::startGame(bool server, const char* ip) {
     Renderer render = Renderer(&cam, !m_server);
 
     if (!server)
-        Renderer::default_render->setRatio(m_monitorXScale, m_monitorYScale);
+        render.setRatio(m_monitorXScale, m_monitorYScale);
 
 
 
@@ -125,7 +123,7 @@ void Game::startGame(bool server, const char* ip) {
             render.startDraw();
         }
         // Main simulation logic
-        Physics::phys->startFrame();
+        phys.startFrame();
         ecs.update();
 
         if (!m_server) {
@@ -230,10 +228,12 @@ void Game::registerInputs() {
 
 
 void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
-    ecs.registerSystemWithBitFlags(Physics::tryRunStep, phys.getRequiredFlags());
+    ecs.registerSystemWithBitFlags([&phys](ECS* e, entity_t ent, float delta) { phys.tryRunStep(e, ent, delta); }, phys.getRequiredFlags());
 
     if (!m_server)
-        ecs.registerSystem(Renderer::drawDynamicOb, {FLN_TRANSFORM, FLN_RENDER});
+        ecs.registerSystem([&renderer](ECS* e, entity_t ent, float delta) {
+            renderer.drawDynamicOb(e, ent, delta);
+        } , {FLN_TRANSFORM, FLN_RENDER});
 
 //    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
 

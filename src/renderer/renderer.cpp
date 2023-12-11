@@ -28,7 +28,6 @@ Renderer::Renderer(Camera* cam, bool fullSetup)
         return;
 
     camera = cam;
-    default_render = this;
     m_models = generateModelsMap();
 
     m_prev_mouse_pos = glm::vec2(DSCREEN_WIDTH/2, DSCREEN_HEIGHT/2);
@@ -45,7 +44,6 @@ Renderer::Renderer(Camera* cam, bool fullSetup)
     initializeGL();
 
     // If you must use this function, do not edit anything above this
-
 
 }
 
@@ -532,10 +530,10 @@ void Renderer::drawDynamicOb(struct ECS* e, entity_t ent, float delta_seconds) {
         Player p;
         p.transformPlayer(trans);
         for (RenderObject& ob : p.getModel().objects) {
-            default_render->drawRenderOb(ob);
+            drawRenderOb(ob);
         }
     } else {//for single-prim models associated
-        Model mod = default_render->m_models[rend->model_id];
+        Model mod = m_models[rend->model_id];
 
         for(RenderObject& ob : mod.objects) {
 
@@ -556,7 +554,7 @@ void Renderer::drawDynamicOb(struct ECS* e, entity_t ent, float delta_seconds) {
     //    ob.primitive.material.cSpecular = SceneColor(1, 1, 1, 1);
 
 
-        default_render->drawRenderOb(ob);
+        drawRenderOb(ob);
         }
     }
 

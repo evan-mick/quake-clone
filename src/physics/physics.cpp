@@ -4,7 +4,6 @@
 
 Physics::Physics(float tickTime)
 {
-    phys = this;
     m_timer.setAndResetTimer(tickTime);
     this->m_tickTime = tickTime;
 }
@@ -16,9 +15,9 @@ void Physics::Reset() {
 
 void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
-    if (!phys->m_frameRun) {
-        phys->m_timer.increment(delta_seconds);
-        phys->m_frameRun = true;
+    if (!m_frameRun) {
+        m_timer.increment(delta_seconds);
+        m_frameRun = true;
     }
 
     // Run the simulation
@@ -43,7 +42,7 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
 
 
-    if (phys->m_timer.finished()) {
+    if (m_timer.finished()) {
 
         auto currentTime = std::chrono::system_clock::now();
 
@@ -77,16 +76,16 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
         }
 
         if (glm::length(damped_vel) > 0)
-            transform->pos += damped_vel * phys->m_tickTime +
-                          damped_accel * phys->m_tickTime * phys->m_tickTime * 0.5f;
+            transform->pos += damped_vel * m_tickTime +
+                          damped_accel * m_tickTime * m_tickTime * 0.5f;
 
 
 
 
-        if (transform->pos == (phys->m_previousTransforms[my_ent].pos))
+        if (transform->pos == (m_previousTransforms[my_ent].pos))
             return;
 
-        phys->m_previousTransforms[my_ent] = *transform;
+        m_previousTransforms[my_ent] = *transform;
 
 
 
@@ -95,8 +94,8 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
         // STATIC OBJECTS HERE
         // Need to adjust based off scale n such
-        if (phys->m_sceneData != nullptr) {
-            for (RenderObject& ob : phys->m_sceneData->shapes) {
+        if (m_sceneData != nullptr) {
+            for (RenderObject& ob : m_sceneData->shapes) {
                 Transform trans {};
                 trans.scale.x = glm::length(glm::vec3(ob.ctm[0])); // X-axis scale
                 trans.scale.y = glm::length(glm::vec3(ob.ctm[1])); // Y-axis scale
@@ -105,14 +104,14 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
                 CollisionData* col = getComponentData<CollisionData>(e, my_ent, FLN_COLLISION);
 
-                if (phys->AABBtoAABBIntersect(getTransform(e, my_ent), physDat, &trans, nullptr, (col != nullptr))) {
+                if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, &trans, nullptr, (col != nullptr))) {
 
                     if (!e->entityHasComponent(my_ent, FLN_TYPE))
                         continue;
 
                     TypeData* type = getComponentData<TypeData>(e, my_ent, FLN_TYPE);
-                    if (type != nullptr && phys->m_typeToResponse[type->type] != nullptr) {
-                        phys->m_typeToResponse[type->type](e, my_ent, 0, true);
+                    if (type != nullptr && m_typeToResponse[type->type] != nullptr) {
+                        m_typeToResponse[type->type](e, my_ent, 0, true);
                     }
 
                 }
@@ -128,10 +127,10 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
             if (!e->entityExists(ent) || ent == my_ent
                 || !e->entityHasComponent(ent, FLN_COLLISION)
                 || !e->entityHasComponent(ent, FLN_TRANSFORM)
-                || phys->checkOccured(my_ent, ent))
+                || checkOccured(my_ent, ent))
                 continue;
 
-            phys->addOccured(my_ent, ent);
+            addOccured(my_ent, ent);
 
 
             // POTENTIAL ERROR:
@@ -140,7 +139,7 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
             // will in theory be pushed around and not vice versa
 
             // OF NOTE: collision logic will be used for both entities because everything cycled through
-            if (phys->AABBtoAABBIntersect(getTransform(e, my_ent), physDat, getTransform(e, ent), nullptr, true)) {
+            if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, getTransform(e, ent), nullptr, true)) {
 //                e->queueDestroyEntity(my_ent);
                 //          IF type registered
                 //              run collision logic on each entity for the registered type,
@@ -149,8 +148,8 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                     continue;
 
                 TypeData* type = getComponentData<TypeData>(e, my_ent, FLN_TYPE);
-                if (type != nullptr && phys->m_typeToResponse[type->type] != nullptr) {
-                    phys->m_typeToResponse[type->type](e, my_ent, ent, true);
+                if (type != nullptr && m_typeToResponse[type->type] != nullptr) {
+                    m_typeToResponse[type->type](e, my_ent, ent, true);
                 }
             }
 

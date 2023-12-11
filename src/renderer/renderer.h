@@ -33,7 +33,7 @@ public:
     void initializeGL();                       // Called once at the start of the program
 
     void drawStaticObs();
-    static void drawDynamicOb(struct ECS*, entity_t entity_id, float delta_seconds);
+    void drawDynamicOb(struct ECS*, entity_t entity_id, float delta_seconds);
     static std::map<u_int8_t,Model> generateModelsMap();
     static std::map<QString,SceneTexture> generateTexturesMap();
 
@@ -53,7 +53,7 @@ public:
         resizeGL(DSCREEN_WIDTH * ratio_x, DSCREEN_HEIGHT * ratio_y);
     }
 
-    static inline Renderer* default_render;
+//    static inline Renderer* default_render;
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
 
