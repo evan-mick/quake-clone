@@ -126,17 +126,22 @@ void Game::startGame(bool server, const char* ip) {
             //         getComponentData<InputData>(&ecs, ent, FLN_INPUT)-> = Input::getHeld();
 
             //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            render.startDraw();
+
         }
         // Main simulation logic
+
         phys.startFrame();
-        ecs.update();
+         ecs.update();
 
         if (!m_server) {
             cam.updateFromEnt(&ecs, ent);
             cam.setRotation(in->x_look, in->y_look);
 
+            render.startDraw();
+
             render.drawStaticObs();
+            render.drawDynamicObs();
+
             render.drawScreen();
 
             // Swap front and back buffers
@@ -145,6 +150,7 @@ void Game::startGame(bool server, const char* ip) {
             // Poll for and process events
             glfwPollEvents();
         }
+
 
         if (net)
             net->broadcastOnTick(ecs.getRecentDelta());
@@ -237,7 +243,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
     if (!m_server)
         ecs.registerSystem([&renderer](ECS* e, entity_t ent, float delta) {
-            renderer.drawDynamicOb(e, ent, delta);
+//            renderer.drawDynamicOb(e, ent, delta);
+            renderer.queueDynamicModel(e,ent,delta);
         } , {FLN_TRANSFORM, FLN_RENDER});
 
     //    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
@@ -290,7 +297,7 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         }
 
         // TO BE IMPROVED, the actual quake accel code, doesn't really work rn
-        glm::vec3 norm_vel = glm::normalize(vel) * 5.f;
+        glm::vec3 norm_vel = glm::normalize(vel) * 10.f;
         if (vel != glm::vec3(0, 0, 0)) {
             phys->vel.x = norm_vel.x;
             phys->vel.z = norm_vel.z;

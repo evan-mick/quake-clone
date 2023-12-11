@@ -400,8 +400,6 @@ void Renderer::paintTexture(GLuint texture, bool post_process, int slot, float o
     } else {
         glDisable(GL_DEPTH_TEST);
     }
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    glPolygonOffset(1.0f, 1.0f);
 
     glUseProgram(m_texture_shader);
 
@@ -425,7 +423,6 @@ void Renderer::paintTexture(GLuint texture, bool post_process, int slot, float o
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
     glUseProgram(0);
-    glDisable(GL_POLYGON_OFFSET_FILL);
 
 
     if(slot>=m_texture_map.size()) {
@@ -566,9 +563,46 @@ void Renderer::drawDynamicOb(struct ECS* e, entity_t ent, float delta_seconds) {
 //    default_render.drawRenderOb();
 }
 
+void Renderer::queueDynamicModel(struct ECS* e, entity_t ent, float delta_seconds) {
+    Transform* trans = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
+    Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
+
+
+
+    if(rend->model_id==5) {//for player entity
+        Player p;
+        p.transformPlayer(trans);
+        for (RenderObject& ob : p.getModel().objects) {
+//        drawRenderOb(ob);
+         m_dynamics.push_back(ob);
+
+        }
+    } else {//for single-prim models associated
+        Model mod = m_models[rend->model_id];
+
+        for(RenderObject& ob : mod.objects) {
+
+
+        ob.ctm = glm::translate(ob.ctm, trans->pos);
+        glm::rotate(ob.ctm, trans->rot.x, glm::vec3(1, 0, 0));
+        glm::rotate(ob.ctm, trans->rot.y, glm::vec3(0, 1, 0));
+        glm::rotate(ob.ctm, trans->rot.z, glm::vec3(0, 0, 1));
+        glm::scale(ob.ctm, trans->scale);
+            m_dynamics.push_back(ob);
+
+
+//        drawRenderOb(ob);
+
+        }
+    }
+
+
+}
+
 
 
 void Renderer::drawScreen() {
+
 
     // Draw to screen
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
@@ -737,6 +771,26 @@ void Renderer::drawStaticObs()
 
 }
 
+void Renderer::drawDynamicObs() {
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glEnable(GL_DEPTH_TEST);
+    glPolygonOffset(1.f,10.0f);
+    std::vector<RenderObject> toRender = m_dynamics;
+    for (RenderObject ob : toRender) {
+        drawRenderOb(ob);
+    }
+
+    // Remove all rendered dynamic objects from dynamic render queue
+//    m_dynamics.erase(std::remove_if(m_dynamics.begin(), m_dynamics.end(),
+//                                    [&toRender](const RenderObject& value) {
+//                                        return std::find(toRender.begin(), toRender.end(), value) != toRender.end();
+//                                    }),
+//                     m_dynamics.end());
+    m_dynamics = std::vector<RenderObject>();
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+}
+
 
 
 
@@ -821,75 +875,7 @@ void Renderer::settingsChanged() {
 //    update(); // asks for a PaintGL() call to occur
 }
 
-// ================== Project 6: Action!
-/*
-void Renderer::keyPressEvent(QKeyEvent *event) {
-    m_keyMap[Qt::Key(event->key())] = true;
-}
 
-void Renderer::keyReleaseEvent(QKeyEvent *event) {
-    m_keyMap[Qt::Key(event->key())] = false;
-}
-
-void Renderer::mousePressEvent(QMouseEvent *event) {
-    if (event->buttons().testFlag(Qt::LeftButton)) {
-        m_mouseDown = true;
-        m_prev_mouse_pos = glm::vec2(event->position().x(), event->position().y());
-    }
-}
-
-void Renderer::mouseReleaseEvent(QMouseEvent *event) {
-    if (!event->buttons().testFlag(Qt::LeftButton)) {
-        m_mouseDown = false;
-    }
-}
-
-void Renderer::mouseMoveEvent(QMouseEvent *event) {
-    if (m_mouseDown) {
-        int posX = event->position().x();
-        int posY = event->position().y();
-        int deltaX = posX - m_prev_mouse_pos.x;
-        int deltaY = posY - m_prev_mouse_pos.y;
-        m_prev_mouse_pos = glm::vec2(posX, posY);
-
-        // Use deltaX and deltaY here to rotate
-//        glm::rotate()
-        camera.rotate(-deltaX / 500.f, deltaY / 500.f);
-
-        update(); // asks for a PaintGL() call to occur
-    }
-}
-
-void Renderer::timerEvent(QTimerEvent *event) {
-    int elapsedms   = m_elapsedTimer.elapsed();
-    float deltaTime = elapsedms * 0.001f;
-    m_elapsedTimer.restart();
-
-    // Use deltaTime and m_keyMap here to move around
-
-    if (m_keyMap[Qt::Key_W]) {
-        camera.move_forward(5 * deltaTime);
-    }
-    if (m_keyMap[Qt::Key_S]) {
-        camera.move_forward(-5 * deltaTime);
-    }
-
-    if (m_keyMap[Qt::Key_D]) {
-        camera.move_right(5 * deltaTime);
-    }
-    if (m_keyMap[Qt::Key_A]) {
-        camera.move_right(-5 * deltaTime);
-    }
-
-    if (m_keyMap[Qt::Key_Space]) {
-        camera.move_up(5 * deltaTime);
-    }
-    if (m_keyMap[Qt::Key_Control]) {
-        camera.move_up(-5 * deltaTime);
-    }
-
-    update(); // asks for a PaintGL() call to occur
-}*/
 
 // DO NOT EDIT
 void Renderer::saveViewportImage(std::string filePath) {
