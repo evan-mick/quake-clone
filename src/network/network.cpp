@@ -272,6 +272,8 @@ int Network::connect(const char* ip, const char* port) {
     struct addrinfo hints {}, *servinfo, *p;
     int rv;
 
+    std::cout << "Connect start" << std::endl;
+
     // Set up UDP connection
 //    memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_INET;
