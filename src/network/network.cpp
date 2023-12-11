@@ -455,7 +455,7 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
     Packet dataPacket;
     dataPacket.tick = td->tick;
     dataPacket.command = 'D'; // 'D' for Data
-    char* data = new char[data_written];
+    char* data = new char[data_written + sizeof(Packet)];
     memcpy(data, &dataPacket, sizeof(Packet));
     memcpy(data + sizeof(Packet), td->data, data_written);
 
