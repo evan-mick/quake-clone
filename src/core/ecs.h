@@ -4,12 +4,15 @@
 #include <vector>
 #include <chrono>
 #include <array>
+#include <functional>
 
 
 typedef unsigned int flags_t;
 typedef unsigned char entity_t;
 typedef unsigned char entityType_t;
-typedef void (*system_t)(struct ECS*, entity_t entity_id, float delta_seconds);
+//typedef void (*system_t)(struct ECS*, entity_t entity_id, float delta_seconds);
+typedef std::function<void(struct ECS*, entity_t, float)> system_t;
+typedef std::function<void(entity_t)> entbroadcast_t;
 //template <typename T> T* getComponentData(int entity_id, int flag_num);
 
 // IN THEORY, these expressions, and any of the functions, should not have to be edited
@@ -93,6 +96,16 @@ public:
         return m_component_registered[flag_num];
     }
 
+    inline void addBroadcast(entbroadcast_t broadcast) {
+        m_onCreateEntityBroadcast.push_back(broadcast);
+    }
+
+    inline float getRecentDelta() {
+        return m_deltaTime;
+    }
+
+
+
 private:
 
     struct SystemData {
@@ -112,11 +125,20 @@ private:
 
     std::vector<SystemData> m_systems = {};
 
+    std::vector<entbroadcast_t> m_onCreateEntityBroadcast = {};
+    inline void doBroadcast(std::vector<entbroadcast_t>& funcs, entity_t ent) {
+        for (entbroadcast_t& func : funcs) {
+            func(ent);
+        }
+    }
+
     // Amount of data stored, needed for serialization and deserialization
     // BE ON THE LOOKOUT FOR BUGS RELATED TO THIS
     size_t m_usedDataSize = 0;
 
     size_t m_nextUnallocEntity = 0;
+
+    float m_deltaTime;
 
     // Destruction
     std::vector<int> m_destroyQueue = {};

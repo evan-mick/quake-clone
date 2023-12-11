@@ -22,8 +22,8 @@ Renderer::Renderer(Camera* cam, bool fullSetup)
     //: QOpenGLWidget(parent)
 {
 
-//    if (!fullSetup)
-//        return;
+    if (!fullSetup)
+        return;
 
     camera = cam;
     default_render = this;

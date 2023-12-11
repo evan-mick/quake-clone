@@ -91,19 +91,24 @@ public:
         return m_myPlayerEntityID;
     }
 
+    inline void setAuthority(entity_t ent) {
+        m_hasAuthority[ent] = true;
+    }
+
 
 private:
     entity_t m_myPlayerEntityID = 0;
     bool m_isServer = false;
     ECS* m_ecs;
     std::atomic_bool m_shutdown; // equal sign needs to be removed and defined in the consructor I think
-    std::mutex m_connectionMutex = std::mutex();
+    std::mutex m_connectionMutex;
     // ONLY RELEVENT TO CLIENTS AS OF NOW
     // what should server be receiving? should this be in connection?
     std::priority_queue<Gamestate, std::vector<Gamestate>, Gamestate> m_recentGamestates;
 
     // To store what entities they have authority over
     std::array<int, MAX_ENTITY> m_hasAuthority{};
+
 
     std::array<Connection, MAX_PLAYERS> m_connections{}; // not using this atm
     std::unordered_map<uint32_t, Connection*> m_connectionMap{};

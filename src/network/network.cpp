@@ -5,6 +5,7 @@
 #include "game_types.h"
 #include <iostream>
 #include "game_create_helpers.h"
+#include <functional>
 
 /* TODO:
     
@@ -17,10 +18,11 @@ const char* DEFAULT_PORT = "42069";
 Network::Network(bool server, ECS* ecs, const char* ip)
 {
     // IP and port are ALWAYS the server address and port
-
     m_isServer = server;
     m_ecs = ecs;
     m_shutdown = false;
+
+
 
     // Initialize Tick Rate
     m_timer.setAndResetTimer(TICK_RATE); // 60 ticks per second
@@ -38,7 +40,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
     }
 
     // Initialize client
-    if (!server){
+    else if (!server){
 
         // Attempt to connect to server
         int clientSetup = connect(ip, DEFAULT_PORT); 
@@ -53,8 +55,8 @@ Network::Network(bool server, ECS* ecs, const char* ip)
 
 //        this->clientListen();
         // Open listen thread
-//        m_listenThread = std::thread([this]() { this->clientListen(); });
-//        m_listenThread.detach();
+        m_listenThread = std::thread([this]() { this->clientListen(); });
+        m_listenThread.detach();
     }
 
 }
@@ -302,7 +304,6 @@ int Network::connect(const char* ip, const char* port) {
     Packet pack = *((Packet*) buff);
 
 
-
     if (pack.command == 'W') {
 
         std::cout << "Welcome packet received bytes read " << bytes << std::endl;
@@ -327,7 +328,7 @@ int Network::connect(const char* ip, const char* port) {
         addConnection(conn->ip, conn);
     }
 
-    freeaddrinfo(servinfo); // all done with this structure
+//    freeaddrinfo(servinfo); // all done with this structure
     return 0;
 }
 
