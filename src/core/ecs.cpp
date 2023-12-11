@@ -142,6 +142,10 @@ void* ECS::getComponentData(entity_t entity_id, int flag_num) {
 
     flags_t flag = (1 << (flag_num));
     bool equal = ((m_entities[entity_id] & flag) == flag);
+    std::cout << "m_entities[id]: " << std::to_string(m_entities[entity_id])
+              << " m_entities[entity_id] & flag: " << std::to_string(m_entities[entity_id] & flag)
+              << " flag: " << std::to_string(flag)
+              << " equal: " << std::to_string(equal) <<std::endl;
 //    bool ent_in_bounds = (entity_id < MAX_ENTITY && entity_id >= 0); this already checked by virtue of entity_t
     bool flag_in_bounds = (flag_num >= 0 || flag_num < MAX_COMPONENTS);
 

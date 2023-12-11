@@ -493,7 +493,7 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
 
     // Serialize data
     int data_written = ecs->serializeData(&tick_data);
-    std::cout << "data_written: " << std::to_string(data_written) << std::endl;
+    // std::cout << "data_written: " << std::to_string(data_written) << std::endl;
 //    assert(data_written <= FULL_PACKET - sizeof(Packet));
     td->data = tick_data;
     td->tick = tick;
