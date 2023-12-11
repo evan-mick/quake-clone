@@ -8,9 +8,12 @@
 
 inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
     entity_t ent = e->createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT, FLN_COLLISION });
-    Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
-    //    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
-    rend->model_id = 5;
+
+    if (e->isComponentRegistered(FLN_RENDER)) {
+        Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
+        //    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+        rend->model_id = 5;
+    }
 
     Transform* trans = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
     trans->pos = pos;
@@ -26,8 +29,10 @@ inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec2 rot) {
     getTransform(e, proj)->pos = pos;
     getTransform(e, proj)->scale = glm::vec3(.15f, .15f, .15f);
 
-    Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
-    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+    if (e->isComponentRegistered(FLN_RENDER)) {
+        Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
+        rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+    }
 
     CollisionData* col = getComponentData<CollisionData>(e, proj, FLN_COLLISION);
     col->col_type = -1;

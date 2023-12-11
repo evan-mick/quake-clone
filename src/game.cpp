@@ -214,7 +214,9 @@ void Game::registerInputs() {
 
 void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
     ecs.registerSystemWithBitFlags(Physics::tryRunStep, phys.getRequiredFlags());
-    ecs.registerSystem(Renderer::drawDynamicOb, {FLN_TRANSFORM, FLN_RENDER});
+
+    if (!m_server)
+        ecs.registerSystem(Renderer::drawDynamicOb, {FLN_TRANSFORM, FLN_RENDER});
 
 //    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
 

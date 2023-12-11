@@ -46,11 +46,15 @@ Network::Network(bool server, ECS* ecs, const char* ip)
             throw std::runtime_error("Client initialization failed");
         }
 
+        std::cout << "Connection Established" << std::endl;
+
         // Populate Client authority vector
         // TODO
 
+        this->clientListen();
         // Open listen thread
-        m_listenThread = std::thread([this]() { this->clientListen(); });
+//        m_listenThread = std::thread([this]() { this->clientListen(); });
+//        m_listenThread.detach();
     }
 
 }
@@ -191,21 +195,25 @@ void Network::addConnection(uint32_t ip, Connection* conn) {
         m_connectionMap[ip] = conn;
         m_connectionMutex.unlock();
         return;
+    } else {
+        m_connectionMap[ip] = conn;
     }
-    std::cout << "add connection failed, try lock failed" << std::endl;
+//    std::cout << "add connection failed, try lock failed" << std::endl;
 
 }
 
 Connection* Network::getConnection(uint32_t ip) {
 
     // Find connection based on IP
-    std::lock_guard<std::mutex> lock(m_connectionMutex); // Lock the connection map
-    auto it = m_connectionMap.find(ip);
-    if (it == m_connectionMap.end()) {
-        // Key not found:
-        return nullptr;
-    } else {
-        return it->second;
+//    std::lock_guard<std::mutex> lock(m_connectionMutex); // Lock the connection map
+    if (m_connectionMutex.try_lock()) {
+        auto it = m_connectionMap.find(ip);
+        if (it == m_connectionMap.end()) {
+            // Key not found:
+            return nullptr;
+        } else {
+            return it->second;
+        }
     }
 
 }
@@ -213,7 +221,8 @@ Connection* Network::getConnection(uint32_t ip) {
 void Network::deserializeAllDataIntoECS(ECS* ecs) {
     
     // Iterate through all connections, pop once per tick
-    m_connectionMutex.lock();
+//    m_connectionMutex.lock();
+    std::lock_guard<std::mutex> lock(m_connectionMutex);
     for (auto& conn : m_connectionMap) { 
 
         TickData data;
@@ -234,7 +243,7 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
         conn.second->tick_buffer.mutex.unlock();
     }
 
-    m_connectionMutex.unlock();
+//    m_connectionMutex.unlock();
 }
 
 int Network::connect(const char* ip, const char* port) {
@@ -268,6 +277,8 @@ int Network::connect(const char* ip, const char* port) {
         return -1;
     }
 
+    int server = setupUDPConn(ip, port);
+
     // Send Hello packet
     Packet helloPacket;
     helloPacket.tick = m_timer.getTimesRun(); 
@@ -280,7 +291,7 @@ int Network::connect(const char* ip, const char* port) {
     servAddr.sin_family = AF_INET;
     servAddr.sin_port = ((struct sockaddr_in*)p->ai_addr)->sin_port;
 
-    sendto(sockfd, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, servAddr_len);
+    sendto(server, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, servAddr_len);
 
     // Wait for Welcome packet
 //    Packet welcomePacket;
@@ -290,27 +301,30 @@ int Network::connect(const char* ip, const char* port) {
     int bytes = recvfrom(sockfd, buff, 1400, 0, (struct sockaddr *)&servAddr, &servAddr_len);
     Packet pack = *((Packet*) buff);
 
-    std::cout << "Potential welcome packet received bytes read " << bytes << std::endl;
+
 
     if (pack.command == 'W') {
+
+        std::cout << "Welcome packet received bytes read " << bytes << std::endl;
         // Create new Connection
-        Connection conn;
-        entity_t entity_id = *((entity_t*)buff + sizeof(Packet));
+        Connection* conn = new Connection();
+        entity_t entity_id = *((entity_t*)(buff + sizeof(Packet)));
         //assert(entity_id != nullptr);
 
         //client has authority over this
         m_hasAuthority[entity_id] = true;
         m_myPlayerEntityID = entity_id;
+
         
         // Create new Connection
-        conn.last_rec_tick = pack.tick;
-        conn.socket = sockfd;
-        conn.entity = -1; // -1 for server
-        conn.ip = (uint32_t)((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
-        conn.port = (uint16_t)((struct sockaddr_in*)p->ai_addr)->sin_port;
-        uint32_t serverIP = ((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
+        conn->last_rec_tick = pack.tick;
+        conn->socket = sockfd;
+        conn->entity = -1; // -1 for server
+        conn->ip = ((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
+        conn->port = ((struct sockaddr_in*)p->ai_addr)->sin_port;
+        //uint32_t serverIP = //((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
         // Add to connestions map
-        addConnection(serverIP, &conn);
+        addConnection(conn->ip, conn);
     }
 
     freeaddrinfo(servinfo); // all done with this structure
@@ -319,7 +333,8 @@ int Network::connect(const char* ip, const char* port) {
 
 void Network::shutdown() {
 
-    m_connectionMutex.lock();
+//    m_connectionMutex.lock();
+    std::lock_guard<std::mutex> lock(m_connectionMutex);
     for (auto& conn : m_connectionMap) {
 
         // Close all sockets
@@ -340,7 +355,7 @@ void Network::shutdown() {
 
     // Clear the map
     m_connectionMap.clear();
-    m_connectionMutex.unlock();
+//    m_connectionMutex.unlock();
 
     // Set shutdown flag
     m_shutdown = true;
@@ -436,8 +451,11 @@ void Network::clientListen() {
         int servSocket = -1;
 
         // Iterate through all connections and find the server (should only be one)
-        m_connectionMutex.lock();
-        for (auto& conn : m_connectionMap) {
+//        std::lock_guard<std::mutex> lock(m_connectionMutex);
+
+        for (auto& conn : this->m_connectionMap) {
+
+            std::cout << " conn " << conn.first << " " << (long)(conn.second) << std::endl;
 
             // This is the server
             if (conn.second->entity == -1) {
@@ -458,7 +476,9 @@ void Network::clientListen() {
                 servAddr.sin_addr.s_addr = serverIP;
                 servAddr.sin_family = AF_INET;
                 servAddr.sin_port = serverPort;
+                std::cout << "Attempting to receive" << std::endl;
                 recvfrom(servSocket, (char*)&buff, 1400, 0, (struct sockaddr *)&servAddr, &servAddr_len);
+
                 Packet packet = *((Packet*) buff);
 
                 // Process packet
@@ -471,7 +491,7 @@ void Network::clientListen() {
             }
         }
 
-        m_connectionMutex.unlock();
+//        m_connectionMutex.unlock();
     }
 }
 
