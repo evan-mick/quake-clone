@@ -33,11 +33,19 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         // Server has authority over everything by default
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
 
+        // Start listening for connections
+        // Null addr means listen socket
+        int serverSocket = setupUDPConn(nullptr, DEFAULT_PORT);
+        if (serverSocket < 0) {
+            std::cout << "Unable to set up UDP connection for server" << std::endl;
+            return;
+        }
+
         // Open listen thread and accept connections
-//        m_listenThread = std::thread([this, ip]() {
-            this->serverListen(ip, DEFAULT_PORT); 
-//        });
-//        m_listenThread.detach();
+        m_listenThread = std::thread([this, ip, serverSocket]() {
+                this->serverListen(ip, DEFAULT_PORT, serverSocket); 
+        });
+        m_listenThread.detach();
     }
 
     // Initialize client
@@ -82,14 +90,9 @@ void Network::mainLoop(float delta) {
     
 }
 
-void Network::serverListen(const char* ip, const char* port) {
+void Network::serverListen(const char* ip, const char* port, int serverSocket) {
 
-    // Null addr means listen socket
-    int serverSocket = setupUDPConn(nullptr, port);
-    if (serverSocket < 0) {
-        std::cout << "Unable to set up UDP connection for server" << std::endl;
-        return;
-    }
+    
 
     std::cout << "Server now listening on socket: " << std::to_string(serverSocket) << std::endl;
 
@@ -233,8 +236,7 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
 //    m_connectionMutex.lock();
     std::lock_guard<std::mutex> lock(m_connectionMutex);
     for (auto& [ip, conn] : m_connectionMap) {
-        std::cout << "conn ip: " << std::to_string(ip) << " " << std::to_string((long)(conn)) << std::endl;
-        std::cout << "entity: " << std::to_string((unsigned int)conn->entity) << std::endl; // This might error
+
 
         if (conn == nullptr) {
             std::cout << "conn is null for ip: " << std::to_string(ip) << std::endl;
@@ -245,6 +247,9 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
         conn->tick_buffer.mutex.lock();
 
         if (!conn->tick_buffer.buffer.empty()) {
+
+            std::cout << "conn ip: " << std::to_string(ip) << " " << std::to_string((long)(conn)) << std::endl;
+            std::cout << "entity: " << std::to_string((unsigned int)conn->entity) << std::endl; // This might error
 
             // Get the first element in the tick buffer
             td = conn->tick_buffer.buffer.front();
@@ -454,6 +459,8 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
     memcpy(data, &dataPacket, sizeof(Packet));
     memcpy(data + sizeof(Packet), td->data, data_written);
 
+
+    std::cout << std::string(data) << std::endl;
     // Send data to server
     struct sockaddr_in connAddr;
     socklen_t connAddr_len = sizeof(connAddr);
@@ -488,7 +495,7 @@ void Network::clientListen() {
                 // Construct packet
 //                Packet packet;
                 char* buff = new char[FULL_PACKET];
-                memset(buff, 0, FULL_PACKET);
+                // memset(buff, 0, FULL_PACKET);
 
                 uint32_t serverIP = conn->ip;
                 uint16_t serverPort = conn->port;
@@ -500,10 +507,12 @@ void Network::clientListen() {
                 servAddr.sin_family = AF_INET;
                 servAddr.sin_port = serverPort;
 
-                std::cout << "Attempting to receive " << servSocket << std::endl;
+                std::cout << "Attempting to receive on socket" << servSocket << std::endl;
                 int bytes = recvfrom(servSocket, buff, FULL_PACKET, 0, (struct sockaddr *)&servAddr, &servAddr_len);
                 std::cout << "Received: " << std::to_string(bytes) << std::endl;
-                
+                std::cout << "content: " << std::string(buff) << std::endl;
+
+
                 assert(bytes <= FULL_PACKET);
                 assert(bytes > 0);
 

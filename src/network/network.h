@@ -118,7 +118,7 @@ private:
 
     std::thread m_listenThread;
     
-    void serverListen(const char* ip, const char* port);
+    void serverListen(const char* ip, const char* port, int serverSocket);
     void clientListen();
 
     int setupUDPConn(const char* address, const char* port);
