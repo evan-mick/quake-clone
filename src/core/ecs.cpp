@@ -146,9 +146,16 @@ void* ECS::getComponentData(entity_t entity_id, int flag_num) {
     bool flag_in_bounds = (flag_num >= 0 || flag_num < MAX_COMPONENTS);
 
     if (!flag_in_bounds || !m_component_registered[flag_num]
-        || !equal /*|| !ent_in_bounds*/)
-        return nullptr;
+        || !equal /*|| !ent_in_bounds*/) {
 
+        if (!flag_in_bounds)
+            std::cout << "!flag_in_bounds" << std::endl;
+        if (!m_component_registered[flag_num])
+            std::cout << "!m_component_registered[flag_num]" << std::endl;
+        if (!equal)
+            std::cout << "!equal" << std::endl;
+        return nullptr;
+    }
     return ((char*)(m_components[flag_num])) + (m_component_num_to_size[flag_num] * entity_id);
 }
 
@@ -157,6 +164,7 @@ int ECS::serializeData(char** buff_ptr) {
     *buff_ptr = new char[m_usedDataSize];
 
     size_t ob_ptr = 0;
+    // size_t used = 0;
     for (int ent = 0; ent < MAX_ENTITY; ent++) {
 
         if (m_entities[ent] == 0)
@@ -181,13 +189,18 @@ int ECS::serializeData(char** buff_ptr) {
     }
 
 
-    return m_usedDataSize;
+    return ob_ptr;//..m_usedDataSize;
 }
 
 void ECS::deserializeIntoData(char* serialized_data, size_t max_size, const bool* ignore) {
     // IMPORTANT: what happens to used data size when a new object is deserialized in?
     // ALSO, ensure that tip of data isn't full if flags are empty/object is destroyed
+    std::cout << "Deserializing into data (ECS)" << std::endl;
 
+    if (serialized_data == nullptr) {
+        std::cout << "Null Serialized Data" << std::endl;
+        return;
+    }
     size_t ob_ptr = 0;
 
     entity_t ent;

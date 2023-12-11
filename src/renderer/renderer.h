@@ -34,6 +34,7 @@ public:
 
     void drawStaticObs();
     void drawDynamicOb(struct ECS*, entity_t entity_id, float delta_seconds);
+    void queueDynamicModel(struct ECS* e, entity_t ent, float delta_seconds);
     static std::map<u_int8_t,Model> generateModelsMap();
     static std::map<QString,SceneTexture> generateTexturesMap();
 
@@ -41,10 +42,14 @@ public:
 
     void drawScreen();
 
+    void drawDynamicObs();
+
     void resizeGL(int width, int height);      // Called when window size changes
 
     void startDraw();
     std::map<u_int8_t,Model> m_models;
+
+
 
     inline void setRatio(float x, float y) {
 //        m_devicePixelRatio = ratio;
@@ -64,7 +69,8 @@ protected:
 private:
 
     void drawRenderOb(RenderObject& to_draw);
-    void drawDynamicModel(struct ECS* e, entity_t ent, float delta_seconds);
+
+    std::vector<RenderObject> m_dynamics;
 
 //    void keyPressEvent(QKeyEvent *event) override;
 //    void keyReleaseEvent(QKeyEvent *event) override;
@@ -76,6 +82,8 @@ private:
     // Tick Related Variables
     int m_timer;                                        // Stores timer which attempts to run ~60 times per second
     QElapsedTimer m_elapsedTimer;                       // Stores timer which keeps track of actual time between frames
+
+
 
     SceneData* data = nullptr;
 
