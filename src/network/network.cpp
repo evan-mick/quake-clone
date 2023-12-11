@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include "game_types.h"
 #include <iostream>
-#include "game_create_helpers.h"
+#include "../game_create_helpers.h"
 #include <functional>
 
 /* TODO:
@@ -55,7 +55,6 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         // Populate Client authority vector
         // TODO
 
-//        this->clientListen();
         // Open listen thread
         m_listenThread = std::thread([this]() { this->clientListen(); });
         m_listenThread.detach();
@@ -112,10 +111,12 @@ void Network::serverListen(const char* ip, const char* port) {
         std::cout << "Packet received successfully with size: " << bytesReceived << std::endl;
 
         Packet packet = *((Packet*)rec_buff);
+
         // Process received packet
         if (packet.command == 'H') { // 'H' for Hello
+
             // Create entity for client
-            entity_t entity_id = createPlayer(m_ecs, glm::vec3(0, 3.f, 0));//m_ecs->createEntity({FLN_PHYSICS, FLN_TRANSFORM, FLN_TEST, FLN_TESTKILL});
+            entity_t entity_id = createPlayer(m_ecs, glm::vec3(0, 3.f, 0));
             char* welcome_entity_id = new char[sizeof(entity_id)];
             memcpy(welcome_entity_id, &entity_id, sizeof(entity_id));
             
@@ -145,7 +146,7 @@ void Network::serverListen(const char* ip, const char* port) {
             Packet welcomePacket;
             welcomePacket.tick = m_timer.getTimesRun(); 
             welcomePacket.command = 'W'; // 'W' for Welcome
-//            welcomePacket.data = welcome_entity_id;
+            // welcomePacket.data = welcome_entity_id;
 
             char* send_buff = new char[sizeof(Packet) + sizeof(entity_t)];
             memcpy(send_buff, &welcomePacket, sizeof(Packet));
@@ -160,6 +161,7 @@ void Network::serverListen(const char* ip, const char* port) {
             delete[] send_buff;
 
         } else if (packet.command == 'D') { // 'D' for Data
+
             // Get tick at which packet was received
             unsigned int tick = m_timer.getTimesRun();
 
@@ -192,7 +194,7 @@ void Network::serverListen(const char* ip, const char* port) {
 void Network::addConnection(uint32_t ip, Connection* conn) {
 
     // Add connection to map
-//    std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map
+    // std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map
 
     if (m_connectionMutex.try_lock()) {
         m_connectionMap[ip] = conn;
@@ -208,7 +210,7 @@ void Network::addConnection(uint32_t ip, Connection* conn) {
 Connection* Network::getConnection(uint32_t ip) {
 
     // Find connection based on IP
-//    std::lock_guard<std::mutex> lock(m_connectionMutex); // Lock the connection map
+    // std::lock_guard<std::mutex> lock(m_connectionMutex); // Lock the connection map
     if (m_connectionMutex.try_lock()) {
         auto it = m_connectionMap.find(ip);
         if (it == m_connectionMap.end()) {
@@ -218,6 +220,8 @@ Connection* Network::getConnection(uint32_t ip) {
             return it->second;
         }
     }
+
+    return nullptr;
 
 }
 
@@ -335,7 +339,6 @@ int Network::connect(const char* ip, const char* port) {
 
 void Network::shutdown() {
 
-//    m_connectionMutex.lock();
     std::lock_guard<std::mutex> lock(m_connectionMutex);
     for (auto& conn : m_connectionMap) {
 
@@ -357,7 +360,6 @@ void Network::shutdown() {
 
     // Clear the map
     m_connectionMap.clear();
-//    m_connectionMutex.unlock();
 
     // Set shutdown flag
     m_shutdown = true;
@@ -428,7 +430,6 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
     char* data = new char[data_written];
     memcpy(data, &dataPacket, sizeof(Packet));
     memcpy(data + sizeof(Packet), td->data, data_written);
-//    dataPacket.data = data;
 
     // Send data to server
     struct sockaddr_in connAddr;
@@ -448,9 +449,6 @@ void Network::clientListen() {
 
     // Get server socket from connection map
     while (!m_shutdown) {
-
-        // Initialize server socket to something invalid
-//        int servSocket = -1;
 
         // Iterate through all connections and find the server (should only be one)
         std::lock_guard<std::mutex> lock(m_connectionMutex);
