@@ -212,8 +212,8 @@ void Game::registerECSComponents(ECS& ecs) {
     ecs.registerComponent(FLN_TRANSFORM, sizeof(Transform));
     ecs.registerComponent(FLN_INPUT, sizeof(InputData));
 
-    if (!m_server)
-        ecs.registerComponent(FLN_RENDER, sizeof(Renderable));
+//    if (!m_server)
+    ecs.registerComponent(FLN_RENDER, sizeof(Renderable));
 
     ecs.registerComponent(FLN_TEST, sizeof(Test));
 }
