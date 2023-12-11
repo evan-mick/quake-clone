@@ -69,7 +69,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
 
 }
 
-void Network::mainLoop(float delta) {
+void Network::broadcastOnTick(float delta) {
 
     if (!m_shutdown) {
         
@@ -88,6 +88,22 @@ void Network::mainLoop(float delta) {
     }
 
     
+}
+
+void Network::deserializeOnTick(float delta) {
+
+    if (!m_shutdown) {
+
+        m_timer.increment(delta);
+
+        // Wait for tick
+        if (!m_timer.finishedThenResetTime()) { 
+            return;
+        }
+        
+        // Deserialize all data into ECS to update the gamestate
+        deserializeAllDataIntoECS(m_ecs);
+    }
 }
 
 void Network::serverListen(const char* ip, const char* port, int serverSocket) {

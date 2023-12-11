@@ -87,7 +87,9 @@ public:
     // int initClient(const char* ip, const char* port);
     void updateTickBuffer(char* data, Connection* conn, unsigned int tick);
     void pushTickData(TickData* td, Connection* conn);
-    void mainLoop(float delta);
+    void broadcastOnTick(float delta);
+    void deserializeOnTick(float delta);
+
 
     inline entity_t getMyPlayerEntityID() {
         return m_myPlayerEntityID;

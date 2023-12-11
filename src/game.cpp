@@ -144,7 +144,7 @@ void Game::startGame(bool server, const char* ip) {
         }
 
         if (net)
-            net->mainLoop(ecs.getRecentDelta());
+            net->broadcastOnTick(ecs.getRecentDelta());
     }
     glfwTerminate();
 
