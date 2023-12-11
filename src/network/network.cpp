@@ -51,7 +51,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         // Populate Client authority vector
         // TODO
 
-        this->clientListen();
+//        this->clientListen();
         // Open listen thread
 //        m_listenThread = std::thread([this]() { this->clientListen(); });
 //        m_listenThread.detach();
@@ -249,11 +249,11 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
 int Network::connect(const char* ip, const char* port) {
 
     int sockfd;
-    struct addrinfo hints, *servinfo, *p;
+    struct addrinfo hints {}, *servinfo, *p;
     int rv;
 
     // Set up UDP connection
-    memset(&hints, 0, sizeof(hints));
+//    memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
 
@@ -264,7 +264,7 @@ int Network::connect(const char* ip, const char* port) {
     }
 
     // Loop through all the results and make a socket
-    for(p = servinfo; p != NULL; p = p->ai_next) {
+    for(p = servinfo; p != nullptr; p = p->ai_next) {
         if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
             perror("client: socket");
             continue;
@@ -272,12 +272,12 @@ int Network::connect(const char* ip, const char* port) {
         break;
     }
 
-    if (p == NULL) {
+    if (p == nullptr) {
         fprintf(stderr, "client: failed to create socket\n");
         return -1;
     }
 
-    int server = setupUDPConn(ip, port);
+//    int server = setupUDPConn(ip, port);
 
     // Send Hello packet
     Packet helloPacket;
@@ -291,7 +291,7 @@ int Network::connect(const char* ip, const char* port) {
     servAddr.sin_family = AF_INET;
     servAddr.sin_port = ((struct sockaddr_in*)p->ai_addr)->sin_port;
 
-    sendto(server, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, servAddr_len);
+    sendto(sockfd, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, servAddr_len);
 
     // Wait for Welcome packet
 //    Packet welcomePacket;
@@ -448,10 +448,10 @@ void Network::clientListen() {
     while (!m_shutdown) {
 
         // Initialize server socket to something invalid
-        int servSocket = -1;
+//        int servSocket = -1;
 
         // Iterate through all connections and find the server (should only be one)
-//        std::lock_guard<std::mutex> lock(m_connectionMutex);
+        std::lock_guard<std::mutex> lock(m_connectionMutex);
 
         for (auto& conn : this->m_connectionMap) {
 
@@ -460,7 +460,7 @@ void Network::clientListen() {
             // This is the server
             if (conn.second->entity == -1) {
 
-                servSocket = conn.second->socket;
+                int servSocket = conn.second->socket;
 
                 // Construct packet
 //                Packet packet;
@@ -476,7 +476,7 @@ void Network::clientListen() {
                 servAddr.sin_addr.s_addr = serverIP;
                 servAddr.sin_family = AF_INET;
                 servAddr.sin_port = serverPort;
-                std::cout << "Attempting to receive" << std::endl;
+                std::cout << "Attempting to receive " << servSocket << std::endl;
                 recvfrom(servSocket, (char*)&buff, 1400, 0, (struct sockaddr *)&servAddr, &servAddr_len);
 
                 Packet packet = *((Packet*) buff);
@@ -487,6 +487,7 @@ void Network::clientListen() {
                     unsigned int tick = m_timer.getTimesRun();
                     updateTickBuffer(buff, conn.second, tick);
                 }
+                delete[] buff;
                 break;
             }
         }

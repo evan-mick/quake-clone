@@ -37,13 +37,13 @@ void Game::startGame(bool server, const char* ip) {
     std::cout << "Phys ECS" << std::endl;
 
     // disabling network for now
-    if (std::string(ip) != "" || server) {
-        std::cout << "Network setup: " << (server ? "server" : "client connecting to " + std::string(ip)) << std::endl;
-        Network net = Network(server, &ecs, ip);
-        std::cout << "Network setup attempt complete" << std::endl;
-    } else {
-        std::cout << "No Networking" << std::endl;
-    }
+//    if (std::string(ip) != "" || server) {
+//        std::cout << "Network setup: " << (server ? "server" : "client connecting to " + std::string(ip)) << std::endl;
+//        Network net = Network(server, &ecs, ip);
+//        std::cout << "Network setup attempt complete" << std::endl;
+//    } else {
+//        std::cout << "No Networking" << std::endl;
+//    }
 
     if (!server)
         setupWindow();
@@ -67,7 +67,7 @@ void Game::startGame(bool server, const char* ip) {
 
     Camera cam = Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, SceneParser::getSceneData().cameraData);
 
-    Renderer render = Renderer(&cam, !server);
+    Renderer render = Renderer(&cam, true);
 
     if (!server)
         Renderer::default_render->setRatio(m_monitorXScale, m_monitorYScale);
@@ -83,7 +83,7 @@ void Game::startGame(bool server, const char* ip) {
 
     entity_t ent;
     if (!m_server)
-        ent = createPlayer(&ecs, glm::vec3(0, 3.f, 0));
+        ent = createPlayer(&ecs, glm::vec3(0, 10.f, 0));
 
 //    glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
 //        Renderer::default_render->resizeGL(width, height);
