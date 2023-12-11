@@ -105,7 +105,7 @@ void Game::startGame(bool server, const char* ip) {
 
     while (m_running) {
 
-        if (net && m_server) {
+        if (net) 
             net->deserializeAllDataIntoECS(&ecs);
 
         //        Input::checkKeys(window);
