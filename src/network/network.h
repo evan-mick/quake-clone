@@ -37,7 +37,7 @@ struct TickData {
 
 struct TickBuffer {
     std::mutex mutex;
-    std::queue<TickData> buffer;
+    std::queue<TickData*> buffer;
 };
 
 struct Gamestate {
@@ -86,7 +86,7 @@ public:
     void onTick(unsigned int tick);
     // int initClient(const char* ip, const char* port);
     void updateTickBuffer(char* data, Connection* conn, unsigned int tick);
-    void pushTickData(TickData td, Connection* conn);
+    void pushTickData(TickData* td, Connection* conn);
     void mainLoop(float delta);
 
     inline entity_t getMyPlayerEntityID() {

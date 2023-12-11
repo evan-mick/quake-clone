@@ -238,7 +238,7 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
             continue;
         }
 
-        TickData td;
+        TickData* td;
         conn->tick_buffer.mutex.lock();
 
         if (!conn->tick_buffer.buffer.empty()) {
@@ -247,7 +247,7 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
             td = conn->tick_buffer.buffer.front();
 
             char* buff = new char[FULL_PACKET];
-            memcpy(buff, td.data, FULL_PACKET);
+            memcpy(buff, td->data, FULL_PACKET);
 
             // Deserialize data into ECS // NEED TO EDIT THIS TO HANDLE CLIENT AUTHORITY
             ecs->deserializeIntoData(buff, FULL_PACKET, nullptr);
@@ -336,7 +336,7 @@ int Network::connect(const char* ip, const char* port) {
         // Create new Connection
         conn->last_rec_tick = pack.tick;
         conn->socket = sockfd;
-        conn->entity = -1; // -1 for server
+        conn->entity = MAX_ENT_VAL; // MAX_ENDT_VAL (-1) for server
         conn->ip = ((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
         conn->port = ((struct sockaddr_in*)p->ai_addr)->sin_port;
         //uint32_t serverIP = //((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
@@ -359,9 +359,10 @@ void Network::shutdown() {
         // Delete all Tick Data in the buffer
         conn.second->tick_buffer.mutex.lock();
         while (!conn.second->tick_buffer.buffer.empty()) {
-            TickData data = conn.second->tick_buffer.buffer.front();
+            TickData* data = conn.second->tick_buffer.buffer.front();
             conn.second->tick_buffer.buffer.pop();
-            delete[] data.data;
+            delete[] data->data;
+            delete data;
         }
         conn.second->tick_buffer.mutex.unlock();
 
@@ -469,7 +470,7 @@ void Network::clientListen() {
             std::cout << " conn " << ip << " " << (long)(conn) << std::endl;
 
             // This is the server
-            if (conn->entity == -1) {
+            if (conn->entity == MAX_ENT_VAL) {
 
                 int servSocket = conn->socket;
 
@@ -521,9 +522,15 @@ void Network::clientListen() {
 void Network::updateTickBuffer(char* data, Connection* conn, unsigned int tick) {
 
     // Populate data based on received Packet
-    TickData td;
-    td.tick = tick;
-    memcpy(&td.data, data, FULL_PACKET - sizeof(Packet));
+    TickData* td = new TickData;
+    
+    // Copy data into buffer
+    char* data_buff = new char[FULL_PACKET - sizeof(Packet)];
+    memcpy(data_buff, data, FULL_PACKET - sizeof(Packet));
+
+    // Populate TickData
+    td->tick = tick;
+    td->data = data_buff;
 
     // Push data into tick buffer
     pushTickData(td, conn);
@@ -541,13 +548,17 @@ void Network::editConnection(uint32_t ip, unsigned int tick) {
     conn->last_rec_tick = tick;
 }
 
-void Network::pushTickData(TickData td, Connection* conn) {
+void Network::pushTickData(TickData* td, Connection* conn) {
 
     // Lock the tick buffer
     conn->tick_buffer.mutex.lock(); 
 
+    std::cout << "pushing tick data" << std::endl;
+    std::cout << "buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
     // Push data into tick buffer
     conn->tick_buffer.buffer.push(td);
+    std::cout << "pushed tick data" << std::endl;
+    std::cout << "buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
 
     // Unlock the tick buffer
     conn->tick_buffer.mutex.unlock();
@@ -563,8 +574,8 @@ void Network::onTick(unsigned int tick) {
     for (auto& conn : m_connectionMap) {
         
         // Assert GS is getting sent to the right place
-        if (!m_isServer) assert(conn.second->entity == -1);
-        if (m_isServer) assert(conn.second->entity != -1);
+        if (!m_isServer) assert(conn.second->entity == MAX_ENT_VAL);
+        if (m_isServer) assert(conn.second->entity != MAX_ENT_VAL);
 
         // Send gamestate to connection
         broadcastGS(m_ecs, conn.second, tick);
