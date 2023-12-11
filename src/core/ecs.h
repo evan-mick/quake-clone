@@ -84,7 +84,7 @@ public:
 
     // Does the entity have the component with the given flag?
     inline bool entityHasComponent(entity_t ent, int flag_num) {
-        return m_entities[ent] | (1 << flag_num);
+        return m_entities[ent] & (1 << flag_num);
     }
 
     // Check if an entity exists
