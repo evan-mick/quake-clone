@@ -328,7 +328,7 @@ int Network::connect(const char* ip, const char* port) {
 //    servAddr.sin_family = AF_INET;
 //    servAddr.sin_port = std::stoi(port);//((struct sockaddr_in*)p->ai_addr)->sin_port;
 
-    sendto(sockfd, (char*)&helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, servAddr_len);
+    sendto(sockfd, &helloPacket, sizeof(helloPacket), 0, (struct sockaddr *)&servAddr, servAddr_len);
 
     // Wait for Welcome packet
 //    Packet welcomePacket;
@@ -470,7 +470,7 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
     connAddr.sin_addr.s_addr = conn->ip;
     connAddr.sin_family = AF_INET;
     connAddr.sin_port = conn->port;
-    sendto(conn->socket, (char*)&data, sizeof(dataPacket) + data_written, 0, (struct sockaddr *)&connAddr, connAddr_len);
+    sendto(conn->socket, data, sizeof(dataPacket) + data_written, 0, (struct sockaddr *)&connAddr, connAddr_len);
 
     // Clean up
     delete[] data;
