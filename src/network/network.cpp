@@ -154,11 +154,11 @@ void Network::serverListen(const char* ip, const char* port, int serverSocket) {
 
             char* send_buff = new char[sizeof(Packet) + sizeof(entity_t)];
             memcpy(send_buff, &welcomePacket, sizeof(Packet));
-            memcpy(send_buff + sizeof(Packet), &welcome_entity_id, sizeof(entity_t));
+            memcpy(send_buff + sizeof(Packet), welcome_entity_id, sizeof(entity_t));
 
             // Send welcome packet
             sendto(serverSocket, send_buff, sizeof(Packet) + sizeof(entity_t), 0, &clientAddr, clientAddrLen);
-            std::cout << "welcome packet sent" << std::endl;
+            std::cout << "welcome packet sent " << (int)(*welcome_entity_id) << std::endl;
 
             // Clean up
             delete[] welcome_entity_id;
@@ -234,10 +234,10 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
     
     // Iterate through all connections, pop once per tick
 //    m_connectionMutex.lock();
-    std::cout << "deserializing all data into ECS" << std::endl;
+//    std::cout << "deserializing all data into ECS" << std::endl;
     std::lock_guard<std::mutex> lock(m_connectionMutex);
     for (auto& [ip, conn] : m_connectionMap) {
-        std::cout << "deserializing data for ip: " << std::to_string(ip) << std::endl;
+//        std::cout << "deserializing data for ip: " << std::to_string(ip) << std::endl;
 
         if (conn == nullptr) {
             std::cout << "conn is null for ip: " << std::to_string(ip) << std::endl;
@@ -247,10 +247,10 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
         TickData* td;
         conn->tick_buffer.mutex.lock();
 
-        std::cout >> "Tick buffer size: " >> std::to_string(conn->tick_buffer.buffer.size()) >> std::endl;
+
 
         if (!conn->tick_buffer.buffer.empty()) {
-
+            std::cout << "Tick buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
             std::cout << "conn ip: " << std::to_string(ip) << " " << std::to_string((long)(conn)) << std::endl;
             std::cout << "entity: " << std::to_string((unsigned int)conn->entity) << std::endl; // This might error
 
@@ -261,7 +261,7 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
             memcpy(buff, td->data, FULL_PACKET);
 
             // Deserialize data into ECS // NEED TO EDIT THIS TO HANDLE CLIENT AUTHORITY
-            // ecs->deserializeIntoData(buff, FULL_PACKET, nullptr);
+            ecs->deserializeIntoData(buff, FULL_PACKET, nullptr/*&(m_hasAuthority[0])*/);
 
             // Pop the tick buffer
             conn->tick_buffer.buffer.pop();
@@ -336,20 +336,23 @@ int Network::connect(const char* ip, const char* port) {
 
     // Listen on that port for a welcome packet
     int bytes = recvfrom(sockfd, buff, FULL_PACKET, 0, (struct sockaddr *)&servAddr, &servAddr_len);
-    Packet pack = *((Packet*) buff);
+    Packet pack;
+    memcpy(&pack, buff, sizeof(Packet));
 
 
     if (pack.command == 'W') {
 
-        std::cout << "Welcome packet received bytes read " << bytes << std::endl;
+
         // Create new Connection
         Connection* conn = new Connection();
-        entity_t entity_id = *((entity_t*)(buff + sizeof(Packet)));
+        entity_t entity_id;//= *((entity_t*)(buff + sizeof(Packet)));
+        memcpy(&entity_id, buff + sizeof(Packet), sizeof(entity_t));
         //assert(entity_id != nullptr);
 
         //client has authority over this
         m_hasAuthority[entity_id] = true;
         m_myPlayerEntityID = entity_id;
+        std::cout << "Welcome packet received bytes read " << bytes << " " << std::to_string((int)entity_id) << std::endl;
 
         
         // Create new Connection
@@ -450,7 +453,7 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
 
     // Serialize data
     int data_written = ecs->serializeData(&tick_data);
-    assert(data_written <= FULL_PACKET - sizeof(Packet));
+//    assert(data_written <= FULL_PACKET - sizeof(Packet));
     td->data = tick_data;
     td->tick = tick;
     
@@ -458,12 +461,14 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
     Packet dataPacket;
     dataPacket.tick = td->tick;
     dataPacket.command = 'D'; // 'D' for Data
-    char* data = new char[FULL_PACKET];
+    char* data = new char[data_written + sizeof(Packet)];
+    memset(data, 0, data_written + sizeof(Packet));
+//    char* data = new char[FULL_PACKET];
     memcpy(data, &dataPacket, sizeof(Packet));
     memcpy(data + sizeof(Packet), td->data, data_written);
 
 
-    std::cout << std::string(data) << std::endl;
+//    std::cout << std::string(data) << std::endl;
     // Send data to server
     struct sockaddr_in connAddr;
     socklen_t connAddr_len = sizeof(connAddr);
@@ -512,12 +517,12 @@ void Network::clientListen() {
 
                 std::cout << "Attempting to receive on socket" << servSocket << std::endl;
                 int bytes = recvfrom(servSocket, buff, FULL_PACKET, 0, (struct sockaddr *)&servAddr, &servAddr_len);
-                std::cout << "Received: " << std::to_string(bytes) << std::endl;
-                std::cout << "content: " << std::string(buff) << std::endl;
+//                std::cout << "Received: " << std::to_string(bytes) << std::endl;
+//                std::cout << "content: " << std::string(buff) << std::endl;
 
 
-                assert(bytes <= FULL_PACKET);
-                assert(bytes > 0);
+//                assert(bytes <= FULL_PACKET);
+//                assert(bytes > 0);
 
                 // Read into packet
                 Packet packet;
@@ -596,15 +601,15 @@ void Network::pushTickData(TickData* td, Connection* conn) {
 void Network::onTick(unsigned int tick) {
 
     // Deserialize all data into ECS to update the gamestate
-    deserializeAllDataIntoECS(m_ecs);
+//    deserializeAllDataIntoECS(m_ecs);
     
     // Broadcast gamestate to all connections
     std::lock_guard<std::mutex> lock(m_connectionMutex); 
     for (auto& conn : m_connectionMap) {
         
         // Assert GS is getting sent to the right place
-        if (!m_isServer) assert(conn.second->entity == MAX_ENT_VAL);
-        if (m_isServer) assert(conn.second->entity != MAX_ENT_VAL);
+//        if (!m_isServer) assert(conn.second->entity == MAX_ENT_VAL);
+//        if (m_isServer) assert(conn.second->entity != MAX_ENT_VAL);
 
         // Send gamestate to connection
         broadcastGS(m_ecs, conn.second, tick);
