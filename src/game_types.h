@@ -35,7 +35,7 @@ const int IN_SHOOT = 4;
 const int IN_JUMP = 5;
 
 // GAME LOGIC CONSTANTS
-const uint8_t TICKS_PER_SECOND = 10; // 60 normally
+const uint8_t TICKS_PER_SECOND = 60; // 60 normally
 constexpr float TICK_RATE = 1.f/TICKS_PER_SECOND;
 
 
@@ -101,7 +101,6 @@ inline T* getComponentData(ECS* e, entity_t ent, uint32_t flag) {
 //const int test2 = sizeof(Transform) + sizeof(Projectile) + sizeof(Renderable);
 
 struct Test {
-    std::string to_print;
     float timer = 0.0f;
     int ticks = 0;
 };

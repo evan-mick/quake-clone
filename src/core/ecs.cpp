@@ -165,7 +165,8 @@ void* ECS::getComponentData(entity_t entity_id, int flag_num) {
 
 
 int ECS::serializeData(char** buff_ptr) {
-    *buff_ptr = new char[m_usedDataSize];
+    // TODO
+    *buff_ptr = new char[1400/*m_usedDataSize*/];
 
     size_t ob_ptr = 0;
     // size_t used = 0;
@@ -228,7 +229,18 @@ void ECS::deserializeIntoData(char* serialized_data, size_t max_size, const bool
             break;
         }
 
+        bool cpy = (m_entities[ent] == 0);
 
+        // Remove data if deleted
+        if (m_entities[ent] != 0 && flags == 0) {
+            for (int com = 0; com < MAX_COMPONENTS; com++) {
+                bool has_flag = m_entities[ent] & (1 << com);
+                if (!m_component_registered[com] || !has_flag) {
+                    continue;
+                }
+                m_usedDataSize -= m_component_num_to_size[com];
+            }
+        }
         // Copy over all component data
         // IMPORTANT: what if entity doesn't exist before?
         m_entities[ent] = flags;
@@ -242,6 +254,8 @@ void ECS::deserializeIntoData(char* serialized_data, size_t max_size, const bool
 
             memcpy(getComponentData(ent, com), (serialized_data + ob_ptr), m_component_num_to_size[com]);
             ob_ptr += m_component_num_to_size[com];
+            if (cpy)
+                m_usedDataSize += m_component_num_to_size[com];
 
         }
     }

@@ -55,8 +55,6 @@ struct Connection {
     uint16_t port;
     uint32_t ip;
     entity_t entity; // if the other side is the server, -1, otherwise keep entity_id of the player
-    std::mutex mutex;
-    std::queue<TickData> buffer;
 };
 
 //bool compare(Gamestate a, Gamestate b) {
@@ -101,6 +99,12 @@ public:
 
 
 private:
+
+    std::mutex mutex_;
+    std::queue<TickData> buffer;
+
+    TickData next;
+
     entity_t m_myPlayerEntityID = 0;
     bool m_isServer = false;
     ECS* m_ecs;
@@ -108,7 +112,7 @@ private:
     std::mutex m_connectionMutex;
     // ONLY RELEVENT TO CLIENTS AS OF NOW
     // what should server be receiving? should this be in connection?
-    std::priority_queue<Gamestate, std::vector<Gamestate>, Gamestate> m_recentGamestates;
+//    std::priority_queue<Gamestate, std::vector<Gamestate>, Gamestate> m_recentGamestates;
 
     // To store what entities they have authority over
     std::array<bool, MAX_ENTITY> m_hasAuthority{};
