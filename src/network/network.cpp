@@ -29,7 +29,8 @@ Network::Network(bool server, ECS* ecs, const char* ip)
     // Initialize server
     if (server) {
         // Server has authority over everything by default
-        std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
+        // FALSE RN FOR TESTING
+        std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), false);
         m_myPlayerEntityID = MAX_ENT_VAL;
 
         // Open listen thread and accept connections
@@ -52,6 +53,11 @@ Network::Network(bool server, ECS* ecs, const char* ip)
 
         // Populate Client authority vector
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), false);
+
+
+        next.tick = -1;
+        next.data = nullptr;
+        next.data_size = 0;
 
         // Open listen thread
         m_listenThread = std::thread([this]() { this->clientListen(); });
@@ -104,7 +110,7 @@ void Network::serverListen(const char* ip, const char* port) {
             // Make new Connection
             Connection* conn = new Connection();
 
-            conn->last_rec_tick = packet.tick;
+            conn->last_rec_tick = -1;//packet.tick;
             conn->entity = entity_id;
             conn->ip = c_ip;
             conn->port = c_port;
@@ -248,14 +254,22 @@ void Network::deserializeAllDataIntoECS() {
    // m_connectionMutex.lock();
 //    std::cout << "deserializing all data into ECS" << std::endl;
     std::lock_guard<std::mutex> lock(m_connectionMutex);
-    if (next.data == nullptr) {
+    if (m_connectionMap.size() > 0 && next.data == nullptr) {
         std::cout << "Data is null" << std::endl;
         return;
     }
 
 //    TickData& td = next;//conn->buffer.front();
     char buff[FULL_PACKET];// = //new char[FULL_PACKET];
-    m_ecs->deserializeIntoData(buff, next.data_size, nullptr);// &(m_hasAuthority[m_myPlayerEntityID]));
+    // Ignore authority for first established tick
+    if (next.tick < 0) {
+        m_ecs->deserializeIntoData(next.data, next.data_size, nullptr);// &(m_hasAuthority[m_myPlayerEntityID]));
+        next.tick = 0;
+    }
+    else
+        m_ecs->deserializeIntoData(next.data, next.data_size, &(m_hasAuthority[0]));
+
+
     delete[] next.data;
     next.data = nullptr;
 //    for (auto& [ipport, conn] : m_connectionMap) {
@@ -485,7 +499,8 @@ void Network::clientListen() {
                         delete[] next.data;
 
                     next.data = data;
-                    next.tick = tick;
+                    if (next.tick >= 0)
+                        next.tick = tick;
                     next.data_size =  bytes - sizeof(Packet);
 
 //                    updateTickBuffer(data, bytes - sizeof(Packet), conn, tick);

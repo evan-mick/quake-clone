@@ -31,7 +31,7 @@ struct Packet {
 };
 
 struct TickData {
-    unsigned int tick;
+    long tick;
     size_t data_size;
     char* data;
 };

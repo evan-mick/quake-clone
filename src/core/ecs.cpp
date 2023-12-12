@@ -65,6 +65,14 @@ entity_t ECS::createEntityWithBitFlags(flags_t flags) {
     return ent_id;
 }
 
+void ECS::resetNextAlloc() {
+    m_nextUnallocEntity = 0;
+    do {
+        m_nextUnallocEntity++;
+    }
+    while (m_nextUnallocEntity < MAX_ENTITY && m_entities[m_nextUnallocEntity] != 0);
+}
+
 entity_t ECS::createEntity(std::initializer_list<int> flag_numbers) {
     int input_flag = 0;
 
@@ -200,10 +208,10 @@ int ECS::serializeData(char** buff_ptr) {
 void ECS::deserializeIntoData(char* serialized_data, size_t max_size, const bool* ignore) {
     // IMPORTANT: what happens to used data size when a new object is deserialized in?
     // ALSO, ensure that tip of data isn't full if flags are empty/object is destroyed
-    std::cout << "Deserializing into data (ECS)" << std::endl;
+//    std::cout << "Deserializing into data (ECS)" << std::endl;
 
     if (serialized_data == nullptr) {
-        std::cout << "Null Serialized Data" << std::endl;
+//        std::cout << "Null Serialized Data" << std::endl;
         return;
     }
     size_t ob_ptr = 0;
@@ -259,4 +267,6 @@ void ECS::deserializeIntoData(char* serialized_data, size_t max_size, const bool
 
         }
     }
+
+    resetNextAlloc();
 }

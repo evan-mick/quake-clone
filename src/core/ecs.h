@@ -132,6 +132,8 @@ private:
         }
     }
 
+    void resetNextAlloc();
+
     // Amount of data stored, needed for serialization and deserialization
     // BE ON THE LOOKOUT FOR BUGS RELATED TO THIS
     size_t m_usedDataSize = 0;

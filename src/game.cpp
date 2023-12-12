@@ -92,7 +92,7 @@ void Game::startGame(bool server, const char* ip) {
     if (!net)
         ent = createPlayer(&ecs, glm::vec3(0, 10.f, 0));
     else if (!m_server) {
-        ent =createPlayer(&ecs, glm::vec3(0, 10.f, 0));// net->getMyPlayerEntityID();
+        ent = net->getMyPlayerEntityID();
         std::cout<< "player ent: " << std::to_string(ent) << std::endl;
     }
 
@@ -107,7 +107,7 @@ void Game::startGame(bool server, const char* ip) {
 
         if (net) {
 //            std::cout << "Tick buffer ready" << std::endl;
-//            net->deserializeAllDataIntoECS();
+            net->deserializeAllDataIntoECS();
         }
 
         //
@@ -285,6 +285,18 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
     ////        trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
     //    }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM});
 
+    if (!m_server)
+        ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
+            Transform* trans = getTransform(e, ent);
+            InputData* in = getComponentData<InputData>(e, ent, FLN_INPUT);
+            if (Input::isHeld(in->dat, IN_SHOOT) && !Input::isHeld(in->last_dat, IN_SHOOT)) {
+                int proj = createProjectile(e, trans->pos, glm::vec2(in->x_look, in->y_look));
+            }
+        }
+
+    , {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM, FLN_INPUT});
+
+
     ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
 
         //        std::cout << "thing" << std::endl;
@@ -324,29 +336,29 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
         // TO BE IMPROVED, the actual quake accel code, doesn't really work rn
 
-        glm::vec3 norm_vel = glm::normalize(vel);
+//        glm::vec3 norm_vel = glm::normalize(vel);
 
-//        glm::vec3 norm_vel = glm::normalize(vel) * 10.f;
+        glm::vec3 norm_vel = glm::normalize(vel) * 5.f;
 
         if (vel != glm::vec3(0, 0, 0)) {
-//            phys->vel.x = norm_vel.x;
-//            phys->vel.z = norm_vel.z;
+            phys->vel.x = norm_vel.x;
+            phys->vel.z = norm_vel.z;
 
-            float current = glm::dot(phys->vel, norm_vel);
-            float wishspeed = 10.f;
-            float addspeed = wishspeed - current;
-            float accelspeed = 9.f * wishspeed;
-            if (addspeed > 0) {
-                if (accelspeed > addspeed) {
-                    accelspeed = addspeed;
-                }
-                phys->accel.x = norm_vel.x * accelspeed;
-                phys->accel.z = norm_vel.z * accelspeed;
-            }
+//            float current = glm::dot(phys->vel, norm_vel);
+//            float wishspeed = 10.f;
+//            float addspeed = wishspeed - current;
+//            float accelspeed = 9.f * wishspeed;
+//            if (addspeed > 0) {
+//                if (accelspeed > addspeed) {
+//                    accelspeed = addspeed;
+//                }
+//                phys->accel.x = norm_vel.x * accelspeed;
+//                phys->accel.z = norm_vel.z * accelspeed;
+//            }
 
         }
-//        else
-//            phys->vel = glm::vec3(0, phys->vel.y, 0);
+        else
+            phys->vel = glm::vec3(0, phys->vel.y, 0);
 
         //        int			i;
         //        float		addspeed, accelspeed, currentspeed;
@@ -373,12 +385,6 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
         if (Input::isHeld(in->dat, IN_JUMP) && phys->grounded) {
             phys->vel = glm::vec3(0, 15.f, 0);
-        }
-
-        if (Input::isHeld(in->dat, IN_SHOOT) && !Input::isHeld(in->last_dat, IN_SHOOT)) {
-//            std::cout << "shoot" << std::endl;
-            int proj = createProjectile(e, trans->pos, glm::vec2(in->x_look, in->y_look));
-//            std::cout << "proj " << proj << std::endl;
         }
 
         in->last_dat = in->dat;
