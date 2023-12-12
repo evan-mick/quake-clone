@@ -23,8 +23,6 @@ Network::Network(bool server, ECS* ecs, const char* ip)
     m_ecs = ecs;
     m_shutdown = false;
 
-
-
     // Initialize Tick Rate
     m_timer.setAndResetTimer(TICK_RATE); // 60 ticks per second
     
@@ -118,7 +116,7 @@ void Network::serverListen(const char* ip, const char* port) {
             char ipString[INET_ADDRSTRLEN];
             const char* c_ip_str = inet_ntop(AF_INET, &c_ip, ipString, INET_ADDRSTRLEN);
             addrinfo* p;
-            conn->socket = setupUDPConn(ipString, std::to_string(conn->port).c_str(), false, &p);
+            conn->socket = serverSocket;//setupUDPConn(ipString, std::to_string(conn->port).c_str(), false, &p);
 
             // Add to connestions map
             this->addConnection(ipport(c_ip, c_port), conn);
@@ -159,9 +157,8 @@ void Network::serverListen(const char* ip, const char* port) {
             char* send = new char[bytesReceived - sizeof(Packet)];
             memcpy(send, rec_buff + sizeof(Packet), bytesReceived - sizeof(Packet));
 
-
             if (next.data != nullptr)
-                delete next.data;
+                delete[] next.data;
             next.data = send;
             next.tick = tick;
             next.data_size = bytesReceived - sizeof(Packet);
@@ -215,12 +212,12 @@ void Network::addConnection(uint64_t ipport_, Connection* conn) {
 
 }
 
-Connection* Network::getConnection(uint64_t ip) {
+Connection* Network::getConnection(uint64_t ipport) {
 
     // Find connection based on IP
     // std::lock_guard<std::mutex> lock(m_connectionMutex); // Lock the connection map
 
-        auto it = m_connectionMap.find(ip);
+        auto it = m_connectionMap.find(ipport);
         if (it == m_connectionMap.end()) {
             // Key not found:
             return nullptr;
@@ -251,44 +248,53 @@ void Network::deserializeAllDataIntoECS() {
    // m_connectionMutex.lock();
 //    std::cout << "deserializing all data into ECS" << std::endl;
     std::lock_guard<std::mutex> lock(m_connectionMutex);
-    char buff[FULL_PACKET];// = //new char[FULL_PACKET];
-    for (auto& [ipport, conn] : m_connectionMap) {
-
-//        std::lock_guard<std::mutex>(mutex_);
-        if (next.data != nullptr/*!conn->buffer.empty()*/) {
-
-            std::cout << "Tick buffer size: " << std::to_string(buffer.size()) << std::endl;
-            std::cout << "conn ipport: " << std::to_string(ipport) << " " << std::to_string((long)(conn)) << std::endl;
-            std::cout << "entity: " << std::to_string((unsigned int)conn->entity) << std::endl;
-
-            {
-                // Get the first element in the tick buffer
-                TickData& td = next;//conn->buffer.front();
-
-                if (td.data == nullptr) {
-                    std::cout << "Data is null" << std::endl;
-                    continue;
-                }
-
-                memcpy(buff, td.data, FULL_PACKET);
-
-                // Deserialize data into ECS // NEED TO EDIT THIS TO HANDLE CLIENT AUTHORITY
-                m_ecs->deserializeIntoData(buff, td.data_size, nullptr);// &(m_hasAuthority[m_myPlayerEntityID]));
-
-                std::cout << "data being FREEEEEDDD" << std::endl;
-//                delete[] td.data;
-//                td.data = nullptr;
-            }
-            // Pop the tick buffer
-//            conn->buffer.pop();
-
-            std::cout << "end of deserialize in networks" << std::endl;
-            if (!m_isServer) {
-                std::cout << "exiting deserialize for client" << std::endl;
-                break;
-            }
-        }
+    if (next.data == nullptr) {
+        std::cout << "Data is null" << std::endl;
+        return;
     }
+
+//    TickData& td = next;//conn->buffer.front();
+    char buff[FULL_PACKET];// = //new char[FULL_PACKET];
+    m_ecs->deserializeIntoData(buff, next.data_size, nullptr);// &(m_hasAuthority[m_myPlayerEntityID]));
+    delete[] next.data;
+    next.data = nullptr;
+//    for (auto& [ipport, conn] : m_connectionMap) {
+
+////        std::lock_guard<std::mutex>(mutex_);
+//        if (next.data != nullptr/*!conn->buffer.empty()*/) {
+
+//            std::cout << "Tick buffer size: " << std::to_string(buffer.size()) << std::endl;
+//            std::cout << "conn ipport: " << std::to_string(ipport) << " " << std::to_string((long)(conn)) << std::endl;
+//            std::cout << "entity: " << std::to_string((unsigned int)conn->entity) << std::endl;
+
+//            {
+//                // Get the first element in the tick buffer
+
+
+//                if (td.data == nullptr) {
+//                    std::cout << "Data is null" << std::endl;
+//                    continue;
+//                }
+
+//                memcpy(buff, td.data, FULL_PACKET);
+
+//                // Deserialize data into ECS // NEED TO EDIT THIS TO HANDLE CLIENT AUTHORITY
+
+
+//                std::cout << "data being FREEEEEDDD" << std::endl;
+
+//            }
+//            // Pop the tick buffer
+////            conn->buffer.pop();
+
+//            std::cout << "end of deserialize in networks" << std::endl;
+//            if (!m_isServer) {
+//                std::cout << "exiting deserialize for client" << std::endl;
+//                break;
+//            }
+//        }
+//    }
+
 }
 
 int Network::connect(const char* ip, const char* port) {
@@ -344,7 +350,7 @@ int Network::connect(const char* ip, const char* port) {
         addConnection(ipport(conn->ip, conn->port), conn);
     }
 
-//    freeaddrinfo(p); // all done with this structure
+    freeaddrinfo(p); // all done with this structure
     return 0;
 }
 
@@ -476,7 +482,7 @@ void Network::clientListen() {
 //                    TickData td {};
 
                     if (next.data != nullptr)
-                        delete next.data;
+                        delete[] next.data;
 
                     next.data = data;
                     next.tick = tick;
@@ -532,9 +538,9 @@ void Network::onTick(unsigned int tick) {
         // Send gamestate to connection
         broadcastGS(m_ecs, conn, tick);
         //std::cout << "broadcast done" << std::endl;
-        if (!m_isServer) {
-            break;
-        }
+//        if (!m_isServer) {
+//            break;
+//        }
     }
 }
 
