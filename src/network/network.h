@@ -36,10 +36,7 @@ struct TickData {
     char* data;
 };
 
-struct TickBuffer {
-    std::mutex mutex;
-    std::queue<TickData*> buffer;
-};
+
 
 struct Gamestate {
     int tick;
@@ -58,7 +55,8 @@ struct Connection {
     uint16_t port;
     uint32_t ip;
     entity_t entity; // if the other side is the server, -1, otherwise keep entity_id of the player
-    TickBuffer tick_buffer {};
+    std::mutex mutex;
+    std::queue<TickData> buffer;
 };
 
 //bool compare(Gamestate a, Gamestate b) {

@@ -92,7 +92,7 @@ void Game::startGame(bool server, const char* ip) {
     if (!net)
         ent = createPlayer(&ecs, glm::vec3(0, 10.f, 0));
     else if (!m_server) {
-        ent = net->getMyPlayerEntityID();
+        ent =createPlayer(&ecs, glm::vec3(0, 10.f, 0));// net->getMyPlayerEntityID();
         std::cout<< "player ent: " << std::to_string(ent) << std::endl;
     }
 
@@ -107,7 +107,7 @@ void Game::startGame(bool server, const char* ip) {
 
         if (net) {
 //            std::cout << "Tick buffer ready" << std::endl;
-            net->deserializeAllDataIntoECS();
+//            net->deserializeAllDataIntoECS();
         }
 
         //
@@ -152,8 +152,12 @@ void Game::startGame(bool server, const char* ip) {
                 std::cout << "null input 2" << std::endl;
                 //continue;
             }
-            cam.updateFromEnt(&ecs, ent);
-            cam.setRotation(in->x_look, in->y_look);
+
+
+            if (ecs.entityHasComponent(ent, FLN_TRANSFORM)) {
+                cam.updateFromEnt(&ecs, ent);
+                cam.setRotation(in->x_look, in->y_look);
+            }
 //            std::cout << "1" << std::endl;
 
 //            std::cout << "2" << std::endl;

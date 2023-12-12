@@ -35,7 +35,7 @@ const int IN_SHOOT = 4;
 const int IN_JUMP = 5;
 
 // GAME LOGIC CONSTANTS
-const uint8_t TICKS_PER_SECOND = 1; // 60 normally
+const uint8_t TICKS_PER_SECOND = 10; // 60 normally
 constexpr float TICK_RATE = 1.f/TICKS_PER_SECOND;
 
 
