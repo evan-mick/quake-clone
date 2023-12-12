@@ -227,6 +227,7 @@ void Game::registerECSComponents(ECS& ecs) {
     ecs.registerComponent(FLN_RENDER, sizeof(Renderable));
 
     ecs.registerComponent(FLN_TEST, sizeof(Test));
+    ecs.registerComponent(FLN_TYPE, sizeof(TypeData));
 }
 
 void Game::registerInputs() {
@@ -240,6 +241,16 @@ void Game::registerInputs() {
 
 void Game::registerCollisionResponses(Physics& phys) {
 
+
+    phys.registerType(ET_PROJ, [](ECS* e, entity_t my_ent, entity_t other_ent, bool world) -> glm::vec3 {
+
+        std::cout << "proj col" << std::endl;
+        if (world) {
+            e->queueDestroyEntity(my_ent);
+        }
+
+        return glm::vec3(0, 0, 0);
+    });
 }
 
 

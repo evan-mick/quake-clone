@@ -102,12 +102,13 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                 // (col != nullptr)
                 if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, &trans, nullptr, (col->col_type > 0))) {
 
-                    if (!e->entityHasComponent(my_ent, FLN_TYPE))
-                        continue;
+//                    if (!e->entityHasComponent(my_ent, FLN_TYPE))
+//                        continue;
 
-                    TypeData* type = getComponentData<TypeData>(e, my_ent, FLN_TYPE);
-                    if (type != nullptr && m_typeToResponse[type->type] != nullptr) {
-                        m_typeToResponse[type->type](e, my_ent, 0, true);
+//                    TypeData* type = getComponentData<TypeData>(e, my_ent, FLN_TYPE);
+                    ent_type_t type = getType(e, my_ent);
+                    if (type != 0 && m_typeToResponse[type] != nullptr) {
+                        m_typeToResponse[type](e, my_ent, 0, true);
                     }
                 }
 
@@ -230,9 +231,3 @@ bool Physics::AABBtoAABBIntersect(Transform* transform, PhysicsData* physics, Tr
     return true;
 }
 
-
-
-void Physics::registerType(ent_type_t type, collision_response_t response) {
-    // no bounds checking because array size correlates with size of ent_type
-    m_typeToResponse[type] = response;
-}

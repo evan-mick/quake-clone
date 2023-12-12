@@ -6,6 +6,7 @@
 #include "game_types.h"
 #include "scene/scenedata.h"
 #include <unordered_set>
+#include <iostream>
 
 // https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
 // basically what we need to do
@@ -16,9 +17,10 @@ const uint8_t COL_AABB = 1;
 const uint8_t COL_SPHERE = 2;
 
 // Pass in ecs and entity ids, then will return the translation offset (or will be zero if not colliding)
-typedef glm::vec3 (*collision_response_t)(struct ECS*, entity_t my_ent, entity_t other_ent, bool world);
+typedef std::function<glm::vec3(ECS*, entity_t my_ent, entity_t other_ent, bool world)> collision_response_t;
 
 
+//typedef glm::vec3 (*collision_response_t)(struct ECS*, entity_t my_ent, entity_t other_ent, bool world);
 //struct AABB {
 //    glm::vec3 min;
 //    glm::vec3 max;
@@ -50,7 +52,10 @@ public:
     // When entities with [type] collide with something, they will run [response]
     // Of note, type is a game level struct, and if the entity doesn't have a type
     // registered, they won't run any special code on collision
-    void registerType(ent_type_t type, collision_response_t response);
+    inline void registerType(ent_type_t type, collision_response_t response) {
+        std::cout << "registering col response" << std::endl;
+        m_typeToResponse[type] = response;
+    }
 
     // Gets required flags from the physics ob
     inline flags_t getRequiredFlags() {

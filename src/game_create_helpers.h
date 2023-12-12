@@ -11,13 +11,15 @@ const int PROJSIZE = sizeof(entity_t) + sizeof(flags_t) + sizeof(Transform) + si
 
 
 inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
-    entity_t ent = e->createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT, FLN_COLLISION });
+    entity_t ent = e->createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT, FLN_COLLISION, FLN_TYPE });
 
     if (e->isComponentRegistered(FLN_RENDER)) {
         Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
         //    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
         rend->model_id = 5;
     }
+
+    trySetType(e, ent, ET_PLAYER);
 
     Transform* trans = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
     trans->pos = pos;
@@ -31,7 +33,7 @@ inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
 
 
 inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec2 rot) {
-    entity_t proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION});
+    entity_t proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION, FLN_TYPE});
     getTransform(e, proj)->pos = pos;
     getTransform(e, proj)->scale = glm::vec3(.15f, .15f, .15f);
 
@@ -39,6 +41,8 @@ inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec2 rot) {
         Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
         rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
     }
+
+    trySetType(e, proj, ET_PROJ);
 
     CollisionData* col = getComponentData<CollisionData>(e, proj, FLN_COLLISION);
     col->col_type = -1;

@@ -9,7 +9,7 @@
 
 // COMPONENT FLAG NUMBERS
 // represents where in the bitmask they are
-constexpr uint32_t FLN_TYPE = 0;
+constexpr uint32_t FLN_TYPE = 10;
 constexpr uint32_t FLN_INPUT = 1;
 constexpr uint32_t FLN_TRANSFORM = 2;
 constexpr uint32_t FLN_RENDER = 3;
@@ -44,6 +44,26 @@ typedef unsigned char ent_type_t;
 struct TypeData {
     ent_type_t type;
 };
+
+inline ent_type_t getType(ECS* e, entity_t ent) {
+    void* type = e->getComponentData(ent, FLN_TYPE);
+    if (type == nullptr)
+        return 0;
+    return static_cast<TypeData*>(type)->type;
+}
+inline void trySetType(ECS* e, entity_t ent, ent_type_t t) {
+    void* type = e->getComponentData(ent, FLN_TYPE);
+    if (type == nullptr)
+        return;
+    static_cast<TypeData*>(type)->type = t;
+}
+
+
+
+constexpr ent_type_t ET_NONE = 0;
+constexpr ent_type_t ET_PLAYER = 1;
+constexpr ent_type_t ET_PROJ = 2;
+
 constexpr uint8_t MAX_TYPE_VAL = -1;
 constexpr uint16_t MAX_TYPES = MAX_TYPE_VAL + 1;
 
