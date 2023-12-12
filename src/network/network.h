@@ -32,6 +32,7 @@ struct Packet {
 
 struct TickData {
     unsigned int tick;
+    size_t data_size;
     char* data;
 };
 
@@ -57,7 +58,7 @@ struct Connection {
     uint16_t port;
     uint32_t ip;
     entity_t entity; // if the other side is the server, -1, otherwise keep entity_id of the player
-    TickBuffer tick_buffer;
+    TickBuffer tick_buffer {};
 };
 
 //bool compare(Gamestate a, Gamestate b) {
@@ -81,15 +82,16 @@ public:
     void shutdown();
     void broadcastGS(ECS* ecs, Connection* conn, int tick);
     void addConnection(uint32_t ip, Connection* conn);
-    void editConnection(uint32_t ip, unsigned int tick);
+    void editConnection(Connection* conn, unsigned int tick);
     
     void onTick(unsigned int tick);
     // int initClient(const char* ip, const char* port);
-    void updateTickBuffer(char* data, Connection* conn, unsigned int tick);
-    void pushTickData(TickData* td, Connection* conn);
+
+    // Input a HEAP ALLOCATED BUFFER data, heap allocated connection, and a tick
+    void updateTickBuffer(char* data, size_t data_size, Connection* conn, unsigned int tick);
     void broadcastOnTick(float delta);
-    void deserializeOnTick(float delta);
-    bool tickBufferReady();
+//    void deserializeOnTick(float delta);
+//    bool tickBufferReady();
 
     inline entity_t getMyPlayerEntityID() {
         return m_myPlayerEntityID;

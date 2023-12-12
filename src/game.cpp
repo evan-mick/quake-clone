@@ -105,8 +105,8 @@ void Game::startGame(bool server, const char* ip) {
 
     while (m_running) {
 
-        if (net && net->tickBufferReady()) {
-            std::cout << "Tick buffer ready" << std::endl;
+        if (net) {
+//            std::cout << "Tick buffer ready" << std::endl;
             net->deserializeAllDataIntoECS();
         }
 
@@ -123,20 +123,23 @@ void Game::startGame(bool server, const char* ip) {
                 //continue;
             }
 
-            in->dat = Input::getHeld();
+            if (in) {
+                in->dat = Input::getHeld();
 
-            double xpos, ypos;
-            glfwGetCursorPos(m_window, &xpos, &ypos);
-            in->x_look -= (xpos - last_x_look) * 1/100.f;
-            in->y_look += (ypos - last_y_look) * 1/100.f;
-            last_x_look = xpos;
-            last_y_look = ypos;
+                double xpos, ypos;
+                glfwGetCursorPos(m_window, &xpos, &ypos);
+                in->x_look -= (xpos - last_x_look) * 1/100.f;
+                in->y_look += (ypos - last_y_look) * 1/100.f;
+                last_x_look = xpos;
+                last_y_look = ypos;
 
-            in->y_look = std::clamp(in->y_look, 0.2f, 3.0f);
+                in->y_look = std::clamp(in->y_look, 0.2f, 3.0f);
+            }
             //         getComponentData<InputData>(&ecs, ent, FLN_INPUT)-> = Input::getHeld();
 
             //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            std::cout << "end of first block" << std::endl;
+//            std::cout << "end of first block" << std::endl;
+            render.startDraw();
         }
         // Main simulation logic
 
@@ -151,20 +154,20 @@ void Game::startGame(bool server, const char* ip) {
             }
             cam.updateFromEnt(&ecs, ent);
             cam.setRotation(in->x_look, in->y_look);
-            std::cout << "1" << std::endl;
-            render.startDraw();
-            std::cout << "2" << std::endl;
+//            std::cout << "1" << std::endl;
+
+//            std::cout << "2" << std::endl;
             render.drawStaticObs();
-            render.drawDynamicObs();
+//            render.drawDynamicObs();
 
             render.drawScreen();
-            std::cout << "3" << std::endl;
+//            std::cout << "3" << std::endl;
             // Swap front and back buffers
             glfwSwapBuffers(m_window);
-            std::cout << "4" << std::endl;
+//            std::cout << "4" << std::endl;
             // Poll for and process events
             glfwPollEvents();
-            std::cout << "second input data block end" << std::endl;
+//            std::cout << "second input data block end" << std::endl;
         }
 
 
@@ -262,8 +265,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
     if (!m_server)
         ecs.registerSystem([&renderer](ECS* e, entity_t ent, float delta) {
-//            renderer.drawDynamicOb(e, ent, delta);
-            renderer.queueDynamicModel(e,ent,delta);
+            renderer.drawDynamicOb(e, ent, delta);
+//            renderer.queueDynamicModel(e,ent,delta);
         } , {FLN_TRANSFORM, FLN_RENDER});
 
     //    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
@@ -369,7 +372,9 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         }
 
         if (Input::isHeld(in->dat, IN_SHOOT) && !Input::isHeld(in->last_dat, IN_SHOOT)) {
+//            std::cout << "shoot" << std::endl;
             int proj = createProjectile(e, trans->pos, glm::vec2(in->x_look, in->y_look));
+//            std::cout << "proj " << proj << std::endl;
         }
 
         in->last_dat = in->dat;

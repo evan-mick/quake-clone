@@ -142,22 +142,22 @@ void* ECS::getComponentData(entity_t entity_id, int flag_num) {
 
     flags_t flag = (1 << (flag_num));
     bool equal = ((m_entities[entity_id] & flag) == flag);
-    std::cout << "m_entities[id]: " << std::to_string(m_entities[entity_id])
-              << " m_entities[entity_id] & flag: " << std::to_string(m_entities[entity_id] & flag)
-              << " flag: " << std::to_string(flag)
-              << " equal: " << std::to_string(equal) <<std::endl;
+//    std::cout << "m_entities[id]: " << std::to_string(m_entities[entity_id])
+//              << " m_entities[entity_id] & flag: " << std::to_string(m_entities[entity_id] & flag)
+//              << " flag: " << std::to_string(flag)
+//              << " equal: " << std::to_string(equal) <<std::endl;
 //    bool ent_in_bounds = (entity_id < MAX_ENTITY && entity_id >= 0); this already checked by virtue of entity_t
     bool flag_in_bounds = (flag_num >= 0 || flag_num < MAX_COMPONENTS);
 
-    if (!flag_in_bounds || !m_component_registered[flag_num] ){
-        //|| !equal /*|| !ent_in_bounds*/) {
+    if (!flag_in_bounds || !m_component_registered[flag_num] || !equal){
+//         /*|| !ent_in_bounds*/) {
 
-        if (!flag_in_bounds)
-            std::cout << "!flag_in_bounds" << std::endl;
-        if (!m_component_registered[flag_num])
-            std::cout << "!m_component_registered[flag_num]" << std::endl;
-        if (!equal)
-            std::cout << "!equal" << std::endl;
+//        if (!flag_in_bounds)
+//            std::cout << "!flag_in_bounds" << std::endl;
+//        if (!m_component_registered[flag_num])
+//            std::cout << "!m_component_registered[flag_num]" << std::endl;
+//        if (!equal)
+//            std::cout << "!equal" << std::endl;
         return nullptr;
     }
     return ((char*)(m_components[flag_num])) + (m_component_num_to_size[flag_num] * entity_id);
