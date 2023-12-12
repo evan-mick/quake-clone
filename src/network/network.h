@@ -93,9 +93,9 @@ public:
         return m_myPlayerEntityID;
     }
 
-    inline void setAuthority(entity_t ent) {
-        m_hasAuthority[ent] = true;
-    }
+//    inline void setAuthority(entity_t ent) {
+//        m_hasAuthority[ent] = true;
+//    }
 
 
 private:
@@ -113,10 +113,6 @@ private:
     // ONLY RELEVENT TO CLIENTS AS OF NOW
     // what should server be receiving? should this be in connection?
 //    std::priority_queue<Gamestate, std::vector<Gamestate>, Gamestate> m_recentGamestates;
-
-    // To store what entities they have authority over
-    std::array<bool, MAX_ENTITY> m_hasAuthority{};
-
 
     std::array<Connection, MAX_PLAYERS> m_connections{}; // not using this atm
     std::unordered_map<uint64_t, Connection*> m_connectionMap{};

@@ -79,7 +79,7 @@ public:
     // ASSUMPTIONS serialized_data is a well-formed, serialization of game state
     // ignore is an MAX_ENTITY sized array of entity -> bool to not add to the data
     // IMPORTANT: some functionality incomplete, especially for objects that didn't exist before or got destroyed
-    void deserializeIntoData(char* serialized_data, size_t max_size, const bool* ignore);
+    void deserializeIntoData(char* serialized_data, size_t max_size, bool ignore_auth);
 
 
     // Does the entity have the component with the given flag?
@@ -104,6 +104,13 @@ public:
         return m_deltaTime;
     }
 
+    inline void setAuthority(entity_t ent, bool set) {
+        m_hasAuthority[ent] = set;
+    }
+    inline bool hasAuthority(entity_t ent) {
+        return m_hasAuthority[ent];
+    }
+
 
 
 private:
@@ -122,6 +129,10 @@ private:
     std::array<bool, MAX_COMPONENTS> m_component_registered{};
     // Component id -> component struct size
     std::array<size_t, MAX_COMPONENTS> m_component_num_to_size{};
+
+    // To store what entities they have authority over
+    std::array<bool, MAX_ENTITY> m_hasAuthority{};
+
 
     std::vector<SystemData> m_systems = {};
 

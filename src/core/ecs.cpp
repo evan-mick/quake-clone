@@ -62,6 +62,8 @@ entity_t ECS::createEntityWithBitFlags(flags_t flags) {
     std::cout << m_nextUnallocEntity << " next post " << std::endl;
     doBroadcast(m_onCreateEntityBroadcast, ent_id);
 
+    m_hasAuthority[ent_id] = true;
+
     return ent_id;
 }
 
@@ -205,7 +207,7 @@ int ECS::serializeData(char** buff_ptr) {
     return ob_ptr;//..m_usedDataSize;
 }
 
-void ECS::deserializeIntoData(char* serialized_data, size_t max_size, const bool* ignore) {
+void ECS::deserializeIntoData(char* serialized_data, size_t max_size, bool ignore_auth) {
     // IMPORTANT: what happens to used data size when a new object is deserialized in?
     // ALSO, ensure that tip of data isn't full if flags are empty/object is destroyed
 //    std::cout << "Deserializing into data (ECS)" << std::endl;
@@ -228,8 +230,8 @@ void ECS::deserializeIntoData(char* serialized_data, size_t max_size, const bool
         ob_ptr += sizeof(flags_t);
 
         // ignore entities on the ignore list
-        if (ignore != nullptr && ignore[ent])
-            continue;
+
+//            continue;
 
         // end early if empty entity / end of data
         if (ent == 0 && flags == 0) {
@@ -258,9 +260,11 @@ void ECS::deserializeIntoData(char* serialized_data, size_t max_size, const bool
                 continue;
             }
 
-            std::cout << "found component to update" << std::endl;
+//            std::cout << "found component to update" << std::endl;
+            // Only copy if authority allows for it
+            if (!m_hasAuthority[ent] || ignore_auth)
+                memcpy(getComponentData(ent, com), (serialized_data + ob_ptr), m_component_num_to_size[com]);
 
-            memcpy(getComponentData(ent, com), (serialized_data + ob_ptr), m_component_num_to_size[com]);
             ob_ptr += m_component_num_to_size[com];
             if (cpy)
                 m_usedDataSize += m_component_num_to_size[com];

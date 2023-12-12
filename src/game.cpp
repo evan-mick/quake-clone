@@ -46,8 +46,8 @@ void Game::startGame(bool server, const char* ip) {
         net = std::make_unique<Network>(server, &ecs, ip);
 
         // set authority on entity create
-        entbroadcast_t bound = [&net](entity_t ent) { net->setAuthority(ent); };
-        ecs.addBroadcast(bound);
+//        entbroadcast_t bound = [&net](entity_t ent) { net->setAuthority(ent); };
+//        ecs.addBroadcast(bound);
         std::cout << "Network setup attempt complete" << std::endl;
     } else {
         std::cout << "No Networking" << std::endl;
@@ -287,6 +287,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
     if (!m_server)
         ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
+            if (!e->hasAuthority(ent))
+                return;
             Transform* trans = getTransform(e, ent);
             InputData* in = getComponentData<InputData>(e, ent, FLN_INPUT);
             if (Input::isHeld(in->dat, IN_SHOOT) && !Input::isHeld(in->last_dat, IN_SHOOT)) {
@@ -298,6 +300,9 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
 
     ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
+
+        if (!e->hasAuthority(ent))
+            return;
 
         //        std::cout << "thing" << std::endl;
         PhysicsData* phys = getPhys(e, ent);
