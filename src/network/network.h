@@ -31,14 +31,12 @@ struct Packet {
 };
 
 struct TickData {
-    unsigned int tick;
+    long tick;
+    size_t data_size;
     char* data;
 };
 
-struct TickBuffer {
-    std::mutex mutex;
-    std::queue<TickData*> buffer;
-};
+
 
 struct Gamestate {
     int tick;
@@ -57,7 +55,6 @@ struct Connection {
     uint16_t port;
     uint32_t ip;
     entity_t entity; // if the other side is the server, -1, otherwise keep entity_id of the player
-    TickBuffer tick_buffer;
 };
 
 //bool compare(Gamestate a, Gamestate b) {
@@ -74,33 +71,40 @@ public:
     Network(bool server, ECS* ecs, const char* ip);
 
     int connect(const char* ip, const char* port);
-    Connection* getConnection(uint32_t ip);
+    Connection* getConnection(uint64_t ip);
     Gamestate* popLeastRecentGamestate();
     void deserializeAllDataIntoECS();
 
     void shutdown();
     void broadcastGS(ECS* ecs, Connection* conn, int tick);
-    void addConnection(uint32_t ip, Connection* conn);
-    void editConnection(uint32_t ip, unsigned int tick);
+    void addConnection(uint64_t ipport, Connection* conn);
+    void editConnection(Connection* conn, unsigned int tick);
     
     void onTick(unsigned int tick);
     // int initClient(const char* ip, const char* port);
-    void updateTickBuffer(char* data, Connection* conn, unsigned int tick);
-    void pushTickData(TickData* td, Connection* conn);
+
+    // Input a HEAP ALLOCATED BUFFER data, heap allocated connection, and a tick
+    void updateTickBuffer(char* data, size_t data_size, Connection* conn, unsigned int tick);
     void broadcastOnTick(float delta);
-    void deserializeOnTick(float delta);
-    bool tickBufferReady();
+//    void deserializeOnTick(float delta);
+//    bool tickBufferReady();
 
     inline entity_t getMyPlayerEntityID() {
         return m_myPlayerEntityID;
     }
 
-    inline void setAuthority(entity_t ent) {
-        m_hasAuthority[ent] = true;
-    }
+//    inline void setAuthority(entity_t ent) {
+//        m_hasAuthority[ent] = true;
+//    }
 
 
 private:
+
+    std::mutex mutex_;
+    std::queue<TickData> buffer;
+
+    TickData next;
+
     entity_t m_myPlayerEntityID = 0;
     bool m_isServer = false;
     ECS* m_ecs;
@@ -108,26 +112,29 @@ private:
     std::mutex m_connectionMutex;
     // ONLY RELEVENT TO CLIENTS AS OF NOW
     // what should server be receiving? should this be in connection?
-    std::priority_queue<Gamestate, std::vector<Gamestate>, Gamestate> m_recentGamestates;
-
-    // To store what entities they have authority over
-    std::array<bool, MAX_ENTITY> m_hasAuthority{};
-
+//    std::priority_queue<Gamestate, std::vector<Gamestate>, Gamestate> m_recentGamestates;
 
     std::array<Connection, MAX_PLAYERS> m_connections{}; // not using this atm
-    std::unordered_map<uint32_t, Connection*> m_connectionMap{};
+    std::unordered_map<uint64_t, Connection*> m_connectionMap{};
 //    void listenForData();
 
     std::thread m_listenThread;
     
-    void serverListen(const char* ip, const char* port, int serverSocket);
+    void serverListen(const char* ip, const char* port);
     void clientListen();
 
-    int setupUDPConn(const char* address, const char* port);
+    int setupUDPConn(const char* address, const char* port, bool bind_sock, addrinfo** outinfo);
 
     // Tick stuff
     Timer m_timer = Timer(TICK_RATE);
     float m_tickRate = TICK_RATE;
+
+    inline uint64_t ipport(uint32_t ip, uint16_t port) {
+        uint64_t return_val = port;
+        return_val = return_val << 16;
+        return_val |= ip;
+        return return_val;
+    }
 };
 
 #endif // NETWORK_H

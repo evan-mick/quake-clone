@@ -776,7 +776,7 @@ void Renderer::drawDynamicObs() {
     glEnable(GL_DEPTH_TEST);
     glPolygonOffset(1.f,10.0f);
     std::vector<RenderObject> toRender = m_dynamics;
-    for (RenderObject ob : toRender) {
+    for (RenderObject& ob : toRender) {
         drawRenderOb(ob);
     }
 

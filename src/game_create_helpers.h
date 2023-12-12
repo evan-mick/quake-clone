@@ -5,6 +5,10 @@
 #include "scene/scenedata.h"
 #include "glm/gtx/transform.hpp"
 
+const int PLAYERSIZE = sizeof(entity_t) + sizeof(flags_t) + sizeof(Transform) + sizeof(PhysicsData) + sizeof(Test) + sizeof(Renderable) + sizeof(InputData) + sizeof(CollisionData);
+
+const int PROJSIZE = sizeof(entity_t) + sizeof(flags_t) + sizeof(Transform) + sizeof(PhysicsData) + sizeof(CollisionData);
+
 
 inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
     entity_t ent = e->createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT, FLN_COLLISION });
@@ -23,6 +27,8 @@ inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
     col->col_type = 1;
     return ent;
 }
+
+
 
 inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec2 rot) {
     entity_t proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION});
