@@ -120,10 +120,10 @@ private:
 
     std::thread m_listenThread;
     
-    void serverListen(const char* ip, const char* port, int serverSocket);
+    void serverListen(const char* ip, const char* port);
     void clientListen();
 
-    int setupUDPConn(const char* address, const char* port);
+    int setupUDPConn(const char* address, const char* port, bool bind_sock, addrinfo** outinfo);
 
     // Tick stuff
     Timer m_timer = Timer(TICK_RATE);
