@@ -76,7 +76,7 @@ public:
     int connect(const char* ip, const char* port);
     Connection* getConnection(uint32_t ip);
     Gamestate* popLeastRecentGamestate();
-    void deserializeAllDataIntoECS(ECS* ecs);
+    void deserializeAllDataIntoECS();
 
     void shutdown();
     void broadcastGS(ECS* ecs, Connection* conn, int tick);
@@ -89,7 +89,7 @@ public:
     void pushTickData(TickData* td, Connection* conn);
     void broadcastOnTick(float delta);
     void deserializeOnTick(float delta);
-
+    bool tickBufferReady();
 
     inline entity_t getMyPlayerEntityID() {
         return m_myPlayerEntityID;

@@ -105,16 +105,24 @@ void Game::startGame(bool server, const char* ip) {
 
     while (m_running) {
 
-        if (net) 
-            net->deserializeAllDataIntoECS(&ecs);
+        if (net && net->tickBufferReady()) {
+            std::cout << "Tick buffer ready" << std::endl;
+            net->deserializeAllDataIntoECS();
+        }
 
-        //        Input::checkKeys(window);
+        //
         //        if (Input::getHeld())
         //            std::cout << "held " << Input::getHeld() << std::endl;
         //InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
 
         if (!m_server) {
             InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
+            if (in == nullptr) {
+
+                std::cout << "null input 1" << std::endl;
+                //continue;
+            }
+
             in->dat = Input::getHeld();
 
             double xpos, ypos;
@@ -128,38 +136,43 @@ void Game::startGame(bool server, const char* ip) {
             //         getComponentData<InputData>(&ecs, ent, FLN_INPUT)-> = Input::getHeld();
 
             //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+            std::cout << "end of first block" << std::endl;
         }
         // Main simulation logic
 
         phys.startFrame();
-         ecs.update();
+        ecs.update();
 
         if (!m_server) {
             InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
+            if (in == nullptr) {
+                std::cout << "null input 2" << std::endl;
+                //continue;
+            }
             cam.updateFromEnt(&ecs, ent);
             cam.setRotation(in->x_look, in->y_look);
-
+            std::cout << "1" << std::endl;
             render.startDraw();
-
+            std::cout << "2" << std::endl;
             render.drawStaticObs();
             render.drawDynamicObs();
 
             render.drawScreen();
-            // std::cout << "3" << std::endl;
+            std::cout << "3" << std::endl;
             // Swap front and back buffers
             glfwSwapBuffers(m_window);
-            // std::cout << "4" << std::endl;
+            std::cout << "4" << std::endl;
             // Poll for and process events
             glfwPollEvents();
-            // std::cout << "second input data block end" << std::endl;
+            std::cout << "second input data block end" << std::endl;
         }
 
 
-        if (net)
+        if (net) {
+
             net->broadcastOnTick(ecs.getRecentDelta());
             // std::cout << "tick broadcasted (game)" << std::endl;
-        
+        }
     }
     glfwTerminate();
 

@@ -149,8 +149,8 @@ void* ECS::getComponentData(entity_t entity_id, int flag_num) {
 //    bool ent_in_bounds = (entity_id < MAX_ENTITY && entity_id >= 0); this already checked by virtue of entity_t
     bool flag_in_bounds = (flag_num >= 0 || flag_num < MAX_COMPONENTS);
 
-    if (!flag_in_bounds || !m_component_registered[flag_num]
-        || !equal /*|| !ent_in_bounds*/) {
+    if (!flag_in_bounds || !m_component_registered[flag_num] ){
+        //|| !equal /*|| !ent_in_bounds*/) {
 
         if (!flag_in_bounds)
             std::cout << "!flag_in_bounds" << std::endl;
@@ -223,8 +223,10 @@ void ECS::deserializeIntoData(char* serialized_data, size_t max_size, const bool
             continue;
 
         // end early if empty entity / end of data
-        if (ent == 0 && flags == 0)
+        if (ent == 0 && flags == 0) {
+            std::cout << "breaking"  <<std::endl;
             break;
+        }
 
 
         // Copy over all component data
@@ -232,11 +234,15 @@ void ECS::deserializeIntoData(char* serialized_data, size_t max_size, const bool
         m_entities[ent] = flags;
         for (int com = 0; com < MAX_COMPONENTS; com++) {
             bool has_flag = m_entities[ent] & (1 << com);
-            if (!m_component_registered[com] || !has_flag)
+            if (!m_component_registered[com] || !has_flag) {
                 continue;
+            }
+
+            std::cout << "found component to update" << std::endl;
 
             memcpy(getComponentData(ent, com), (serialized_data + ob_ptr), m_component_num_to_size[com]);
             ob_ptr += m_component_num_to_size[com];
+
         }
     }
 }

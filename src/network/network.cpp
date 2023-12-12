@@ -32,7 +32,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
     if (server) {
         // Server has authority over everything by default
         std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), true);
-
+        m_myPlayerEntityID = MAX_ENT_VAL - 1;
         // Start listening for connections
         // Null addr means listen socket
         int serverSocket = setupUDPConn(nullptr, DEFAULT_PORT);
@@ -61,7 +61,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         std::cout << "Connection Established" << std::endl;
 
         // Populate Client authority vector
-        // TODO
+        std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), false);
 
         // Open listen thread
         m_listenThread = std::thread([this]() { this->clientListen(); });
@@ -73,7 +73,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
 void Network::broadcastOnTick(float delta) {
 
     if (!m_shutdown) {
-        
+
         m_timer.increment(delta);
 
         // Wait for tick
@@ -83,7 +83,7 @@ void Network::broadcastOnTick(float delta) {
 
         // Get tick
         unsigned int tick = m_timer.getTimesRun();
-
+        //std::cout << "broadcasting tick" << std::endl;
         // Pop tick buffers and deserialize into ECS
         onTick(tick);
     }
@@ -103,7 +103,7 @@ void Network::deserializeOnTick(float delta) {
         }
         
         // Deserialize all data into ECS to update the gamestate
-        deserializeAllDataIntoECS(m_ecs);
+        deserializeAllDataIntoECS();
     }
 }
 
@@ -137,7 +137,7 @@ void Network::serverListen(const char* ip, const char* port, int serverSocket) {
         if (packet.command == 'H') { // 'H' for Hello
 
             // Create entity for client
-            entity_t entity_id = createPlayer(m_ecs, glm::vec3(0, 3.f, 0));
+            entity_t entity_id = createPlayer(m_ecs, glm::vec3(0, 10.f, 0));
             std::cout << "Client entity created -- entityID: " << std::to_string(entity_id) <<std::endl;
             char* welcome_entity_id = new char[sizeof(entity_id)];
             memcpy(welcome_entity_id, &entity_id, sizeof(entity_id));
@@ -253,14 +253,14 @@ Connection* Network::getConnection(uint32_t ip) {
 
 }
 
-void Network::deserializeAllDataIntoECS(ECS* ecs) {
+void Network::deserializeAllDataIntoECS() {
     
     // Iterate through all connections, pop once per tick
    // m_connectionMutex.lock();
 //    std::cout << "deserializing all data into ECS" << std::endl;
     // std::lock_guard<std::mutex> lock(m_connectionMutex);
     for (auto& [ip, conn] : m_connectionMap) {
-//        std::cout << "deserializing data for ip: " << std::to_string(ip) << std::endl;
+       std::cout << "deserializing data for ip: " << std::to_string(ip) << std::endl;
 
         if (conn == nullptr) {
             std::cout << "conn is null for ip: " << std::to_string(ip) << std::endl;
@@ -270,18 +270,22 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
         TickData* td;
 
 
-
+        //conn->tick_buffer.mutex.lock();
         if (!conn->tick_buffer.buffer.empty()) {
-            conn->tick_buffer.mutex.lock();
+
             std::cout << "Tick buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
             std::cout << "conn ip: " << std::to_string(ip) << " " << std::to_string((long)(conn)) << std::endl;
             std::cout << "entity: " << std::to_string((unsigned int)conn->entity) << std::endl; // This might error
 
             // Get the first element in the tick buffer
             td = conn->tick_buffer.buffer.front();
+            if (td == nullptr) {
+                std::cout << "td ptr is null" << std::endl;
+                continue;
+            }
+
             if (td->data == nullptr) {
                 std::cout << "Data is null" << std::endl;
-                conn->tick_buffer.mutex.unlock();
                 continue;
             }
 
@@ -290,20 +294,21 @@ void Network::deserializeAllDataIntoECS(ECS* ecs) {
             memcpy(buff, td->data, FULL_PACKET);
 
             // Deserialize data into ECS // NEED TO EDIT THIS TO HANDLE CLIENT AUTHORITY
-            ecs->deserializeIntoData(buff, FULL_PACKET, nullptr/*&(m_hasAuthority[0])*/);
+            m_ecs->deserializeIntoData(buff, FULL_PACKET, nullptr);// &(m_hasAuthority[m_myPlayerEntityID]));
 
             // Pop the tick buffer
             conn->tick_buffer.buffer.pop();
             std::cout << "New Tick buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
-            // Delete data
-            // delete[] buff;
-            conn->tick_buffer.mutex.unlock();
+
+            delete[] buff;
+
             std::cout << "end of deserialize in networks" << std::endl;
             if (!m_isServer) {
                 std::cout << "exiting deserialize for client" << std::endl;
                 break;
             }
         }
+        // conn->tick_buffer.mutex.unlock();
 
     }
 
@@ -379,7 +384,8 @@ int Network::connect(const char* ip, const char* port) {
 
         // Create new Connection
         Connection* conn = new Connection();
-        entity_t entity_id;//= *((entity_t*)(buff + sizeof(Packet)));
+        entity_t entity_id;// = createPlayer(m_ecs, glm::vec3(0, 10.f, 0));
+
         memcpy(&entity_id, buff + sizeof(Packet), sizeof(entity_t));
         std::cout << "received entity id: " << std::to_string(entity_id) << std::endl;
         //assert(entity_id != nullptr);
@@ -387,6 +393,7 @@ int Network::connect(const char* ip, const char* port) {
         //client has authority over this
         m_hasAuthority[entity_id] = true;
         m_myPlayerEntityID = entity_id;
+
         std::cout << "Welcome packet received bytes read " << bytes << " " << std::to_string((int)entity_id) << std::endl;
 
         
@@ -396,7 +403,7 @@ int Network::connect(const char* ip, const char* port) {
         delete tb;
         conn->last_rec_tick = pack.tick;
         conn->socket = sockfd;
-        conn->entity = MAX_ENT_VAL; // MAX_ENDT_VAL (-1) for server
+        conn->entity = MAX_ENT_VAL - 1; // MAX_ENDT_VAL (-1) for server
         conn->ip = ((struct sockaddr_in*)p->ai_addr)->sin_addr.s_addr;
         conn->port = ((struct sockaddr_in*)p->ai_addr)->sin_port;
 
@@ -406,7 +413,7 @@ int Network::connect(const char* ip, const char* port) {
         addConnection(conn->ip, conn);
     }
 
-//    freeaddrinfo(servinfo); // all done with this structure
+    freeaddrinfo(servinfo); // all done with this structure
     return 0;
 }
 
@@ -493,7 +500,11 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
 
     // Serialize data
     int data_written = ecs->serializeData(&tick_data);
-    // std::cout << "data_written: " << std::to_string(data_written) << std::endl;
+    if (!m_isServer) {
+        std::cout << "Data serialized" << std::endl;
+        std::cout << "data_written: " << std::to_string(data_written) << std::endl;
+    }
+
 //    assert(data_written <= FULL_PACKET - sizeof(Packet));
     td->data = tick_data;
     td->tick = tick;
@@ -503,7 +514,7 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
     dataPacket.tick = td->tick;
     dataPacket.command = 'D'; // 'D' for Data
     char* data = new char[data_written + sizeof(Packet)];
-    memset(data, 0, data_written + sizeof(Packet));
+    // memset(data, 0, data_written + sizeof(Packet));
 //    char* data = new char[FULL_PACKET];
     memcpy(data, &dataPacket, sizeof(Packet));
     memcpy(data + sizeof(Packet), td->data, data_written);
@@ -516,12 +527,21 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
     connAddr.sin_addr.s_addr = conn->ip;
     connAddr.sin_family = AF_INET;
     connAddr.sin_port = conn->port;
-    sendto(conn->socket, data, sizeof(dataPacket) + data_written, 0, (struct sockaddr *)&connAddr, connAddr_len);
+    data[data_written + sizeof(Packet)] = '\0';
+    ssize_t sent = sendto(conn->socket, data, sizeof(dataPacket) + data_written, 0, (struct sockaddr *)&connAddr, connAddr_len);
+
+
     // std::cout << "sent " << std::to_string(sizeof(dataPacket) + data_written) << " bytes" << std::endl;
     // Clean up
     delete[] data;
     delete[] td->data;
     delete td;
+
+    if (!m_isServer){
+        std::cout << "sent " << std::to_string(sent) << " bytes" << std::endl;
+        std::cout << "deleted data" << std::endl;
+    }
+
 }
 
 void Network::clientListen() {
@@ -530,7 +550,7 @@ void Network::clientListen() {
     while (!m_shutdown) {
 
         // Iterate through all connections and find the server (should only be one.
-
+        std::lock_guard<std::mutex> lock(m_connectionMutex);
         for (auto& [ip, conn] : this->m_connectionMap) {
 
             std::cout << " conn " << ip << " " << (long)(conn) << std::endl;
@@ -539,7 +559,7 @@ void Network::clientListen() {
                 continue;
             }
             // This is the server
-            if (conn->entity == MAX_ENT_VAL) {
+            if (conn->entity == MAX_ENT_VAL - 1) {
 
                 int servSocket = conn->socket;
                 std::cout << "server socket " << std::to_string(servSocket) << std::endl;
@@ -632,12 +652,12 @@ void Network::pushTickData(TickData* td, Connection* conn) {
 
     std::cout << "locking tick data mutex" << std::endl;
     // Lock the tick buffer
-    conn->tick_buffer.mutex.lock();
-
+    //conn->tick_buffer.mutex.lock();
+    std::lock_guard<std::mutex> lock(conn->tick_buffer.mutex);
     std::cout << "pushing tick data" << std::endl;
 //    std::cout << "buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
     // Push data into tick buffer
-    conn->tick_buffer.buffer.push(td);
+    //conn->tick_buffer.buffer.push(td);
 //    std::cout << "pushed tick data" << std::endl;
 //    std::cout << "buffer size: " << std::to_string(conn->tick_buffer.buffer.size()) << std::endl;
 
@@ -651,7 +671,7 @@ void Network::onTick(unsigned int tick) {
 
     // Deserialize all data into ECS to update the gamestate
 //    deserializeAllDataIntoECS(m_ecs);
-    
+    //std::cout << "onTick entered" << std::endl;
     // Broadcast gamestate to all connections
     // std::lock_guard<std::mutex> lock(m_connectionMutex);
     for (auto& conn : m_connectionMap) {
@@ -666,7 +686,23 @@ void Network::onTick(unsigned int tick) {
 
         // Send gamestate to connection
         broadcastGS(m_ecs, conn.second, tick);
+        //std::cout << "broadcast done" << std::endl;
+        if (!m_isServer) {
+            break;
+        }
     }
 }
 
 
+bool Network::tickBufferReady() {
+    for (auto& conn : m_connectionMap) {
+        if (conn.second == nullptr) {
+            // std::cout << "null conn" << std::endl;
+            continue;
+        }
+        if (!conn.second->tick_buffer.buffer.empty()) {
+            return true;
+        }
+    }
+    return false;
+}
