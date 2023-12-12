@@ -80,20 +80,16 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                           damped_accel * m_tickTime * m_tickTime * 0.5f;
 
 
-
-
         if (transform->pos == (m_previousTransforms[my_ent].pos))
             return;
 
         m_previousTransforms[my_ent] = *transform;
 
 
-
         if (!e->entityHasComponent(my_ent, FLN_COLLISION))
             return;
 
-        // STATIC OBJECTS HERE
-        // Need to adjust based off scale n such
+        // STATIC OBJECT COLLISIONS
         if (m_sceneData != nullptr) {
             for (RenderObject& ob : m_sceneData->shapes) {
                 Transform trans {};
@@ -103,8 +99,8 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                 trans.pos = glm::vec3(ob.ctm[3]);
 
                 CollisionData* col = getComponentData<CollisionData>(e, my_ent, FLN_COLLISION);
-
-                if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, &trans, nullptr, (col != nullptr))) {
+                // (col != nullptr)
+                if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, &trans, nullptr, (col->col_type > 0))) {
 
                     if (!e->entityHasComponent(my_ent, FLN_TYPE))
                         continue;
@@ -113,14 +109,13 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                     if (type != nullptr && m_typeToResponse[type->type] != nullptr) {
                         m_typeToResponse[type->type](e, my_ent, 0, true);
                     }
-
                 }
 
             }
         }
 
-
-        // ECS objects, optimize later by only going to highest value
+        // DYNAMIC OBJECT COLLISIONS
+        // optimize later by only going to highest value
         for (int ent = 0; ent < MAX_ENTITY; ent++) {
 
 
@@ -132,14 +127,15 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
             addOccured(my_ent, ent);
 
-
             // POTENTIAL ERROR:
             // offsets are not equal between both people, so might be weirdness based on ordering of entities
             // So for instance, because only "my_ent" is changing in function, lower numbered entities
             // will in theory be pushed around and not vice versa
 
+            CollisionData* col = getComponentData<CollisionData>(e, my_ent, FLN_COLLISION);
+
             // OF NOTE: collision logic will be used for both entities because everything cycled through
-            if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, getTransform(e, ent), nullptr, true)) {
+            if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, getTransform(e, ent), nullptr, (col->col_type > 0))) {
 //                e->queueDestroyEntity(my_ent);
                 //          IF type registered
                 //              run collision logic on each entity for the registered type,

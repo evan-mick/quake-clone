@@ -44,10 +44,6 @@ void Game::startGame(bool server, const char* ip) {
     if (std::string(ip) != "" || server) {
         std::cout << "Network setup: " << (server ? "server" : "client connecting to " + std::string(ip)) << std::endl;
         net = std::make_unique<Network>(server, &ecs, ip);
-
-        // set authority on entity create
-//        entbroadcast_t bound = [&net](entity_t ent) { net->setAuthority(ent); };
-//        ecs.addBroadcast(bound);
         std::cout << "Network setup attempt complete" << std::endl;
     } else {
         std::cout << "No Networking" << std::endl;
@@ -83,6 +79,7 @@ void Game::startGame(bool server, const char* ip) {
 
     registerECSComponents(ecs);
     registerECSSystems(ecs, phys, render);
+    registerCollisionResponses(phys);
 
     if (!m_server)
         registerInputs();
@@ -110,17 +107,11 @@ void Game::startGame(bool server, const char* ip) {
             net->deserializeAllDataIntoECS();
         }
 
-        //
-        //        if (Input::getHeld())
-        //            std::cout << "held " << Input::getHeld() << std::endl;
-        //InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
-
         if (!m_server) {
             InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
             if (in == nullptr) {
 
                 std::cout << "null input 1" << std::endl;
-                //continue;
             }
 
             if (in) {
@@ -135,10 +126,6 @@ void Game::startGame(bool server, const char* ip) {
 
                 in->y_look = std::clamp(in->y_look, 0.2f, 3.0f);
             }
-            //         getComponentData<InputData>(&ecs, ent, FLN_INPUT)-> = Input::getHeld();
-
-            //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//            std::cout << "end of first block" << std::endl;
             render.startDraw();
         }
         // Main simulation logic
@@ -158,27 +145,21 @@ void Game::startGame(bool server, const char* ip) {
                 cam.updateFromEnt(&ecs, ent);
                 cam.setRotation(in->x_look, in->y_look);
             }
-//            std::cout << "1" << std::endl;
-
-//            std::cout << "2" << std::endl;
             render.drawStaticObs();
 //            render.drawDynamicObs();
 
             render.drawScreen();
-//            std::cout << "3" << std::endl;
+
             // Swap front and back buffers
             glfwSwapBuffers(m_window);
-//            std::cout << "4" << std::endl;
+
             // Poll for and process events
             glfwPollEvents();
-//            std::cout << "second input data block end" << std::endl;
         }
 
 
         if (net) {
-
             net->broadcastOnTick(ecs.getRecentDelta());
-            // std::cout << "tick broadcasted (game)" << std::endl;
         }
     }
     glfwTerminate();
@@ -225,20 +206,15 @@ void Game::setupWindow() {
     glfwGetWindowContentScale(window, &m_monitorXScale,&m_monitorYScale);
     std::cout <<" window is" << realWidth <<","<<realHeight << std::endl;
 
-
     // Initialize GLEW
     if (glewInit() != GLEW_OK) {
         std::cerr << "Failed to initialize GLEW" << std::endl;
         return;
     }
 
-
-
     glfwSetKeyCallback(window, Input::key_callback);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-
 }
 
 
@@ -248,7 +224,6 @@ void Game::registerECSComponents(ECS& ecs) {
     ecs.registerComponent(FLN_TRANSFORM, sizeof(Transform));
     ecs.registerComponent(FLN_INPUT, sizeof(InputData));
 
-    //    if (!m_server)
     ecs.registerComponent(FLN_RENDER, sizeof(Renderable));
 
     ecs.registerComponent(FLN_TEST, sizeof(Test));
@@ -263,32 +238,30 @@ void Game::registerInputs() {
     Input::registerHeld(GLFW_KEY_SPACE, IN_JUMP);
 }
 
+void Game::registerCollisionResponses(Physics& phys) {
+
+}
+
+
 
 void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
     ecs.registerSystemWithBitFlags([&phys](ECS* e, entity_t ent, float delta) { phys.tryRunStep(e, ent, delta); }, phys.getRequiredFlags());
 
+    // Rendering system
     if (!m_server)
         ecs.registerSystem([&renderer](ECS* e, entity_t ent, float delta) {
             renderer.drawDynamicOb(e, ent, delta);
 //            renderer.queueDynamicModel(e,ent,delta);
         } , {FLN_TRANSFORM, FLN_RENDER});
 
-    //    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
-
-    ////        std::cout << "thing" << std::endl;
-    //        PhysicsData* phys = getPhys(e, ent);
-    //        Transform* trans = getTransform(e, ent);
-    //        Test* ts = getComponentData<Test>(e, ent, FLN_TEST);
-
-    //        ts->timer += delta;
-
-    ////        trans->pos = glm::vec3(2.f * glm::cos(ts->timer), trans->pos.y, trans->pos.z);
-    //    }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM});
-
+    // Player Fire Rocket input
     if (!m_server)
         ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
+
+            // What if input down but rocket never made?
             if (!e->hasAuthority(ent))
                 return;
+
             Transform* trans = getTransform(e, ent);
             InputData* in = getComponentData<InputData>(e, ent, FLN_INPUT);
             if (Input::isHeld(in->dat, IN_SHOOT) && !Input::isHeld(in->last_dat, IN_SHOOT)) {
@@ -299,10 +272,13 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
     , {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM, FLN_INPUT});
 
 
+    // Player Movement Input
     ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
 
-        if (!e->hasAuthority(ent))
-            return;
+        // What if some desync happens? then we'd want this to run but it won't cause no authority
+        // Can't take away though cause then jitter (?)
+//        if (!e->hasAuthority(ent))
+//            return;
 
         //        std::cout << "thing" << std::endl;
         PhysicsData* phys = getPhys(e, ent);
@@ -341,33 +317,38 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
         // TO BE IMPROVED, the actual quake accel code, doesn't really work rn
 
-//        glm::vec3 norm_vel = glm::normalize(vel);
+        glm::vec3 norm_vel = glm::normalize(vel);
 
-        glm::vec3 norm_vel = glm::normalize(vel) * 5.f;
+//        glm::vec3 norm_vel = glm::normalize(vel) * 10.f;
 
-        if (vel != glm::vec3(0, 0, 0)) {
-            phys->vel.x = norm_vel.x;
-            phys->vel.z = norm_vel.z;
+        if (vel != glm::vec3(0, 0, 0) && phys->grounded) {
+//            phys->vel.x = norm_vel.x;
+//            phys->vel.z = norm_vel.z;
 
-//            float current = glm::dot(phys->vel, norm_vel);
-//            float wishspeed = 10.f;
-//            float addspeed = wishspeed - current;
-//            float accelspeed = 9.f * wishspeed;
-//            if (addspeed > 0) {
-//                if (accelspeed > addspeed) {
-//                    accelspeed = addspeed;
-//                }
-//                phys->accel.x = norm_vel.x * accelspeed;
-//                phys->accel.z = norm_vel.z * accelspeed;
-//            }
+            float current = glm::dot(phys->vel, norm_vel);
+            float wishspeed = 10.f;
+            float addspeed = wishspeed - current;
+            float accelspeed = 9.f * wishspeed;
+            if (addspeed > 0) {
+                if (accelspeed > addspeed) {
+                    accelspeed = addspeed;
+                }
+                phys->accel.x = norm_vel.x * accelspeed;
+                phys->accel.z = norm_vel.z * accelspeed;
+            }
+
 
         }
-        else
-            phys->vel = glm::vec3(0, phys->vel.y, 0);
-
-        //        int			i;
-        //        float		addspeed, accelspeed, currentspeed;
-
+        if (Input::isHeld(in->dat, IN_JUMP) && phys->grounded) {
+            phys->vel.y = 15.f;
+            phys->grounded = false;
+        }
+        if (phys->grounded) {
+            phys->vel.x *= .99f * delta;
+            phys->vel.z *= .99f * delta;
+        }
+//        else
+//            phys->vel = glm::vec3(0, phys->vel.y, 0);
 
         /*currentspeed = DotProduct (pm->ps->velocity, wishdir);
         addspeed = wishspeed - currentspeed;
@@ -385,12 +366,6 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
 
 
-
-
-
-        if (Input::isHeld(in->dat, IN_JUMP) && phys->grounded) {
-            phys->vel = glm::vec3(0, 15.f, 0);
-        }
 
         in->last_dat = in->dat;
         ts->timer += delta;

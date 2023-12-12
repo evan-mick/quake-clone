@@ -18,7 +18,7 @@ Camera::Camera(int width, int height, const SceneCameraData& cameraData) {
     pos_ = cameraData.pos;
 
 //    projMat_ = getPerspectiveMatrix(3.f, 100);
-    projMat_ = glm::perspective(heightAngle_,aspectRatio_,0.4f,50.f);
+    projMat_ = glm::perspective(heightAngle_,aspectRatio_,0.4f,500.f);
 }
 
 Camera::Camera() {

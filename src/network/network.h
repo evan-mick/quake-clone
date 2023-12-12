@@ -18,6 +18,19 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+/*
+ * Queue support (again)
+ *
+ * Multiple Packet support
+ * - server sends multiple packets
+ *      - find breakpoint thats at an entity
+ *      - send a packet for each seg
+ * - on client deserialize, check last time object was updated, if before incoming tick, update, otherwise, drop it
+ *
+ *
+ */
+
+
 
 
 extern const char* DEFAULT_PORT;

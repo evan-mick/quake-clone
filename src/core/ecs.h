@@ -74,7 +74,7 @@ public:
 
     // Returns the # of bytes written to the char* array
     // Sets the buff_ptr to a heap allocated pointer to the buffer
-    int serializeData(char** buff_ptr);
+    int serializeData(char** buff_ptr, bool ignore_auth);
 
     // ASSUMPTIONS serialized_data is a well-formed, serialization of game state
     // ignore is an MAX_ENTITY sized array of entity -> bool to not add to the data

@@ -7,13 +7,6 @@
 #include "../game_create_helpers.h"
 #include <functional>
 
-/* TODO:
-    
-    -- INSTANTIATE CLIENT AUTHORITY MAP
-    -- USE CLIENT AUTHORITY MAP TO DETERMINE IF CLIENT HAS AUTHORITY OVER ENTITY IN DESERIALIZEALLDATAINTOECS
-
-*/
-
 const char* DEFAULT_PORT = "42069";
 
 Network::Network(bool server, ECS* ecs, const char* ip)
@@ -28,9 +21,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
     
     // Initialize server
     if (server) {
-        // Server has authority over everything by default
-        // FALSE RN FOR TESTING
-//        std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), false);
+
         m_myPlayerEntityID = MAX_ENT_VAL;
 
         // Open listen thread and accept connections
@@ -52,9 +43,6 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         std::cout << "Connection Established" << std::endl;
 
         // Populate Client authority vector
-//        std::fill(m_hasAuthority.begin(), m_hasAuthority.end(), false);
-
-
         next.tick = -1;
         next.data = nullptr;
         next.data_size = 0;
@@ -106,7 +94,6 @@ void Network::serverListen(const char* ip, const char* port) {
 
             // Add stuff about client authority
             m_ecs->setAuthority(entity_id, false);
-//            m_hasAuthority[entity_id] = false;
 
             // Make new Connection
             Connection* conn = new Connection();
@@ -215,7 +202,6 @@ void Network::addConnection(uint64_t ipport_, Connection* conn) {
         std::cout << "connection already exists in map" << std::endl;
     }
     m_connectionMutex.unlock();
-//    std::cout << "add connection failed, try lock failed" << std::endl;
 
 }
 
@@ -253,7 +239,6 @@ void Network::deserializeAllDataIntoECS() {
     
     // Iterate through all connections, pop once per tick
    // m_connectionMutex.lock();
-//    std::cout << "deserializing all data into ECS" << std::endl;
     std::lock_guard<std::mutex> lock(m_connectionMutex);
     if (m_connectionMap.size() > 0 && next.data == nullptr) {
 //        std::cout << "Data is null" << std::endl;
@@ -261,10 +246,11 @@ void Network::deserializeAllDataIntoECS() {
     }
 
 //    TickData& td = next;//conn->buffer.front();
-    char buff[FULL_PACKET];// = //new char[FULL_PACKET];
+    char buff[FULL_PACKET];
+
     // Ignore authority for first established tick
     if (next.tick < 0) {
-        m_ecs->deserializeIntoData(next.data, next.data_size, true);// &(m_hasAuthority[m_myPlayerEntityID]));
+        m_ecs->deserializeIntoData(next.data, next.data_size, true);
         next.tick = 0;
     }
     else
@@ -273,42 +259,6 @@ void Network::deserializeAllDataIntoECS() {
 
     delete[] next.data;
     next.data = nullptr;
-//    for (auto& [ipport, conn] : m_connectionMap) {
-
-////        std::lock_guard<std::mutex>(mutex_);
-//        if (next.data != nullptr/*!conn->buffer.empty()*/) {
-
-//            std::cout << "Tick buffer size: " << std::to_string(buffer.size()) << std::endl;
-//            std::cout << "conn ipport: " << std::to_string(ipport) << " " << std::to_string((long)(conn)) << std::endl;
-//            std::cout << "entity: " << std::to_string((unsigned int)conn->entity) << std::endl;
-
-//            {
-//                // Get the first element in the tick buffer
-
-
-//                if (td.data == nullptr) {
-//                    std::cout << "Data is null" << std::endl;
-//                    continue;
-//                }
-
-//                memcpy(buff, td.data, FULL_PACKET);
-
-//                // Deserialize data into ECS // NEED TO EDIT THIS TO HANDLE CLIENT AUTHORITY
-
-
-//                std::cout << "data being FREEEEEDDD" << std::endl;
-
-//            }
-//            // Pop the tick buffer
-////            conn->buffer.pop();
-
-//            std::cout << "end of deserialize in networks" << std::endl;
-//            if (!m_isServer) {
-//                std::cout << "exiting deserialize for client" << std::endl;
-//                break;
-//            }
-//        }
-//    }
 
 }
 
@@ -348,9 +298,8 @@ int Network::connect(const char* ip, const char* port) {
         memcpy(&entity_id, buff + sizeof(Packet), sizeof(entity_t));
         std::cout << "received entity id: " << std::to_string(entity_id) << std::endl;
 
-        //client has authority over this
+        // Client has authority over this
         m_ecs->setAuthority(entity_id, true);
-//        m_hasAuthority[entity_id] = true;
         m_myPlayerEntityID = entity_id;
 
         std::cout << "Welcome packet received bytes read " << bytes << " " << std::to_string((int)entity_id) << std::endl;
@@ -403,7 +352,7 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
 
     char* tick_data;
     // Serialize data
-    int data_written = ecs->serializeData(&tick_data);
+    int data_written = ecs->serializeData(&tick_data, m_isServer);
     if (!m_isServer) {
 //        std::cout << "Data serialized" << std::endl;
         std::cout << "data_written: " << std::to_string(data_written) << std::endl;
@@ -428,7 +377,6 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
 
 //    std::cout << "broadcast ip: " << conn->ip << " " << conn->port << std::endl;
     ssize_t sent = sendto(conn->socket, data, sizeof(dataPacket) + data_written, 0, (struct sockaddr *)&connAddr, connAddr_len);
-
 
     // Clean up
     delete[] data;
@@ -508,7 +456,7 @@ void Network::clientListen() {
 //                    updateTickBuffer(data, bytes - sizeof(Packet), conn, tick);
                     
                 } else {
-//                    std::cout << "Unknown command: " << std::to_string(packet.command) << std::endl;
+                    std::cout << "Unknown command: " << std::to_string(packet.command) << std::endl;
                 }
                 continue;
             }
@@ -536,28 +484,16 @@ void Network::updateTickBuffer(char* data, size_t data_size, Connection* conn, u
 }
 
 void Network::onTick(unsigned int tick) {
-
-    // Deserialize all data into ECS to update the gamestate
-//    deserializeAllDataIntoECS(m_ecs);
-    //std::cout << "onTick entered" << std::endl;
     // Broadcast gamestate to all connections
-     std::lock_guard<std::mutex> lock(m_connectionMutex);
+    std::lock_guard<std::mutex> lock(m_connectionMutex);
     for (auto& [ip, conn] : m_connectionMap) {
         if (conn == nullptr) {
             std::cout << "null conn" << std::endl;
             continue;
         }
         
-        // Assert GS is getting sent to the right place
-//        if (!m_isServer) assert(conn.second->entity == MAX_ENT_VAL);
-//        if (m_isServer) assert(conn.second->entity != MAX_ENT_VAL);
-
         // Send gamestate to connection
         broadcastGS(m_ecs, conn, tick);
-        //std::cout << "broadcast done" << std::endl;
-//        if (!m_isServer) {
-//            break;
-//        }
     }
 }
 
