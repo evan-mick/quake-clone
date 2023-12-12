@@ -71,13 +71,13 @@ public:
     Network(bool server, ECS* ecs, const char* ip);
 
     int connect(const char* ip, const char* port);
-    Connection* getConnection(uint32_t ip);
+    Connection* getConnection(uint64_t ip);
     Gamestate* popLeastRecentGamestate();
     void deserializeAllDataIntoECS();
 
     void shutdown();
     void broadcastGS(ECS* ecs, Connection* conn, int tick);
-    void addConnection(uint32_t ip, Connection* conn);
+    void addConnection(uint64_t ipport, Connection* conn);
     void editConnection(Connection* conn, unsigned int tick);
     
     void onTick(unsigned int tick);
@@ -119,7 +119,7 @@ private:
 
 
     std::array<Connection, MAX_PLAYERS> m_connections{}; // not using this atm
-    std::unordered_map<uint32_t, Connection*> m_connectionMap{};
+    std::unordered_map<uint64_t, Connection*> m_connectionMap{};
 //    void listenForData();
 
     std::thread m_listenThread;
@@ -132,6 +132,13 @@ private:
     // Tick stuff
     Timer m_timer = Timer(TICK_RATE);
     float m_tickRate = TICK_RATE;
+
+    inline uint64_t ipport(uint32_t ip, uint16_t port) {
+        uint64_t return_val = port;
+        return_val = return_val << 16;
+        return_val |= ip;
+        return return_val;
+    }
 };
 
 #endif // NETWORK_H

@@ -121,7 +121,7 @@ void Network::serverListen(const char* ip, const char* port) {
             conn->socket = setupUDPConn(ipString, std::to_string(conn->port).c_str(), false, &p);
 
             // Add to connestions map
-            this->addConnection(c_ip, conn);
+            this->addConnection(ipport(c_ip, c_port), conn);
             std::cout << "connection added" << std::endl;
 
             // Construct welcome packet
@@ -144,7 +144,7 @@ void Network::serverListen(const char* ip, const char* port) {
             unsigned int tick = m_timer.getTimesRun();
 
             // Get the connection
-            Connection* conn = getConnection(c_ip);
+            Connection* conn = getConnection(ipport(c_ip, c_port));
 
             // If not found, throw error
             if (conn == nullptr) {
@@ -198,14 +198,14 @@ void Network::broadcastOnTick(float delta) {
 }
 
 
-void Network::addConnection(uint32_t ip, Connection* conn) {
+void Network::addConnection(uint64_t ipport_, Connection* conn) {
 
     // Add connection to map
     // std::lock_guard<std::mutex> lock(m_connectionMutex); // lock the connection map
 
     m_connectionMutex.lock();
-    if (m_connectionMap.find(ip) == m_connectionMap.end()) {
-        m_connectionMap[ip] = conn;
+    if (m_connectionMap.find(ipport_) == m_connectionMap.end()) {
+        m_connectionMap[ipport_] = conn;
         std::cout << "connection added to map" << std::endl;
     } else {
         std::cout << "connection already exists in map" << std::endl;
@@ -215,7 +215,7 @@ void Network::addConnection(uint32_t ip, Connection* conn) {
 
 }
 
-Connection* Network::getConnection(uint32_t ip) {
+Connection* Network::getConnection(uint64_t ip) {
 
     // Find connection based on IP
     // std::lock_guard<std::mutex> lock(m_connectionMutex); // Lock the connection map
@@ -252,13 +252,13 @@ void Network::deserializeAllDataIntoECS() {
 //    std::cout << "deserializing all data into ECS" << std::endl;
     std::lock_guard<std::mutex> lock(m_connectionMutex);
     char buff[FULL_PACKET];// = //new char[FULL_PACKET];
-    for (auto& [ip, conn] : m_connectionMap) {
+    for (auto& [ipport, conn] : m_connectionMap) {
 
 //        std::lock_guard<std::mutex>(mutex_);
         if (next.data != nullptr/*!conn->buffer.empty()*/) {
 
             std::cout << "Tick buffer size: " << std::to_string(buffer.size()) << std::endl;
-            std::cout << "conn ip: " << std::to_string(ip) << " " << std::to_string((long)(conn)) << std::endl;
+            std::cout << "conn ipport: " << std::to_string(ipport) << " " << std::to_string((long)(conn)) << std::endl;
             std::cout << "entity: " << std::to_string((unsigned int)conn->entity) << std::endl;
 
             {
@@ -341,7 +341,7 @@ int Network::connect(const char* ip, const char* port) {
         conn->port = servAddr.sin_port;
 
         // Add to connestions map
-        addConnection(conn->ip, conn);
+        addConnection(ipport(conn->ip, conn->port), conn);
     }
 
 //    freeaddrinfo(p); // all done with this structure
@@ -351,7 +351,7 @@ int Network::connect(const char* ip, const char* port) {
 void Network::shutdown() {
 
     std::lock_guard<std::mutex> lock(m_connectionMutex);
-    for (auto& [ip, conn] : m_connectionMap) {
+    for (auto& [ipport, conn] : m_connectionMap) {
 
         // Close all sockets
         close(conn->socket);
@@ -421,11 +421,11 @@ void Network::clientListen() {
         // Iterate through all connections and find the server (should only be one.
 //        std::lock_guard<std::mutex> lock(m_connectionMutex);
 //        m_connectionMutex.lock();
-        for (auto& [ip, conn] : this->m_connectionMap) {
+        for (auto& [ipport, conn] : this->m_connectionMap) {
 
-            std::cout << " conn " << ip << " " << (long)(conn) << std::endl;
+            std::cout << " conn " << ipport << " " << (long)(conn) << std::endl;
             if (conn == nullptr) {
-                std::cout << "conn is null for client, null conn ip is " << std::to_string(ip) << std::endl;
+                std::cout << "conn is null for client, null conn ip is " << std::to_string(ipport) << std::endl;
                 continue;
             }
             // This is the server
