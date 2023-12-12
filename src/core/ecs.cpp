@@ -161,13 +161,6 @@ void* ECS::getComponentData(entity_t entity_id, int flag_num) {
 
     if (!flag_in_bounds || !m_component_registered[flag_num] || !equal){
 //         /*|| !ent_in_bounds*/) {
-
-//        if (!flag_in_bounds)
-//            std::cout << "!flag_in_bounds" << std::endl;
-//        if (!m_component_registered[flag_num])
-//            std::cout << "!m_component_registered[flag_num]" << std::endl;
-//        if (!equal)
-//            std::cout << "!equal" << std::endl;
         return nullptr;
     }
     return ((char*)(m_components[flag_num])) + (m_component_num_to_size[flag_num] * entity_id);
