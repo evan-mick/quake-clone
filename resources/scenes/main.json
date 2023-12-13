@@ -1,0 +1,71 @@
+{
+  "name": "root",
+  "globalData": {
+    "ambientCoeff": 0.8,
+    "diffuseCoeff": 0.8,
+    "specularCoeff": 0.8,
+    "transparentCoeff": 0
+  },
+  "cameraData": {
+    "position": [0.0, 0.0, 0.0],
+    "up": [0.0, 1.0, 0.0],
+    "heightAngle": 60.0,
+    "focus": [0.0, 0.0, 0.0]
+  },
+  "groups": [
+    {
+      "lights": [
+        {
+          "type": "directional",
+          "color": [1.0, 0.5, 0.5],
+          "direction": [-2.0, -4.0, -6.0]
+        }
+      ]
+    },
+
+    {
+    "groups": [
+
+          {
+            "translate": [0.0, -100.0, 0.0],
+            "scale": [80.0, 200.0, 45.0],
+            "primitives": [
+              {
+                "type": "cube",
+                "ambient": [0.7, 0.7, 0.7],
+                "diffuse": [0.5, 0.5, 0.5],
+                "specular": [0.05, 0.05, 0.05],
+                "shininess": 0.2
+              }
+            ]
+            },
+            {
+              "translate": [0.0, -80.0, 0.0],
+              "scale": [10.0, 200.0, 10.0],
+              "primitives": [
+                {
+                    "type": "cube",
+                    "ambient": [0.7, 0.7, 0.7],
+                    "diffuse": [0.5, 0.5, 0.5],
+                    "specular": [0.05, 0.05, 0.05],
+                    "shininess": 0.2
+                }
+              ]
+            },
+            {
+              "translate": [0.0, -100.0, 0.0],
+              "scale": [45.0, 200.0, 80.0],
+              "primitives": [
+                {
+                    "type": "cube",
+                    "ambient": [0.7, 0.7, 0.7],
+                    "diffuse": [0.5, 0.5, 0.5],
+                    "specular": [0.05, 0.05, 0.05],
+                    "shininess": 0.2
+                }
+              ]
+            }
+        ]
+        }
+    ]
+}

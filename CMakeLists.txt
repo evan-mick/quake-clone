@@ -104,6 +104,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
      resources/shaders/texture.frag resources/shaders/texture.vert
      resources/scenes/phong_total.json
      resources/scenes/empty.json
+     resources/scenes/main.json
      resources/shaders/skybox.frag resources/shaders/skybox.vert
  )
 

@@ -32,7 +32,7 @@ inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
 
 
 inline void respawnPlayer(ECS* e, entity_t ent) {
-    getTransform(e, ent)->pos = glm::vec3(0, 20.f, 0);
+    getTransform(e, ent)->pos = glm::vec3(0, 50.f, 0);
     getPhys(e, ent)->vel = glm::vec3(0, 0.f, 0);
     getPhys(e, ent)->accel = glm::vec3(0, 0.f, 0);
 

@@ -91,7 +91,10 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
             return;
 
         // STATIC OBJECT COLLISIONS
+        // OPTIMIZATIONS: static stuff could be accelerated with KD-tree or similar
+        // entities would need more dynamic system
         if (m_sceneData != nullptr) {
+            physDat->grounded = false;
             for (RenderObject& ob : m_sceneData->shapes) {
                 Transform trans {};
                 trans.scale.x = glm::length(glm::vec3(ob.ctm[0])); // X-axis scale
@@ -101,7 +104,11 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
                 CollisionData* col = getComponentData<CollisionData>(e, my_ent, FLN_COLLISION);
                 // (col != nullptr)
+
                 if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, &trans, nullptr, (col->col_type > 0))) {
+
+                    if (trans.pos.y < getTransform(e, my_ent)->pos.y)
+                        physDat->grounded = true;
 
 //                    if (!e->entityHasComponent(my_ent, FLN_TYPE))
 //                        continue;
@@ -112,6 +119,17 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                         m_typeToResponse[type](e, my_ent, 0, true);
                     }
                 }
+
+//                if (physDat->grounded == false) {
+//                    Transform groundTest = *getTransform(e, my_ent);
+//                    PhysicsData phys_ = *physDat;
+//                    groundTest.pos.y -= .1f;
+//                    if (AABBtoAABBIntersect(&groundTest, &phys_, &trans, nullptr, false)) {
+//                        if (trans.pos.y < getTransform(e, my_ent)->pos.y)
+//                            physDat->grounded = true;
+//                    }
+
+//                }
 
             }
         }
@@ -153,16 +171,8 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                 }
             }
 
-
-
         }
 
-
-
-        // OPTIMIZATIONS: static stuff could be accelerated with KD-tree or similar
-        // entities would need more dynamic system
-
-        // STATIC COLLISIONS
     }
 }
 
