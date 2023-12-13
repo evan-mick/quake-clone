@@ -185,9 +185,9 @@ void Renderer::initializeGL() {
     m_models = generateModelsMap();
 
 
-    m_shader = ShaderLoader::createShaderProgram("../../resources/shaders/default.vert", "../../resources/shaders/default.frag");
-    m_texture_shader = ShaderLoader::createShaderProgram("../../resources/shaders/texture.vert", "../../resources/shaders/texture.frag");
-    m_skybox_shader = ShaderLoader::createShaderProgram("../../resources/shaders/skybox.vert", "../../resources/shaders/skybox.frag");
+    m_shader = ShaderLoader::createShaderProgram("resources/shaders/default.vert", "resources/shaders/default.frag");
+    m_texture_shader = ShaderLoader::createShaderProgram("resources/shaders/texture.vert", "resources/shaders/texture.frag");
+    m_skybox_shader = ShaderLoader::createShaderProgram("resources/shaders/skybox.vert", "resources/shaders/skybox.frag");
 
     glUseProgram(m_texture_shader);
     GLint texLoc = glGetUniformLocation(m_texture_shader, "tex");
@@ -291,7 +291,7 @@ std::map<u_int8_t,Model> Renderer::generateModelsMap() {
 std::map<QString,SceneTexture> Renderer::generateTexturesMap() {
     std::map<QString,SceneTexture> res;
 
-    QString crosshair_path("../../resources/textures/crosshair.png");
+    QString crosshair_path("resources/textures/crosshair.png");
     SceneTexture crosshair;
     crosshair.width = 1600;
     crosshair.height = 1200;
@@ -313,7 +313,7 @@ void Renderer::loadSkyboxTexture() {
     }
 
     for (GLuint i = 0; i < 6; i++) {
-        QString facePath = QString("../../resources/textures/cloudbox") + QString::number(i) + ".png";
+        QString facePath = QString("resources/textures/cloudbox") + QString::number(i) + ".png";
         QImage faceImage(facePath);
         QImage faceImageConv = faceImage.convertToFormat(QImage::Format_RGBA8888);
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA,

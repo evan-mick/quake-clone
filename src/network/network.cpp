@@ -104,6 +104,7 @@ void Network::serverListen(const char* ip, const char* port) {
             conn->port = c_port;
             conn->lastActivityTime = std::chrono::steady_clock::now();
             conn->timeoutDuration = std::chrono::seconds(5);
+            conn->discon_timer = 5.f;
 
 
             // Create send socket to new connection
@@ -133,13 +134,14 @@ void Network::serverListen(const char* ip, const char* port) {
             std::cout << "welcome packet sent " << (int)(entity_id) << std::endl;
 
         } else if (packet.command == 'D') { // 'D' for Data
-            std::cout << "Command D from client" << std::endl;
+//            std::cout << "Command D from client" << std::endl;
 
             // Get tick at which packet was received
             unsigned int tick = m_timer.getTimesRun();
 
             // Get the connection
             Connection* conn = getConnection(ipport(c_ip, c_port));
+            conn->discon_timer = 5.f;
 
             // If not found, throw error
             if (conn == nullptr) {
@@ -184,7 +186,7 @@ void Network::broadcastOnTick(float delta) {
 //        std::vector<uint64_t> to_diss {};
 //        for (auto& [ipport, conn] : m_connectionMap) {
 //            conn->discon_timer -= delta;
-//            if (conn->discon_timer) {
+//            if (conn->discon_timer <= 0.f) {
 //                to_diss.push_back(ipport);
 //            }
 //        }
@@ -192,6 +194,7 @@ void Network::broadcastOnTick(float delta) {
 //            Connection* conn = m_connectionMap[ipport];
 //            m_ecs->queueDestroyEntity(conn->entity);
 //            m_connectionMap.erase(ipport);
+//            std::cout << ipport << " disconnected" << std::endl;
 //            delete conn;
 //        }
 
@@ -237,7 +240,7 @@ Connection* Network::getConnection(uint64_t ipport) {
             // Key not found:
             return nullptr;
         } else {
-            std::cout << "connection found!" << std::endl;
+//            std::cout << "connection found!" << std::endl;
             return it->second;
 
         }
@@ -342,6 +345,7 @@ int Network::connect(const char* ip, const char* port) {
         conn->port = servAddr.sin_port;
         conn->lastActivityTime = std::chrono::steady_clock::now();
         conn->timeoutDuration = std::chrono::seconds(5);
+        conn->discon_timer = 5.f;
 
         // Add to connestions map
         addConnection(ipport(conn->ip, conn->port), conn);
@@ -438,6 +442,8 @@ void Network::clientListen() {
 //        std::lock_guard<std::mutex> lock(m_connectionMutex);
 //        m_connectionMutex.lock();
         for (auto& [ipport, conn] : this->m_connectionMap) {
+
+            conn->discon_timer = 5.f;
 
 //            std::cout << " conn " << ipport << " " << (long)(conn) << std::endl;
             if (conn == nullptr) {
@@ -553,6 +559,7 @@ void Network::onTick(unsigned int tick) {
             broadcastGS(m_ecs, conn, tick);
         } else {
             std::cout << "Connection timed out" << std::endl;
+            m_ecs->queueDestroyEntity(conn->entity);
             m_connectionMap.erase(ip);
             break;
         }
