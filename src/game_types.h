@@ -26,7 +26,7 @@ const uint32_t DSCREEN_HEIGHT = 900;
 constexpr float RAW_FOV = 90;
 constexpr float FOV = glm::radians(RAW_FOV); //* (float)DSCREEN_HEIGHT/(float)DSCREEN_WIDTH;
 const float NEAR_PLANE = 0.45f;
-const float FAR_PLANE = 200.0f;
+const float FAR_PLANE = 400.0f;
 
 // INPUT FLAGS
 const int IN_FORWARD = 0;

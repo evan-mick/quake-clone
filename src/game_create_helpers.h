@@ -34,7 +34,7 @@ inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
 
 inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec2 rot) {
     entity_t proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION, FLN_TYPE});
-    getTransform(e, proj)->pos = pos;
+    getTransform(e, proj)->pos = pos+glm::vec3(0,2.2,0);
     getTransform(e, proj)->scale = glm::vec3(.15f, .15f, .15f);
 
     if (e->isComponentRegistered(FLN_RENDER)) {
