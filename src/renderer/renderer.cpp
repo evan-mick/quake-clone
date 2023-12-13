@@ -683,21 +683,60 @@ void Renderer::queueDynamicModel(struct ECS* e, entity_t ent, float delta_second
 
 void Renderer::drawScreen() {
 
+//    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+//    glViewport(0, 0, m_screen_width, m_screen_height);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    paintSkybox();
+////
+//    paintTexture(m_fbo_texture, true,0,1.f);
+//    for (auto it = m_texture_map.begin(); it != m_texture_map.end(); ++it) {
+//        paintTexture(it->second.tex, false,it->second.slot,1.f);
+//    }
+
+////    GLenum error = glGetError();
+////    if (error != GL_NO_ERROR) {
+////        std::cerr << "OpenGL error: " << error << std::endl;
+////    }
+//    glUseProgram(0);
+
+    // Enable blending for overlapping objects
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Enable depth testing
+    glEnable(GL_DEPTH_TEST);
+
+    // Draw to screen
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
     glViewport(0, 0, m_screen_width, m_screen_height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     paintSkybox();
-//
-    paintTexture(m_fbo_texture, true,0,1.f);
+
+    // Clear the framebuffer
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Draw the FBO texture with full opacity
+    paintTexture(m_fbo_texture, true, 0, 1.0f);
+
+    // Draw other textures with full opacity
     for (auto it = m_texture_map.begin(); it != m_texture_map.end(); ++it) {
-        paintTexture(it->second.tex, false,it->second.slot,1.f);
+        paintTexture(it->second.tex, false, it->second.slot, 1.0f);
     }
 
-//    GLenum error = glGetError();
-//    if (error != GL_NO_ERROR) {
-//        std::cerr << "OpenGL error: " << error << std::endl;
-//    }
+    // Disable blending for subsequent rendering
+    glDisable(GL_BLEND);
+
+    // Disable depth testing for subsequent rendering
+    glDisable(GL_DEPTH_TEST);
+
+    // Check for OpenGL errors
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL error: " << error << std::endl;
+    }
+
+    // Reset the shader program
     glUseProgram(0);
+
 
 }
 
@@ -843,15 +882,15 @@ void Renderer::drawDynamicObs() {//(OBSOLETE)
 }
 
 void Renderer::drawDynamicAndStaticObs() {//USED
-    std::vector<RenderObject> toRender = m_dynamics;
-    toRender.insert(toRender.end(),data->shapes.begin(),data->shapes.end());
-    for (RenderObject& ob : toRender) {
 
-    for (RenderObject& ob : m_dynamics) {
+    glDepthRange(0.6,1.0);
+    for (RenderObject& ob : data->shapes) {
         drawRenderOb(ob);
     }
 
-    for (RenderObject& ob : data->shapes) {
+
+    glDepthRange(0.1,0.4);
+    for (RenderObject& ob : m_dynamics) {
         drawRenderOb(ob);
     }
 }
