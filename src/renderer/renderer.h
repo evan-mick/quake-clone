@@ -32,6 +32,8 @@ public:
     void saveViewportImage(std::string filePath);
     void initializeGL();                       // Called once at the start of the program
 
+    std::map<int,glm::vec4> m_colors;
+    static glm::vec4 getColor(int i);
     void drawStaticObs();
     void drawDynamicOb(struct ECS*, entity_t entity_id, float delta_seconds);
     void queueDynamicModel(struct ECS* e, entity_t ent, float delta_seconds);
@@ -41,6 +43,8 @@ public:
     void loadTextures();
 
     void drawScreen();
+
+    float player_health = 0.f;
 
 //    void drawDynamicObs();
 

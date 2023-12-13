@@ -105,9 +105,12 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                 CollisionData* col = getComponentData<CollisionData>(e, my_ent, FLN_COLLISION);
                 // (col != nullptr)
 
+                float prev_y = physDat->vel.y;
+
                 if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, &trans, nullptr, (col->col_type > 0))) {
 
-                    if (trans.pos.y < getTransform(e, my_ent)->pos.y)
+//                    if (trans.pos.y < getTransform(e, my_ent)->pos.y)
+                    if (prev_y != physDat->vel.y)
                         physDat->grounded = true;
 
 //                    if (!e->entityHasComponent(my_ent, FLN_TYPE))
@@ -157,7 +160,7 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
             // OF NOTE: collision logic will be used for both entities because everything cycled through
             if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, getTransform(e, ent), nullptr, (col->col_type > 0 && other_col->col_type > 0))) {
-                std::cout << "dyn intersect " << (int)my_ent << " " << (int)ent << " c type " <<  (int)(col->col_type) << std::endl;
+//                std::cout << "dyn intersect " << (int)my_ent << " " << (int)ent << " c type " <<  (int)(col->col_type) << std::endl;
 //                e->queueDestroyEntity(my_ent);
                 //          IF type registered
                 //              run collision logic on each entity for the registered type,

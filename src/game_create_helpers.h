@@ -4,11 +4,14 @@
 #include "game_types.h"
 #include "scene/scenedata.h"
 #include "glm/gtx/transform.hpp"
+#include <random>
 
 const int PLAYERSIZE = sizeof(entity_t) + sizeof(flags_t) + sizeof(Transform) + sizeof(PhysicsData) + sizeof(Test) + sizeof(Renderable) + sizeof(InputData) + sizeof(CollisionData);
 
 const int PROJSIZE = sizeof(entity_t) + sizeof(flags_t) + sizeof(Transform) + sizeof(PhysicsData) + sizeof(CollisionData);
 
+
+inline int cur_player_color = 0;
 
 inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
     entity_t ent = e->createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT, FLN_COLLISION, FLN_TYPE, FLN_HEALTH, FLN_PLAYERINFO });
@@ -16,6 +19,8 @@ inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
     if (e->isComponentRegistered(FLN_RENDER)) {
         Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
         //    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+        rend->color = (cur_player_color % 7) + 1;
+        cur_player_color++;
         rend->model_id = 5;
     }
 
@@ -24,6 +29,9 @@ inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
     Transform* trans = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
     trans->pos = pos;
     trans->scale = glm::vec3(1, 2, 1);
+
+    Health* hlth = static_cast<Health*>(e->getComponentData(ent, FLN_HEALTH));
+    hlth->amt = MAX_HEALTH;
 
     CollisionData* col = getComponentData<CollisionData>(e, ent, FLN_COLLISION);
     col->col_type = 1;
@@ -49,6 +57,7 @@ inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec3 move) {
     if (e->isComponentRegistered(FLN_RENDER)) {
         Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
         rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+        rend->color = 4;
     }
 
     trySetType(e, proj, ET_PROJ);
@@ -61,7 +70,7 @@ inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec3 move) {
 
 //    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(0.0f, 1.0f, 0.0f));
 //    rotationMatrix = glm::rotate(rotationMatrix, rot.y, glm::vec3(0.0f, 0.0f, 1.0f));
-    getPhys(e, proj)->vel = move * 20.f;
+    getPhys(e, proj)->vel = move * 30.f;
     return proj;
 }
 
@@ -74,6 +83,7 @@ inline entity_t createExplosion(ECS* e, glm::vec3 pos) {
     if (e->isComponentRegistered(FLN_RENDER)) {
         Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
         rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+        rend->color = 7;
     }
 
     trySetType(e, proj, ET_EXPLOSION);

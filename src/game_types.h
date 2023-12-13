@@ -122,15 +122,18 @@ struct Projectile {
 struct PlayerInfo {
     float shotCooldown = 1.f;
     float no_control_time = 0.f;
+    float invul = 0.f;
 };
 
-const float MAX_HEALTH = 10;
+const float MAX_HEALTH = 10.f;
+const float PROJ_DMG = 3.f;
 struct Health {
-    float amt = 10;
+    float amt = MAX_HEALTH;
 };
 
 struct Renderable {
     uint8_t model_id;
+    uint8_t color;
 };
 
 template <typename T>
