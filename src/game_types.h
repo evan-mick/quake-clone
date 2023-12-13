@@ -9,13 +9,14 @@
 
 // COMPONENT FLAG NUMBERS
 // represents where in the bitmask they are
-constexpr uint32_t FLN_TYPE = 10;
+constexpr uint32_t FLN_TYPE = 0;
 constexpr uint32_t FLN_INPUT = 1;
 constexpr uint32_t FLN_TRANSFORM = 2;
 constexpr uint32_t FLN_RENDER = 3;
 constexpr uint32_t FLN_PHYSICS = 4;
 constexpr uint32_t FLN_COLLISION = 5;
 constexpr uint32_t FLN_PROJECTILE = 6;
+constexpr uint32_t FLN_DESTROYTIME = 7;
 
 constexpr uint32_t FLN_TESTKILL = 29;
 constexpr uint32_t FLN_TEST = 30;
@@ -65,6 +66,7 @@ inline void trySetType(ECS* e, entity_t ent, ent_type_t t) {
 constexpr ent_type_t ET_NONE = 0;
 constexpr ent_type_t ET_PLAYER = 1;
 constexpr ent_type_t ET_PROJ = 2;
+constexpr ent_type_t ET_EXPLOSION = 3;
 
 constexpr uint8_t MAX_TYPE_VAL = -1;
 constexpr uint16_t MAX_TYPES = MAX_TYPE_VAL + 1;
@@ -78,6 +80,10 @@ struct InputData {
     input_t last_dat;
     float x_look = 0.f;
     float y_look = 0.f;
+};
+
+struct DestroyData {
+    float timer = 1.f;
 };
 
 struct Transform {

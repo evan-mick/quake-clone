@@ -32,10 +32,10 @@ inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
 
 
 
-inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec2 rot) {
-    entity_t proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION, FLN_TYPE});
+inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec3 move) {
+    entity_t proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION, FLN_TYPE, FLN_DESTROYTIME});
     getTransform(e, proj)->pos = pos+glm::vec3(0,2.2,0);
-    getTransform(e, proj)->scale = glm::vec3(.15f, .15f, .15f);
+    getTransform(e, proj)->scale = glm::vec3(.5f, .5f, .5f);
 
     if (e->isComponentRegistered(FLN_RENDER)) {
         Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
@@ -47,8 +47,31 @@ inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec2 rot) {
     CollisionData* col = getComponentData<CollisionData>(e, proj, FLN_COLLISION);
     col->col_type = -1;
 
-    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(0.0f, 1.0f, 0.0f));
-    rotationMatrix = glm::rotate(rotationMatrix, rot.y, glm::vec3(0.0f, 0.0f, 1.0f));
-    getPhys(e, proj)->vel = rotationMatrix * glm::vec4(1, 1, 1, 1) * 10.f;
+    DestroyData* dat = getComponentData<DestroyData>(e, proj, FLN_DESTROYTIME);
+    dat->timer = 5.f;
+
+//    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(0.0f, 1.0f, 0.0f));
+//    rotationMatrix = glm::rotate(rotationMatrix, rot.y, glm::vec3(0.0f, 0.0f, 1.0f));
+    getPhys(e, proj)->vel = move * 10.f;
+}
+
+
+inline entity_t createExplosion(ECS* e, glm::vec3 pos) {
+    entity_t proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION, FLN_TYPE, FLN_DESTROYTIME});
+    getTransform(e, proj)->pos = pos;
+    getTransform(e, proj)->scale = glm::vec3(7.5f, 7.5f, 7.5f);
+
+    if (e->isComponentRegistered(FLN_RENDER)) {
+        Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
+        rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+    }
+
+    trySetType(e, proj, ET_EXPLOSION);
+
+    CollisionData* col = getComponentData<CollisionData>(e, proj, FLN_COLLISION);
+    col->col_type = -1;
+
+    DestroyData* dat = getComponentData<DestroyData>(e, proj, FLN_DESTROYTIME);
+    dat->timer = 1.f;
 }
 #endif // GAME_CREATE_HELPERS_H

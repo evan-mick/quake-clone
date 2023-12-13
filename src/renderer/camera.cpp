@@ -58,11 +58,23 @@ void Camera::updateRotation(float dX, float dY) {
 void Camera::setRotation(float x, float y) {
 //    look_ = rotateCamX(x) * rotateCamY(y) * glm::vec4(0, 0, 0, 1);
 
+//    glm::mat4 CameraMatrix = glm::lookAt(
+//        pos_, // camera, in world space
+//        pos_ + glm::vec3(glm::sin(y), glm::cos(x), 0),   // direction vector eye + Dir
+//        glm::vec3(0, 1.f, 0)
+//        );
 
-    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), x, glm::vec3(0.0f, 1.0f, 0.0f));
-    rotationMatrix = glm::rotate(rotationMatrix, y, glm::vec3(0.0f, 0.0f, 1.0f));
 
-    look_ = rotationMatrix * glm::vec4(1, 1, 1, 1);
+//    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), x, glm::vec3(0.0f, 1.0f, 0.0f));
+//    rotationMatrix = glm::rotate(rotationMatrix, y, glm::vec3(0.0f, 0.0f, 1.0f));
+
+//    float yaw_radians = glm::radians(yaw);
+//    float pitch_radians = glm::radians(pitch);
+    look_.x = -sin(x) * cos(y);
+    look_.y = sin(y);
+    look_.z = -cos(x) * cos(y);
+
+//    look_ = rotationMatrix * glm::vec4(1, 1, 1, 1);
 
     viewMatrix_ = calculateViewMatrix(pos_,glm::vec3(look_),glm::vec3(up_));
     inverseViewMatrix_ = glm::inverse(viewMatrix_);

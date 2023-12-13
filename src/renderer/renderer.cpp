@@ -663,10 +663,10 @@ void Renderer::queueDynamicModel(struct ECS* e, entity_t ent, float delta_second
         for(RenderObject& ob : mod.objects) {
 
         ob.ctm = glm::translate(ob.ctm, trans->pos);
-        glm::rotate(ob.ctm, trans->rot.x, glm::vec3(1, 0, 0));
-        glm::rotate(ob.ctm, trans->rot.y, glm::vec3(0, 1, 0));
-        glm::rotate(ob.ctm, trans->rot.z, glm::vec3(0, 0, 1));
-        glm::scale(ob.ctm, trans->scale);
+        ob.ctm = glm::rotate(ob.ctm, trans->rot.x, glm::vec3(1, 0, 0));
+        ob.ctm = glm::rotate(ob.ctm, trans->rot.y, glm::vec3(0, 1, 0));
+        ob.ctm = glm::rotate(ob.ctm, trans->rot.z, glm::vec3(0, 0, 1));
+        ob.ctm = glm::scale(ob.ctm, trans->scale);
         ob.i = i;
         ob.ent = ent;
         auto found = std::find(m_dynamics.begin(),m_dynamics.end(),ob);
@@ -741,6 +741,9 @@ void Renderer::drawScreen() {
 }
 
 void Renderer::drawRenderOb(RenderObject& to_draw) {
+
+    if (!to_draw.visible)
+        return;
 
     int in = 0;
 
@@ -872,14 +875,13 @@ void Renderer::drawStaticObs()
     }
 }
 
-void Renderer::drawDynamicObs() {//(OBSOLETE)
-    std::vector<RenderObject> toRender = m_dynamics;
-    toRender.insert(toRender.end(),data->shapes.begin(),data->shapes.end());
-    for (RenderObject& ob : toRender) {
-        drawRenderOb(ob);
-
-    }
-}
+//void Renderer::drawDynamicObs() {//(OBSOLETE)
+//    std::vector<RenderObject> toRender = m_dynamics;
+//    toRender.insert(toRender.end(),data->shapes.begin(),data->shapes.end());
+//    for (RenderObject& ob : toRender) {
+//        drawRenderOb(ob);
+//    }
+//}
 
 void Renderer::drawDynamicAndStaticObs() {//USED
 
@@ -893,6 +895,7 @@ void Renderer::drawDynamicAndStaticObs() {//USED
     for (RenderObject& ob : m_dynamics) {
         drawRenderOb(ob);
     }
+    m_dynamics.clear();
 }
 
 

@@ -167,6 +167,7 @@ struct RenderObject {
     entity_t ent;
     int i;
     int vertCount = -1;
+    bool visible = true;
 
     bool operator==(const RenderObject& other) const {
         return this->ent == other.ent && this->i == other.i;

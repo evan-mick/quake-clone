@@ -120,11 +120,20 @@ void Game::startGame(bool server, const char* ip) {
                 double xpos, ypos;
                 glfwGetCursorPos(m_window, &xpos, &ypos);
                 in->x_look -= (xpos - last_x_look) * 1/100.f;
-                in->y_look += (ypos - last_y_look) * 1/100.f;
+                in->y_look -= (ypos - last_y_look) * 1/100.f;
+
+                const float barrier = glm::radians(89.0f);
+
+                if (in->y_look > barrier) { in->y_look = barrier; }
+                if (in->y_look < -barrier) { in->y_look = -barrier; }
+
                 last_x_look = xpos;
                 last_y_look = ypos;
 
-                in->y_look = std::clamp(in->y_look, 0.2f, 3.0f);
+
+
+
+//                in->y_look = std::clamp(in->y_look, 0.2f, 3.0f);
             }
             render.startDraw();
         }
@@ -225,6 +234,7 @@ void Game::registerECSComponents(ECS& ecs) {
     ecs.registerComponent(FLN_INPUT, sizeof(InputData));
 
     ecs.registerComponent(FLN_RENDER, sizeof(Renderable));
+    ecs.registerComponent(FLN_DESTROYTIME, sizeof(DestroyData));
 
     ecs.registerComponent(FLN_TEST, sizeof(Test));
     ecs.registerComponent(FLN_TYPE, sizeof(TypeData));
@@ -245,8 +255,31 @@ void Game::registerCollisionResponses(Physics& phys) {
     phys.registerType(ET_PROJ, [](ECS* e, entity_t my_ent, entity_t other_ent, bool world) -> glm::vec3 {
 
         std::cout << "proj col" << std::endl;
-        if (world) {
-            e->queueDestroyEntity(my_ent);
+//        if (world) {
+        createExplosion(e, getTransform(e, my_ent)->pos);
+        e->queueDestroyEntity(my_ent);
+
+
+
+        return glm::vec3(0, 0, 0);
+    });
+
+    phys.registerType(ET_EXPLOSION, [](ECS* e, entity_t my_ent, entity_t other_ent, bool world) -> glm::vec3 {
+
+        DestroyData* destroyDat = getComponentData<DestroyData>(e, my_ent, FLN_DESTROYTIME);
+        if (1.f - destroyDat->timer < TICK_RATE * 1.f && getType(e, other_ent) == ET_PLAYER) {
+            std::cout << "explosion col" << std::endl;
+            PhysicsData* dat = getPhys(e, other_ent);
+
+            Transform* other_trans = getTransform(e, other_ent);
+            Transform* trans = getTransform(e, my_ent);
+            if (dat) {
+//                std::cout << "explosion col 2" << std::endl;
+                glm::vec3 dir = -glm::normalize((trans->pos - glm::vec3(0, 1.f, 0) - (other_trans->pos + glm::vec3(0, 1.f, 0))));
+
+                dat->vel = dir * 30.f;
+            }
+
         }
 
         return glm::vec3(0, 0, 0);
@@ -277,12 +310,25 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
             Transform* trans = getTransform(e, ent);
             InputData* in = getComponentData<InputData>(e, ent, FLN_INPUT);
             if (Input::isHeld(in->dat, IN_SHOOT) && !Input::isHeld(in->last_dat, IN_SHOOT)) {
-                int proj = createProjectile(e, trans->pos, glm::vec2(in->x_look, in->y_look));
+                glm::vec3 look_;
+                look_.x = -sin(in->x_look) * cos(in->y_look);
+                look_.y = sin(in->y_look);
+                look_.z = -cos(in->x_look) * cos(in->y_look);
+
+                int proj = createProjectile(e, trans->pos, look_);
             }
         }
 
     , {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM, FLN_INPUT});
 
+    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
+        DestroyData* destroyDat = getComponentData<DestroyData>(e, ent, FLN_DESTROYTIME);
+        destroyDat->timer -= delta;
+
+        if (destroyDat->timer <= 0.f) {
+            e->queueDestroyEntity(ent);
+        }
+    }, { FLN_DESTROYTIME });
 
     // Player Movement Input
     ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
@@ -302,23 +348,23 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         phys->accel = glm::vec3(0, -.98f, 0);
 
 
-        trans->rot.y = in->x_look - glm::radians(53.f);
+        trans->rot.y = in->x_look/* - glm::radians(53.f)*/;
 
 
         // Needed the 37 degree offset?? no clue why, it would be consistently slightly off whenever I moved it
-        glm::mat4 forwardMatrix = glm::rotate(glm::mat4(1.0f), in->x_look + glm::radians(37.f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 forwardMatrix = glm::rotate(glm::mat4(1.0f), in->x_look + glm::radians(90.f), glm::vec3(0.0f, 1.0f, 0.0f));
         forwardMatrix = glm::translate(forwardMatrix, glm::vec3(5.0f, 0.0f, 0.0f));
         glm::vec3 forwardDirection = forwardMatrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-        glm::mat4 sideMatrix = glm::rotate(glm::mat4(1.0f), in->x_look + glm::radians(127.f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 sideMatrix = glm::rotate(glm::mat4(1.0f), in->x_look /*+ glm::radians(127.f)*/, glm::vec3(0.0f, 1.0f, 0.0f));
         sideMatrix = glm::translate(sideMatrix, glm::vec3(5.0f, 0.0f, 0.0f));
         glm::vec3 sideDirection = sideMatrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         glm::vec3 vel = glm::vec3(0, 0, 0);
         if (Input::isHeld(in->dat, IN_FORWARD)) {
-            vel += -forwardDirection;
-        } else if (Input::isHeld(in->dat, IN_BACK)) {
             vel += forwardDirection;
+        } else if (Input::isHeld(in->dat, IN_BACK)) {
+            vel += -forwardDirection;
         }
 
         if (Input::isHeld(in->dat, IN_RIGHT)) {
