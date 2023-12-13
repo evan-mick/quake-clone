@@ -267,7 +267,7 @@ void Game::registerCollisionResponses(Physics& phys) {
     phys.registerType(ET_EXPLOSION, [](ECS* e, entity_t my_ent, entity_t other_ent, bool world) -> glm::vec3 {
 
         DestroyData* destroyDat = getComponentData<DestroyData>(e, my_ent, FLN_DESTROYTIME);
-        if (1.f - destroyDat->timer < TICK_RATE * 1.f && getType(e, other_ent) == ET_PLAYER) {
+        if (!world && 1.f - destroyDat->timer < TICK_RATE * 1.f && getType(e, other_ent) == ET_PLAYER) {
             std::cout << "explosion col" << std::endl;
             PhysicsData* dat = getPhys(e, other_ent);
 

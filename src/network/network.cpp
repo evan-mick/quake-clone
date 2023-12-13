@@ -350,21 +350,11 @@ void Network::shutdown() {
 
 void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
 
-    char* tick_data;
-    // Serialize data
-    int data_written = ecs->serializeData(&tick_data, m_isServer);
-    if (!m_isServer) {
-//        std::cout << "Data serialized" << std::endl;
-        std::cout << "data_written: " << std::to_string(data_written) << std::endl;
-    }
 
-    // Make new packet
-    Packet dataPacket {};
-    dataPacket.tick = tick;
-    dataPacket.command = 'D'; // 'D' for Data
-    char* data = new char[data_written + sizeof(Packet)];
-    memcpy(data, &dataPacket, sizeof(Packet));
-    memcpy(data + sizeof(Packet), tick_data, data_written);
+
+
+
+
 
 
     // Send data to server
@@ -375,12 +365,39 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
     connAddr.sin_port = conn->port;
 
 
-//    std::cout << "broadcast ip: " << conn->ip << " " << conn->port << std::endl;
-    ssize_t sent = sendto(conn->socket, data, sizeof(dataPacket) + data_written, 0, (struct sockaddr *)&connAddr, connAddr_len);
+    // Serialize data
+    char* tick_data;
+    int data_written = 0;
+    int total_data_written = 0;
+    data_written = ecs->serializeData(&tick_data, m_isServer, FULL_PACKET, total_data_written);
+    while (data_written > 0) {
+//        data_written = ecs->serializeData(&tick_data, m_isServer, FULL_PACKET, total_data_written);
+        total_data_written += data_written;
+//        if (!m_isServer) {
+            //        std::cout << "Data serialized" << std::endl;
+        std::cout << "data_written: " << std::to_string(data_written) << " " << std::to_string(total_data_written) << std::endl;
+//        }
 
-    // Clean up
-    delete[] data;
+        // Make new packet
+        Packet dataPacket {};
+        dataPacket.tick = tick;
+        dataPacket.command = 'D'; // 'D' for Data
+        char* data = new char[data_written + sizeof(Packet)];
+        memcpy(data, &dataPacket, sizeof(Packet));
+        memcpy(data + sizeof(Packet), tick_data, data_written);
+
+    //    std::cout << "broadcast ip: " << conn->ip << " " << conn->port << std::endl;
+        ssize_t sent = sendto(conn->socket, data, sizeof(dataPacket) + data_written, 0, (struct sockaddr *)&connAddr, connAddr_len);
+        // Clean up
+        delete[] tick_data;
+        delete[] data;
+        data_written = ecs->serializeData(&tick_data, m_isServer, FULL_PACKET, total_data_written);
+    }
     delete[] tick_data;
+
+
+
+
 }
 
 void Network::clientListen() {

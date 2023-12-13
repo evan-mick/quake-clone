@@ -165,22 +165,34 @@ void* ECS::getComponentData(entity_t entity_id, int flag_num) {
     return ((char*)(m_components[flag_num])) + (m_component_num_to_size[flag_num] * entity_id);
 }
 
-int ECS::serializeData(char** buff_ptr, bool ignore_auth) {
+int ECS::serializeData(char** buff_ptr, bool ignore_auth, int max_size, int start_pos) {
     // TODO
-    *buff_ptr = new char[1400/*m_usedDataSize*/];
+    *buff_ptr = new char[max_size/*usually, 1400*/];
+
+    // RN, no matter start position this goes through whole loop
+    // could potential remedy by outputting struct with start in bytes and of entity
 
     size_t ob_ptr = 0;
+    size_t last_ob_ptr = ob_ptr;
     // size_t used = 0;
     for (int ent = 0; ent < MAX_ENTITY; ent++) {
 
         if (m_entities[ent] == 0 || (!m_hasAuthority[ent] && !ignore_auth))
             continue;
 
+        if ((ob_ptr - start_pos + sizeof(entity_t) + sizeof(flags_t)) > max_size) {
+            memset(*buff_ptr, 0, ob_ptr - last_ob_ptr);
+            return last_ob_ptr - start_pos;
+        }
+
+        last_ob_ptr = ob_ptr;
         // Copy entity id and flags
-        *((entity_t*)(*buff_ptr + ob_ptr)) = ent;
+        if (ob_ptr >= start_pos)
+            *((entity_t*)(*buff_ptr + ob_ptr - start_pos)) = ent;
         ob_ptr += sizeof(entity_t);
 
-        *((flags_t*)(*buff_ptr + ob_ptr)) = m_entities[ent];
+        if (ob_ptr >= start_pos)
+            *((flags_t*)(*buff_ptr + ob_ptr - start_pos)) = m_entities[ent];
         ob_ptr += sizeof(flags_t);
 
         // Copy component data
@@ -190,14 +202,19 @@ int ECS::serializeData(char** buff_ptr, bool ignore_auth) {
                 continue;
 
             // Only copy if authority allows for it
+            if (ob_ptr - start_pos + m_component_num_to_size[com] > max_size) {
+                memset(*buff_ptr, 0, ob_ptr - last_ob_ptr );
+                return last_ob_ptr - start_pos;
+            }
 
-            memcpy((*buff_ptr + ob_ptr), getComponentData(ent, com), m_component_num_to_size[com]);
+            if (ob_ptr >= start_pos)
+                memcpy((*buff_ptr + ob_ptr - start_pos), getComponentData(ent, com), m_component_num_to_size[com]);
             ob_ptr += m_component_num_to_size[com];
         }
     }
 
 
-    return ob_ptr;//..m_usedDataSize;
+    return ob_ptr - start_pos;//..m_usedDataSize;
 }
 
 void ECS::deserializeIntoData(char* serialized_data, size_t max_size, bool ignore_auth) {

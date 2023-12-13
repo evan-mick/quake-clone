@@ -42,6 +42,7 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
 
 
+    m_collisionOccured.clear();
     if (m_timer.finished()) {
 
         auto currentTime = std::chrono::system_clock::now();
