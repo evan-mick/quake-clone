@@ -251,14 +251,13 @@ void Network::deserializeAllDataIntoECS() {
     //        std::cout << "Data is null" << std::endl;
             return;
         }
-
     //    TickData& td = next;//conn->buffer.front();
         char buff[FULL_PACKET];
 
         // Ignore authority for first established tick
         if (next.tick < 0) {
             m_ecs->deserializeIntoData(nxt.data, nxt.data_size, true);
-            next.tick = 0;
+
         }
         else
             m_ecs->deserializeIntoData(nxt.data, nxt.data_size, false);
@@ -268,6 +267,8 @@ void Network::deserializeAllDataIntoECS() {
         nxt.data = nullptr;
         buffer.pop();
     }
+    if (next.tick < 0)
+        next.tick = 0;
 
 }
 
