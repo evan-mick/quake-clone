@@ -37,7 +37,7 @@ public:
     void queueDynamicModel(struct ECS* e, entity_t ent, float delta_seconds);
     static std::map<u_int8_t,Model> generateModelsMap();
     static std::map<QString,SceneTexture> generateTexturesMap();
-
+    void drawDynamicAndStaticObs();
     void loadTextures();
 
     void drawScreen();
@@ -118,9 +118,7 @@ private:
 
     QString m_texturePaths[2] = {"crosshair.png"};
 
-
-
-
+    GLuint m_skybox_shader;
     GLuint m_shader;
 
     Camera* camera;// = Camera();
@@ -142,7 +140,7 @@ private:
 
 //    Level m_level;
 
-
+    void loadSkyboxShader();
     void makeFBO();
     GLuint m_fbo_renderbuffer;
     GLuint m_fbo;
@@ -155,6 +153,7 @@ private:
 
     void setUniforms(RenderObject& sp);
 
+    int m_obj_count = 0;
 
 
 
