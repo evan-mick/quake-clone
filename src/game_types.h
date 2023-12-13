@@ -25,8 +25,8 @@ constexpr uint32_t FLN_TESTKILL = 29;
 constexpr uint32_t FLN_TEST = 30;
 
 
-const uint32_t DSCREEN_WIDTH = 1200;
-const uint32_t DSCREEN_HEIGHT = 900;
+const uint32_t DSCREEN_WIDTH = 1920;
+const uint32_t DSCREEN_HEIGHT = 1080;
 constexpr float RAW_FOV = 90;
 constexpr float FOV = glm::radians(RAW_FOV); //* (float)DSCREEN_HEIGHT/(float)DSCREEN_WIDTH;
 const float NEAR_PLANE = 0.001f;
