@@ -68,6 +68,7 @@ struct Connection {
     uint16_t port;
     uint32_t ip;
     entity_t entity; // if the other side is the server, -1, otherwise keep entity_id of the player
+    float discon_timer = 5.f;
 };
 
 //bool compare(Gamestate a, Gamestate b) {

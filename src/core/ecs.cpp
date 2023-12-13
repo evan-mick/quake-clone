@@ -172,9 +172,9 @@ int ECS::serializeData(char** buff_ptr, bool ignore_auth, int max_size, int star
     // RN, no matter start position this goes through whole loop
     // could potential remedy by outputting struct with start in bytes and of entity
 
-    if (start_pos > 0) {
-        std::cout << "greater start" << std::endl;
-    }
+//    if (start_pos > 0) {
+//        std::cout << "greater start" << std::endl;
+//    }
 
     signed long ob_ptr = 0;
     signed long last_ob_ptr = ob_ptr;

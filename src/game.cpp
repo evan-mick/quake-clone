@@ -55,19 +55,19 @@ void Game::startGame(bool server, const char* ip) {
     // Parse setup
     SceneParser SCENEparser = SceneParser();
     //    SCENEparser.parse("../../resources/scenes/phong_total.json");
-    SCENEparser.parse("../../resources/scenes/empty.json");
+    SCENEparser.parse("../../resources/scenes/main.json");
     phys.setStaticObs(&SceneParser::getSceneData());
     SceneParser::getSceneData().cameraData.heightAngle = FOV;
 
     // Putting this here for now, needs to move, but should def not be in renderer
-    auto m_level(Level(50.f,5.f,50.f));
+    /*auto m_level(Level(50.f,5.f,50.f));
     auto data = &SceneParser::getSceneData();
     m_level.generateLevel();
     for(Model& mod : m_level.getLevelModels()) {
         for(RenderObject obj : mod.objects) {
             data->shapes.push_back(obj);
         }
-    }
+    }*/
 
     Camera cam = Camera(DSCREEN_WIDTH, DSCREEN_HEIGHT, SceneParser::getSceneData().cameraData);
 
@@ -87,7 +87,7 @@ void Game::startGame(bool server, const char* ip) {
 
     entity_t ent;
     if (!net)
-        ent = createPlayer(&ecs, glm::vec3(0, 10.f, 0));
+        ent = createPlayer(&ecs, glm::vec3(0, 50.f, 0));
     else if (!m_server) {
         ent = net->getMyPlayerEntityID();
         std::cout<< "player ent: " << std::to_string(ent) << std::endl;

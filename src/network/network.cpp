@@ -89,7 +89,7 @@ void Network::serverListen(const char* ip, const char* port) {
         if (packet.command == 'H') { // 'H' for Hello
 
             // Create entity for client
-            entity_t entity_id = createPlayer(m_ecs, glm::vec3(0, 30.f, 0));
+            entity_t entity_id = createPlayer(m_ecs, glm::vec3(0, 50.f, 0));
             std::cout << "Client entity created -- entityID: " << std::to_string(entity_id) <<std::endl;
 
             // Add stuff about client authority
@@ -175,6 +175,20 @@ void Network::broadcastOnTick(float delta) {
     if (!m_shutdown) {
 
         m_timer.increment(delta);
+
+//        std::vector<uint64_t> to_diss {};
+//        for (auto& [ipport, conn] : m_connectionMap) {
+//            conn->discon_timer -= delta;
+//            if (conn->discon_timer) {
+//                to_diss.push_back(ipport);
+//            }
+//        }
+//        for (uint64_t ipport : to_diss) {
+//            Connection* conn = m_connectionMap[ipport];
+//            m_ecs->queueDestroyEntity(conn->entity);
+//            m_connectionMap.erase(ipport);
+//            delete conn;
+//        }
 
         // Wait for tick
         if (!m_timer.finishedThenResetTime()) { 
@@ -378,7 +392,7 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
         total_data_written += data_written;
 //        if (!m_isServer) {
             //        std::cout << "Data serialized" << std::endl;
-        std::cout << "data_written: " << std::to_string(data_written) << " " << std::to_string(total_data_written) << std::endl;
+//        std::cout << "data_written: " << std::to_string(data_written) << " " << std::to_string(total_data_written) << std::endl;
 //        }
 
         // Make new packet
@@ -396,8 +410,8 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
         delete[] data;
         data_written = ecs->serializeData(&tick_data, m_isServer, FULL_PACKET, total_data_written);
 
-        if (data_written <= 0)
-            std::cout << "retransmit is over: " << data_written << std::endl;
+//        if (data_written <= 0)
+//            std::cout << "retransmit is over: " << data_written << std::endl;
 
     }
     delete[] tick_data;
