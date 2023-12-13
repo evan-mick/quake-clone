@@ -68,6 +68,31 @@ struct Connection {
     uint16_t port;
     uint32_t ip;
     entity_t entity; // if the other side is the server, -1, otherwise keep entity_id of the player
+    std::chrono::steady_clock::time_point lastActivityTime;
+    std::chrono::seconds timeoutDuration;
+
+    // Constructor to initialize the connection
+    Connection()  {
+        last_rec_tick = 0;
+        socket = 0;
+        port = 0;
+        ip = 0;
+        entity = 0;
+        timeoutDuration = std::chrono::seconds(5);
+        resetTimer();
+    }
+
+    // Function to reset the timer
+    void resetTimer() {
+        lastActivityTime = std::chrono::steady_clock::now();
+    }
+
+    // Function to check if the connection has timed out
+    bool hasTimedOut() const {
+        auto currentTime = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastActivityTime);
+        return elapsed >= timeoutDuration;
+    }
 };
 
 //bool compare(Gamestate a, Gamestate b) {
@@ -87,12 +112,12 @@ public:
     Connection* getConnection(uint64_t ip);
     Gamestate* popLeastRecentGamestate();
     void deserializeAllDataIntoECS();
-
+    void disconnectClient(Connection* conn);
     void shutdown();
     void broadcastGS(ECS* ecs, Connection* conn, int tick);
     void addConnection(uint64_t ipport, Connection* conn);
     void editConnection(Connection* conn, unsigned int tick);
-    
+
     void onTick(unsigned int tick);
     // int initClient(const char* ip, const char* port);
 
@@ -104,6 +129,16 @@ public:
 
     inline entity_t getMyPlayerEntityID() {
         return m_myPlayerEntityID;
+    }
+
+    inline void updateLastActivityTime(Connection* conn) {
+        conn->lastActivityTime = std::chrono::steady_clock::now();
+    }
+
+    inline bool hasTimedOut(const Connection* conn) {
+        auto currentTime = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(currentTime - conn->lastActivityTime);
+        return elapsed >= conn->timeoutDuration;
     }
 
 //    inline void setAuthority(entity_t ent) {
@@ -130,9 +165,8 @@ private:
     std::array<Connection, MAX_PLAYERS> m_connections{}; // not using this atm
     std::unordered_map<uint64_t, Connection*> m_connectionMap{};
 //    void listenForData();
-
     std::thread m_listenThread;
-    
+
     void serverListen(const char* ip, const char* port);
     void clientListen();
 

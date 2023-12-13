@@ -102,6 +102,9 @@ void Network::serverListen(const char* ip, const char* port) {
             conn->entity = entity_id;
             conn->ip = c_ip;
             conn->port = c_port;
+            conn->lastActivityTime = std::chrono::steady_clock::now();
+            conn->timeoutDuration = std::chrono::seconds(5);
+
 
             // Create send socket to new connection
             char ip[INET_ADDRSTRLEN];
@@ -143,6 +146,8 @@ void Network::serverListen(const char* ip, const char* port) {
                 std::cout << "Connection not found in the map" << std::endl;
                 continue;
             }
+
+            conn->resetTimer();
 
             // Edit the connection to update last received tick
             editConnection(conn, tick);
@@ -236,6 +241,7 @@ void Network::editConnection(Connection* conn, unsigned int tick) {
             std::cout << "Connection not found in the map" << std::endl;
     }
     conn->last_rec_tick = tick;
+
 }
 
 void Network::deserializeAllDataIntoECS() {
@@ -320,6 +326,8 @@ int Network::connect(const char* ip, const char* port) {
         conn->entity = MAX_ENT_VAL; // MAX_ENDT_VAL (-1) for server
         conn->ip = servAddr.sin_addr.s_addr;
         conn->port = servAddr.sin_port;
+        conn->lastActivityTime = std::chrono::steady_clock::now();
+        conn->timeoutDuration = std::chrono::seconds(5);
 
         // Add to connestions map
         addConnection(ipport(conn->ip, conn->port), conn);
@@ -457,7 +465,7 @@ void Network::clientListen() {
                 // Read into packet
                 Packet packet;
                 memcpy(&packet, buff, sizeof(Packet));
-
+                conn->resetTimer();
                 // Process packet
                 if (packet.command == 'D') {
 //                    std::cout << "D Command" << std::endl;
@@ -523,11 +531,20 @@ void Network::onTick(unsigned int tick) {
             std::cout << "null conn" << std::endl;
             continue;
         }
+
+        // Graceful Disconnect
         
         // Send gamestate to connection
-        broadcastGS(m_ecs, conn, tick);
+        if (!conn->hasTimedOut()) {
+            broadcastGS(m_ecs, conn, tick);
+        } else {
+            std::cout << "Connection timed out" << std::endl;
+            m_connectionMap.erase(ip);
+            break;
+        }
     }
 }
+
 
 int Network::setupUDPConn(const char* address, const char* port, bool bind_sock, addrinfo** outinfo) {
 
