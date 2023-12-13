@@ -238,6 +238,9 @@ void Game::registerECSComponents(ECS& ecs) {
 
     ecs.registerComponent(FLN_TEST, sizeof(Test));
     ecs.registerComponent(FLN_TYPE, sizeof(TypeData));
+
+    ecs.registerComponent(FLN_SHOTFROM, sizeof(Projectile));
+    ecs.registerComponent(FLN_HEALTH, sizeof(Health));
 }
 
 void Game::registerInputs() {
@@ -256,8 +259,16 @@ void Game::registerCollisionResponses(Physics& phys) {
 
         std::cout << "proj col" << std::endl;
 //        if (world) {
-        createExplosion(e, getTransform(e, my_ent)->pos);
-        e->queueDestroyEntity(my_ent);
+
+        if ((world || getComponentData<Projectile>(e, my_ent, FLN_SHOTFROM)->shot_from != other_ent)){
+            if (e->hasAuthority(my_ent))
+                createExplosion(e, getTransform(e, my_ent)->pos - glm::vec3(0, 1, 0));
+            e->queueDestroyEntity(my_ent);
+        }
+
+
+
+
 
 
 
@@ -267,7 +278,7 @@ void Game::registerCollisionResponses(Physics& phys) {
     phys.registerType(ET_EXPLOSION, [](ECS* e, entity_t my_ent, entity_t other_ent, bool world) -> glm::vec3 {
 
         DestroyData* destroyDat = getComponentData<DestroyData>(e, my_ent, FLN_DESTROYTIME);
-        if (!world && 1.f - destroyDat->timer < TICK_RATE * 1.f && getType(e, other_ent) == ET_PLAYER) {
+        if (!world/* && 1.f - destroyDat->timer < TICK_RATE * 1.f */&& getType(e, other_ent) == ET_PLAYER) {
             std::cout << "explosion col" << std::endl;
             PhysicsData* dat = getPhys(e, other_ent);
 
@@ -275,7 +286,7 @@ void Game::registerCollisionResponses(Physics& phys) {
             Transform* trans = getTransform(e, my_ent);
             if (dat) {
 //                std::cout << "explosion col 2" << std::endl;
-                glm::vec3 dir = -glm::normalize((trans->pos - glm::vec3(0, 1.f, 0) - (other_trans->pos + glm::vec3(0, 1.f, 0))));
+                glm::vec3 dir = glm::normalize(((other_trans->pos + glm::vec3(0, 2.f, 0)) - (trans->pos)));
 
                 dat->vel = dir * 30.f;
             }
@@ -307,6 +318,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
             if (!e->hasAuthority(ent))
                 return;
 
+
+
             Transform* trans = getTransform(e, ent);
             InputData* in = getComponentData<InputData>(e, ent, FLN_INPUT);
             if (Input::isHeld(in->dat, IN_SHOOT) && !Input::isHeld(in->last_dat, IN_SHOOT)) {
@@ -316,6 +329,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
                 look_.z = -cos(in->x_look) * cos(in->y_look);
 
                 int proj = createProjectile(e, trans->pos, look_);
+                Projectile* projdat = getComponentData<Projectile>(e, proj, FLN_SHOTFROM);
+                projdat->shot_from = ent;
             }
         }
 

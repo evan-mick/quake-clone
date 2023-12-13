@@ -723,10 +723,10 @@ void Renderer::drawScreen() {
     }
 
     // Disable blending for subsequent rendering
-    glDisable(GL_BLEND);
+//    glDisable(GL_BLEND);
 
     // Disable depth testing for subsequent rendering
-    glDisable(GL_DEPTH_TEST);
+//    glDisable(GL_DEPTH_TEST);
 
     // Check for OpenGL errors
     GLenum error = glGetError();
@@ -885,13 +885,13 @@ void Renderer::drawStaticObs()
 
 void Renderer::drawDynamicAndStaticObs() {//USED
 
-    glDepthRange(0.6,1.0);
+//    glDepthRange(0.6,1.0);
     for (RenderObject& ob : data->shapes) {
         drawRenderOb(ob);
     }
 
 
-    glDepthRange(0.1,0.4);
+//    glDepthRange(0.1,0.4);
     for (RenderObject& ob : m_dynamics) {
         drawRenderOb(ob);
     }
