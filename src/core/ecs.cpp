@@ -173,7 +173,7 @@ int ECS::serializeData(char** buff_ptr, bool ignore_auth) {
     // size_t used = 0;
     for (int ent = 0; ent < MAX_ENTITY; ent++) {
 
-        if (m_entities[ent] == 0)
+        if (m_entities[ent] == 0 || (!m_hasAuthority[ent] && !ignore_auth))
             continue;
 
         // Copy entity id and flags
@@ -190,8 +190,8 @@ int ECS::serializeData(char** buff_ptr, bool ignore_auth) {
                 continue;
 
             // Only copy if authority allows for it
-            if (!m_hasAuthority[ent] || ignore_auth)
-                memcpy((*buff_ptr + ob_ptr), getComponentData(ent, com), m_component_num_to_size[com]);
+
+            memcpy((*buff_ptr + ob_ptr), getComponentData(ent, com), m_component_num_to_size[com]);
             ob_ptr += m_component_num_to_size[com];
         }
     }
