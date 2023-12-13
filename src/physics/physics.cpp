@@ -105,9 +105,12 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                 CollisionData* col = getComponentData<CollisionData>(e, my_ent, FLN_COLLISION);
                 // (col != nullptr)
 
+                float prev_y = physDat->vel.y;
+
                 if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, &trans, nullptr, (col->col_type > 0))) {
 
-                    if (trans.pos.y < getTransform(e, my_ent)->pos.y)
+//                    if (trans.pos.y < getTransform(e, my_ent)->pos.y)
+                    if (prev_y != physDat->vel.y)
                         physDat->grounded = true;
 
 //                    if (!e->entityHasComponent(my_ent, FLN_TYPE))

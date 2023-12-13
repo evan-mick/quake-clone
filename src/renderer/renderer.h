@@ -44,7 +44,7 @@ public:
 
     void drawScreen();
 
-    float player_health;
+    float player_health = 0.f;
 
 //    void drawDynamicObs();
 

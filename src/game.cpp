@@ -295,15 +295,14 @@ void Game::registerCollisionResponses(Physics& phys) {
                 info->no_control_time = .5f;
 //                std::cout << "explosion col 2" << std::endl;
                 glm::vec3 dir = glm::normalize(((other_trans->pos + glm::vec3(0, 10.f, 0)) - (trans->pos)));
+                if (info->invul > 0.f)
+                    return glm::vec3(0, 0, 0);
+                info->invul = .2f;
 
-                dat->vel += dir * 30.f;
+                dat->vel += dir * 40.f;
 
                 if (getComponentData<Projectile>(e, my_ent, FLN_PROJECTILE)->shot_from != other_ent) {
 
-                    if (info->invul > 0.f)
-                        return glm::vec3(0, 0, 0);
-
-                    info->invul = .2f;
                     getComponentData<Health>(e, other_ent, FLN_HEALTH)->amt -= PROJ_DMG;
                     std::cout << "HEALTH " << other_ent << " " << getComponentData<Health>(e, other_ent, FLN_HEALTH)->amt << std::endl;
 
@@ -373,7 +372,7 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
     }, { FLN_DESTROYTIME });
 
     // Player Movement Input
-    ecs.registerSystem([](ECS* e, entity_t ent, float delta) {
+    ecs.registerSystem([&renderer](ECS* e, entity_t ent, float delta) {
 
         // What if some desync happens? then we'd want this to run but it won't cause no authority
         // Can't take away though cause then jitter (?)
@@ -387,6 +386,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         InputData* in = getComponentData<InputData>(e, ent, FLN_INPUT);
         PlayerInfo* info = getComponentData<PlayerInfo>(e, ent, FLN_PLAYERINFO);
         //        std::cout << "test " << ent << std::endl;
+
+        renderer.player_health = ((getComponentData<Health>(e, ent, FLN_HEALTH)->amt)/MAX_HEALTH);
 
         phys->accel = glm::vec3(0, -.98f, 0);
 
@@ -484,6 +485,6 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         ts->timer += delta;
 
         //        trans->pos = glm::vec3(2.f * glm::acos(ts->timer), trans->pos.y, trans->pos.z);
-    }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM, FLN_INPUT});
+    }, {FLN_TEST, FLN_PHYSICS, FLN_TRANSFORM, FLN_INPUT, FLN_HEALTH});
 
 }

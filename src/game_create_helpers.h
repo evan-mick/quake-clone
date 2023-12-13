@@ -30,6 +30,9 @@ inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
     trans->pos = pos;
     trans->scale = glm::vec3(1, 2, 1);
 
+    Health* hlth = static_cast<Health*>(e->getComponentData(ent, FLN_HEALTH));
+    hlth->amt = MAX_HEALTH;
+
     CollisionData* col = getComponentData<CollisionData>(e, ent, FLN_COLLISION);
     col->col_type = 1;
     return ent;
