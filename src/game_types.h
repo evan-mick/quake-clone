@@ -16,6 +16,9 @@ constexpr uint32_t FLN_RENDER = 3;
 constexpr uint32_t FLN_PHYSICS = 4;
 constexpr uint32_t FLN_COLLISION = 5;
 constexpr uint32_t FLN_PROJECTILE = 6;
+constexpr uint32_t FLN_DESTROYTIME = 7;
+constexpr uint32_t FLN_SHOTFROM = 8;
+constexpr uint32_t FLN_HEALTH = 9;
 
 constexpr uint32_t FLN_TESTKILL = 29;
 constexpr uint32_t FLN_TEST = 30;
@@ -25,6 +28,8 @@ const uint32_t DSCREEN_WIDTH = 1200;
 const uint32_t DSCREEN_HEIGHT = 900;
 constexpr float RAW_FOV = 90;
 constexpr float FOV = glm::radians(RAW_FOV); //* (float)DSCREEN_HEIGHT/(float)DSCREEN_WIDTH;
+const float NEAR_PLANE = 0.45f;
+const float FAR_PLANE = 400.0f;
 
 // INPUT FLAGS
 const int IN_FORWARD = 0;
@@ -44,6 +49,27 @@ typedef unsigned char ent_type_t;
 struct TypeData {
     ent_type_t type;
 };
+
+inline ent_type_t getType(ECS* e, entity_t ent) {
+    void* type = e->getComponentData(ent, FLN_TYPE);
+    if (type == nullptr)
+        return 0;
+    return static_cast<TypeData*>(type)->type;
+}
+inline void trySetType(ECS* e, entity_t ent, ent_type_t t) {
+    void* type = e->getComponentData(ent, FLN_TYPE);
+    if (type == nullptr)
+        return;
+    static_cast<TypeData*>(type)->type = t;
+}
+
+
+
+constexpr ent_type_t ET_NONE = 0;
+constexpr ent_type_t ET_PLAYER = 1;
+constexpr ent_type_t ET_PROJ = 2;
+constexpr ent_type_t ET_EXPLOSION = 3;
+
 constexpr uint8_t MAX_TYPE_VAL = -1;
 constexpr uint16_t MAX_TYPES = MAX_TYPE_VAL + 1;
 
@@ -56,6 +82,10 @@ struct InputData {
     input_t last_dat;
     float x_look = 0.f;
     float y_look = 0.f;
+};
+
+struct DestroyData {
+    float timer = 1.f;
 };
 
 struct Transform {
@@ -85,7 +115,12 @@ inline CollisionData* getCollisionData(ECS* e, entity_t ent) {
 
 
 struct Projectile {
-    float speed;
+    entity_t shot_from;
+};
+
+const float MAX_HEALTH = 10;
+struct Health {
+    float amt = 10;
 };
 
 struct Renderable {

@@ -22,6 +22,7 @@ private:
     void registerECSComponents(ECS& ecs);
     void registerECSSystems(ECS& ecs, Physics& phys, Renderer& render);
     void registerInputs();
+    void registerCollisionResponses(Physics& phys);
 
     void setupWindow();
 

@@ -37,12 +37,12 @@ public:
     void queueDynamicModel(struct ECS* e, entity_t ent, float delta_seconds);
     static std::map<u_int8_t,Model> generateModelsMap();
     static std::map<QString,SceneTexture> generateTexturesMap();
-
+    void drawDynamicAndStaticObs();
     void loadTextures();
 
     void drawScreen();
 
-    void drawDynamicObs();
+//    void drawDynamicObs();
 
     void resizeGL(int width, int height);      // Called when window size changes
 
@@ -118,9 +118,7 @@ private:
 
     QString m_texturePaths[2] = {"crosshair.png"};
 
-
-
-
+    GLuint m_skybox_shader;
     GLuint m_shader;
 
     Camera* camera;// = Camera();
@@ -140,9 +138,56 @@ private:
 
     bool init_gen = false;
 
+    float skybox_vertices[108] = {
+        // Positions
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f
+    };
 //    Level m_level;
-
-
+    GLuint m_skybox_texture;
+    GLuint m_skybox_vao;
+    GLuint m_skybox_vbo;
+    void loadSkyboxTexture();
+    void paintSkybox();
     void makeFBO();
     GLuint m_fbo_renderbuffer;
     GLuint m_fbo;
@@ -155,6 +200,7 @@ private:
 
     void setUniforms(RenderObject& sp);
 
+    int m_obj_count = 0;
 
 
 

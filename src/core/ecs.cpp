@@ -97,7 +97,13 @@ void ECS::destroyEntity(entity_t id) {
         }
     }
 
+    // TODO: this will be destroyed on network with the authority
+    // but once destroyed, the fact its destroyed won't be transmitted to rest of everyone
+    // so if something gets desynced, or if a command causes this, how will they know?
+    // Could send as a command (then needs to be retransmitted)
+    // Should be fine in most cases though, unless, again, something gets randomly deleted instead of being apart of simulation
     m_entities[id] = 0;
+    m_hasAuthority[id] = false;
     m_nextUnallocEntity = std::min((size_t)id, m_nextUnallocEntity);
 }
 
@@ -124,9 +130,6 @@ void ECS::registerSystem(system_t system_function, std::initializer_list<int> fl
     registerSystemWithBitFlags(system_function, input_flag);
 }
 
-
-
-//template <typename T>
 int ECS::registerComponent(int flag_num, size_t data_size) {
 
     if (flag_num >= MAX_COMPONENTS || flag_num < 0) {
@@ -152,10 +155,6 @@ void* ECS::getComponentData(entity_t entity_id, int flag_num) {
 
     flags_t flag = (1 << (flag_num));
     bool equal = ((m_entities[entity_id] & flag) == flag);
-//    std::cout << "m_entities[id]: " << std::to_string(m_entities[entity_id])
-//              << " m_entities[entity_id] & flag: " << std::to_string(m_entities[entity_id] & flag)
-//              << " flag: " << std::to_string(flag)
-//              << " equal: " << std::to_string(equal) <<std::endl;
 //    bool ent_in_bounds = (entity_id < MAX_ENTITY && entity_id >= 0); this already checked by virtue of entity_t
     bool flag_in_bounds = (flag_num >= 0 || flag_num < MAX_COMPONENTS);
 
@@ -166,23 +165,34 @@ void* ECS::getComponentData(entity_t entity_id, int flag_num) {
     return ((char*)(m_components[flag_num])) + (m_component_num_to_size[flag_num] * entity_id);
 }
 
-
-int ECS::serializeData(char** buff_ptr) {
+int ECS::serializeData(char** buff_ptr, bool ignore_auth, int max_size, int start_pos) {
     // TODO
-    *buff_ptr = new char[1400/*m_usedDataSize*/];
+    *buff_ptr = new char[max_size/*usually, 1400*/];
+
+    // RN, no matter start position this goes through whole loop
+    // could potential remedy by outputting struct with start in bytes and of entity
 
     size_t ob_ptr = 0;
+    size_t last_ob_ptr = ob_ptr;
     // size_t used = 0;
     for (int ent = 0; ent < MAX_ENTITY; ent++) {
 
-        if (m_entities[ent] == 0)
+        if (m_entities[ent] == 0 || (!m_hasAuthority[ent] && !ignore_auth))
             continue;
 
+        if ((ob_ptr - start_pos + sizeof(entity_t) + sizeof(flags_t)) > max_size) {
+            memset(*buff_ptr, 0, ob_ptr - last_ob_ptr);
+            return last_ob_ptr - start_pos;
+        }
+
+        last_ob_ptr = ob_ptr;
         // Copy entity id and flags
-        *((entity_t*)(*buff_ptr + ob_ptr)) = ent;
+        if (ob_ptr >= start_pos)
+            *((entity_t*)(*buff_ptr + ob_ptr - start_pos)) = ent;
         ob_ptr += sizeof(entity_t);
 
-        *((flags_t*)(*buff_ptr + ob_ptr)) = m_entities[ent];
+        if (ob_ptr >= start_pos)
+            *((flags_t*)(*buff_ptr + ob_ptr - start_pos)) = m_entities[ent];
         ob_ptr += sizeof(flags_t);
 
         // Copy component data
@@ -191,13 +201,20 @@ int ECS::serializeData(char** buff_ptr) {
             if (!m_component_registered[com] || !has_flag)
                 continue;
 
-            memcpy((*buff_ptr + ob_ptr), getComponentData(ent, com), m_component_num_to_size[com]);
+            // Only copy if authority allows for it
+            if (ob_ptr - start_pos + m_component_num_to_size[com] > max_size) {
+                memset(*buff_ptr, 0, ob_ptr - last_ob_ptr );
+                return last_ob_ptr - start_pos;
+            }
+
+            if (ob_ptr >= start_pos)
+                memcpy((*buff_ptr + ob_ptr - start_pos), getComponentData(ent, com), m_component_num_to_size[com]);
             ob_ptr += m_component_num_to_size[com];
         }
     }
 
 
-    return ob_ptr;//..m_usedDataSize;
+    return ob_ptr - start_pos;//..m_usedDataSize;
 }
 
 void ECS::deserializeIntoData(char* serialized_data, size_t max_size, bool ignore_auth) {
@@ -221,10 +238,6 @@ void ECS::deserializeIntoData(char* serialized_data, size_t max_size, bool ignor
         ob_ptr += sizeof(entity_t);
         memcpy(&flags, &serialized_data[ob_ptr], sizeof(flags_t));
         ob_ptr += sizeof(flags_t);
-
-        // ignore entities on the ignore list
-
-//            continue;
 
         // end early if empty entity / end of data
         if (ent == 0 && flags == 0) {
@@ -253,7 +266,6 @@ void ECS::deserializeIntoData(char* serialized_data, size_t max_size, bool ignor
                 continue;
             }
 
-//            std::cout << "found component to update" << std::endl;
             // Only copy if authority allows for it
             if (!m_hasAuthority[ent] || ignore_auth)
                 memcpy(getComponentData(ent, com), (serialized_data + ob_ptr), m_component_num_to_size[com]);

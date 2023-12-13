@@ -48,10 +48,6 @@ Renderer::Renderer(Camera* cam, bool fullSetup)
 }
 
 
-
-
-
-
 void Renderer::finish() {
 
 
@@ -191,6 +187,7 @@ void Renderer::initializeGL() {
 
     m_shader = ShaderLoader::createShaderProgram("../../resources/shaders/default.vert", "../../resources/shaders/default.frag");
     m_texture_shader = ShaderLoader::createShaderProgram("../../resources/shaders/texture.vert", "../../resources/shaders/texture.frag");
+    m_skybox_shader = ShaderLoader::createShaderProgram("../../resources/shaders/skybox.vert", "../../resources/shaders/skybox.frag");
 
     glUseProgram(m_texture_shader);
     GLint texLoc = glGetUniformLocation(m_texture_shader, "tex");
@@ -245,20 +242,18 @@ void Renderer::initializeGL() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-
-    std::cout << "shader: " << std::to_string(m_shader) << std::endl;
-
-
-
     generateShape();
 
     init_gen = true;
 
     makeFBO();
 
-    sceneChanged();
+    loadSkyboxTexture();
 
+    sceneChanged();
 }
+
+
 
 std::map<u_int8_t,Model> Renderer::generateModelsMap() {
     std::map<u_int8_t,Model> models;
@@ -305,6 +300,84 @@ std::map<QString,SceneTexture> Renderer::generateTexturesMap() {
     return res;
 }
 
+void Renderer::loadSkyboxTexture() {
+
+    int slot = 4;
+    glUseProgram(m_skybox_shader);
+    glActiveTexture(GL_TEXTURE4);
+    glGenTextures(1, &m_skybox_texture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_skybox_texture);
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr <<  "OpenGL error before loop: " << error << std::endl;
+    }
+
+    for (GLuint i = 0; i < 6; i++) {
+        QString facePath = QString("../../resources/textures/cloudbox") + QString::number(i) + ".png";
+        QImage faceImage(facePath);
+        QImage faceImageConv = faceImage.convertToFormat(QImage::Format_RGBA8888);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA,
+                     faceImageConv.width(), faceImageConv.height(), 0, GL_RGBA,
+                     GL_UNSIGNED_BYTE, faceImageConv.bits());
+    }
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr <<  "OpenGL error after loop load: " << error << std::endl;
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glGenVertexArrays(1, &m_skybox_vao);
+    glBindVertexArray(m_skybox_vao);
+
+    for(int i=0;i<108;i++) {
+        skybox_vertices[i] = skybox_vertices[i] * 200.f;
+    }
+
+    glGenBuffers(1, &m_skybox_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_skybox_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skybox_vertices), skybox_vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    glUniform1i(glGetUniformLocation(m_skybox_shader, "skybox"), slot);
+
+    glUseProgram(0);
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr <<  "OpenGL error in load: " << error << std::endl;
+    }
+}
+
+void Renderer::paintSkybox() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+
+    glUseProgram(m_skybox_shader);
+    glActiveTexture(GL_TEXTURE4);
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_skybox_texture);
+
+    glBindVertexArray(m_skybox_vao);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+
+    glEnable(GL_DEPTH_TEST);
+    glUseProgram(0);
+//    GLenum error = glGetError();
+//    if (error != GL_NO_ERROR) {
+//        std::cerr <<  "OpenGL error in paint: " << error << std::endl;
+//    }
+}
+
 void Renderer::loadTextures() {
     int slot=1;
     std::cout << "size: " << m_texture_map.size() << std::endl;
@@ -329,7 +402,6 @@ void Renderer::loadTextures() {
         glBindTexture(GL_TEXTURE_2D,0);
 
         texture->slot = slot;
-
 
         std::cout <<"image width: "<<texture->image.width() << std::endl;
 
@@ -454,7 +526,6 @@ void Renderer::generateShape() {
     Cylinder cyl = Cylinder();
     cyl.updateParams(p_1, p_2);
     bindBuff(cyl.generateShape(), cylinder_in);
-
 }
 
 void Renderer::setUniforms(RenderObject& sp) {
@@ -465,10 +536,15 @@ void Renderer::setUniforms(RenderObject& sp) {
     GLint viewLoc = glGetUniformLocation(m_shader, "view_matrix");
     GLint projLoc = glGetUniformLocation(m_shader, "proj_matrix");
     if (viewLoc == -1 || projLoc == -1 || matrixLoc == -1) {
-
         std::cout << "matrix name wrong" << std::endl;
         exit(1);
     }
+    // OBJECT SPACE NORMAL SOMEWHERE
+    auto view_mat = camera->getViewMatrix();
+    auto proj_mat = camera->getProjectionMatrix();
+
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &(view_mat[0][0]));
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, &(proj_mat[0][0]));
 
 
     glUniform4f(glGetUniformLocation(m_shader, "ambient"),
@@ -489,14 +565,9 @@ void Renderer::setUniforms(RenderObject& sp) {
                 sp.primitive.material.cSpecular.z,
                 sp.primitive.material.cSpecular[3]);
 
-
-    // OBJECT SPACE NORMAL SOMEWHERE
-    auto view_mat = camera->getViewMatrix();
-    auto proj_mat = camera->getProjectionMatrix();
-
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &(view_mat[0][0]));
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, &(proj_mat[0][0]));
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &(sp.ctm[0][0]));
+
+
 
     // Phong lighting constants
     GLuint ka_in = glGetUniformLocation(m_shader, "kd");
@@ -518,14 +589,16 @@ void Renderer::setUniforms(RenderObject& sp) {
     glUniform4f(glGetUniformLocation(m_shader, "cam_pos"),
                 cam_pos.x, cam_pos.y, cam_pos.z, cam_pos[3]);
 
-
+    glUseProgram(m_skybox_shader);
+    //pass view and proj to skybox
+    glUniformMatrix4fv(glGetUniformLocation(m_skybox_shader, "view"), 1, GL_FALSE, &view_mat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_skybox_shader, "projection"), 1, GL_FALSE, &proj_mat[0][0]);
+    glUseProgram(m_shader);
 }
 
 void Renderer::drawDynamicOb(struct ECS* e, entity_t ent, float delta_seconds) {
     Transform* trans = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
     Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
-
-
 
     if(rend->model_id==5) {//for player entity
         Player p;
@@ -568,61 +641,109 @@ void Renderer::queueDynamicModel(struct ECS* e, entity_t ent, float delta_second
     Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
 
 
-
     if(rend->model_id==5) {//for player entity
         Player p;
         p.transformPlayer(trans);
-        for (RenderObject& ob : p.getModel().objects) {
-//        drawRenderOb(ob);
-         m_dynamics.push_back(ob);
-
+        int i=0;
+        for (RenderObject ob : p.getModel().objects) {
+            ob.i =i;
+            ob.ent = ent;
+            auto found = std::find(m_dynamics.begin(),m_dynamics.end(),ob);
+            if (found == m_dynamics.end()){
+                m_dynamics.push_back(ob);
+            }
+            else {
+                *found = ob;
+            }
+            i++;
         }
     } else {//for single-prim models associated
         Model mod = m_models[rend->model_id];
-
+        int i=0;
         for(RenderObject& ob : mod.objects) {
 
-
         ob.ctm = glm::translate(ob.ctm, trans->pos);
-        glm::rotate(ob.ctm, trans->rot.x, glm::vec3(1, 0, 0));
-        glm::rotate(ob.ctm, trans->rot.y, glm::vec3(0, 1, 0));
-        glm::rotate(ob.ctm, trans->rot.z, glm::vec3(0, 0, 1));
-        glm::scale(ob.ctm, trans->scale);
+        ob.ctm = glm::rotate(ob.ctm, trans->rot.x, glm::vec3(1, 0, 0));
+        ob.ctm = glm::rotate(ob.ctm, trans->rot.y, glm::vec3(0, 1, 0));
+        ob.ctm = glm::rotate(ob.ctm, trans->rot.z, glm::vec3(0, 0, 1));
+        ob.ctm = glm::scale(ob.ctm, trans->scale);
+        ob.i = i;
+        ob.ent = ent;
+        auto found = std::find(m_dynamics.begin(),m_dynamics.end(),ob);
+        if (found == m_dynamics.end()){
             m_dynamics.push_back(ob);
-
-
-//        drawRenderOb(ob);
-
+        }
+        else {
+            *found = ob;
+        }
+            i++;
         }
     }
-
-
 }
-
-
 
 void Renderer::drawScreen() {
 
+//    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+//    glViewport(0, 0, m_screen_width, m_screen_height);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    paintSkybox();
+////
+//    paintTexture(m_fbo_texture, true,0,1.f);
+//    for (auto it = m_texture_map.begin(); it != m_texture_map.end(); ++it) {
+//        paintTexture(it->second.tex, false,it->second.slot,1.f);
+//    }
+
+////    GLenum error = glGetError();
+////    if (error != GL_NO_ERROR) {
+////        std::cerr << "OpenGL error: " << error << std::endl;
+////    }
+//    glUseProgram(0);
+
+    // Enable blending for overlapping objects
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Enable depth testing
+    glEnable(GL_DEPTH_TEST);
 
     // Draw to screen
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
     glViewport(0, 0, m_screen_width, m_screen_height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    paintTexture(m_fbo_texture, true,0,1.f);
+    paintSkybox();
+
+    // Clear the framebuffer
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Draw the FBO texture with full opacity
+    paintTexture(m_fbo_texture, true, 0, 1.0f);
+
+    // Draw other textures with full opacity
     for (auto it = m_texture_map.begin(); it != m_texture_map.end(); ++it) {
-        paintTexture(it->second.tex, false,it->second.slot,1.f);
+        paintTexture(it->second.tex, false, it->second.slot, 1.0f);
     }
 
+    // Disable blending for subsequent rendering
+//    glDisable(GL_BLEND);
+
+    // Disable depth testing for subsequent rendering
+//    glDisable(GL_DEPTH_TEST);
+
+    // Check for OpenGL errors
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
         std::cerr << "OpenGL error: " << error << std::endl;
     }
 
+    // Reset the shader program
     glUseProgram(0);
+
 
 }
 
 void Renderer::drawRenderOb(RenderObject& to_draw) {
+
+    if (!to_draw.visible)
+        return;
 
     int in = 0;
 
@@ -719,6 +840,7 @@ void Renderer::drawRenderOb(RenderObject& to_draw) {
     // Actually draw geo
     glBindVertexArray(m_vaos[in]);
     glDrawArrays(GL_TRIANGLES, 0, m_data[in].size() / 6);
+    glBindVertexArray(0);
 
 }
 
@@ -739,21 +861,10 @@ void Renderer::startDraw() {
 
 }
 void Renderer::drawStaticObs()
-{
-
+{ //(OBSOLETE)
     if (m_mouseDown) {
         // rotate cam based on delta x
     }
-
-
-    // Clear screen color and depth before painting
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-    // TODO
-    // Paramter support (just regenerate meshes on setting changes)
-    // Multiple objects (generate VBO/VOA for each object, just a lot of code)
-    // Multiple lights (may need to also pass in light color data, and type)
 
     if (!data)
         return;
@@ -761,37 +872,31 @@ void Renderer::drawStaticObs()
 
     for (RenderObject sp : data->shapes) {
         drawRenderOb(sp);
-
-
     }
-
-
-//    glBindVertexArray(0);
-
-
 }
 
-void Renderer::drawDynamicObs() {
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    glEnable(GL_DEPTH_TEST);
-    glPolygonOffset(1.f,10.0f);
-    std::vector<RenderObject> toRender = m_dynamics;
-    for (RenderObject& ob : toRender) {
+//void Renderer::drawDynamicObs() {//(OBSOLETE)
+//    std::vector<RenderObject> toRender = m_dynamics;
+//    toRender.insert(toRender.end(),data->shapes.begin(),data->shapes.end());
+//    for (RenderObject& ob : toRender) {
+//        drawRenderOb(ob);
+//    }
+//}
+
+void Renderer::drawDynamicAndStaticObs() {//USED
+
+//    glDepthRange(0.6,1.0);
+    for (RenderObject& ob : data->shapes) {
         drawRenderOb(ob);
     }
 
-    // Remove all rendered dynamic objects from dynamic render queue
-//    m_dynamics.erase(std::remove_if(m_dynamics.begin(), m_dynamics.end(),
-//                                    [&toRender](const RenderObject& value) {
-//                                        return std::find(toRender.begin(), toRender.end(), value) != toRender.end();
-//                                    }),
-//                     m_dynamics.end());
-    m_dynamics = std::vector<RenderObject>();
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_POLYGON_OFFSET_FILL);
+
+//    glDepthRange(0.1,0.4);
+    for (RenderObject& ob : m_dynamics) {
+        drawRenderOb(ob);
+    }
+    m_dynamics.clear();
 }
-
-
 
 
 void Renderer::resizeGL(int w, int h) {
@@ -940,3 +1045,4 @@ void Renderer::saveViewportImage(std::string filePath) {
     glDeleteRenderbuffers(1, &rbo);
     glDeleteFramebuffers(1, &fbo);
 }
+
