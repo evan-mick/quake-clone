@@ -43,13 +43,14 @@ void Level::makeFloor() {
 
 void Level::makeObstacles() {
     float obst_size = 2;
-    glm::mat4 obst_1 = glm::translate(glm::vec3(-5,obst_size/2,5));
-    obst_1 = glm::scale(obst_1,glm::vec3(obst_size,obst_size,obst_size));
+    glm::mat4 obst_1 = glm::translate(glm::vec3(size_x+5,10,0));
+    obst_1 = glm::scale(obst_1,glm::vec3(2,2,4));
+    obst_1 = glm::rotate(obst_1,-1.571f,glm::vec3(0,1,0));
 
     glm::mat4 obst_2 = glm::translate(glm::vec3(5,obst_size/2,-5));
     obst_2 = glm::scale(obst_2,glm::vec3(obst_size,obst_size,obst_size));
 
-    insertSimpleModel(obst_1,PrimitiveType::PRIMITIVE_CUBE,5);
+    insertSimpleModel(obst_1,PrimitiveType::PRIMITIVE_MESH,5);
     insertSimpleModel(obst_2,PrimitiveType::PRIMITIVE_CUBE,6);
 }
 
@@ -93,3 +94,11 @@ void Level::insertSimpleModel(glm::mat4 ctm, PrimitiveType type, int index) {
     shape.ctm = ctm;
     m_geometry[index] = shape;
 }
+
+void Level::insertSimpleModel(glm::mat4 ctm, std::string meshfile, int index) {
+    RenderObject shape;
+    shape.primitive = {.type=PrimitiveType::PRIMITIVE_MESH,.meshfile=meshfile,.material=m_mat};
+    shape.ctm = ctm;
+    m_geometry[index] = shape;
+}
+

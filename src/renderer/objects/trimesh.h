@@ -6,7 +6,7 @@
 class Trimesh
 {
 public:
-    void updateParams(int param1, int param2, RenderObject prim, std::string file);
+    void updateParams(int param1, int param2, std::string file);
     std::vector<GLfloat> generateShape() { return m_vertexData; }
 
 private:
@@ -23,7 +23,6 @@ private:
     float m_radius = 0.5;
     int m_param1;
     int m_param2;
-    RenderObject m_prim;
     std::string m_meshfile;
 };
 

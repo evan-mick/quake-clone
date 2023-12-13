@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <iostream>
+#include "renderer/objects/trimesh.h"
 #include "shaderloader.h"
 #include "objects/Sphere.h"
 #include "objects/Cube.h"
@@ -251,6 +252,11 @@ void Renderer::initializeGL() {
     loadSkyboxTexture();
 
     sceneChanged();
+
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr <<  "OpenGL error end of initialize: " << error << std::endl;
+    }
 }
 
 
@@ -526,6 +532,10 @@ void Renderer::generateShape() {
     Cylinder cyl = Cylinder();
     cyl.updateParams(p_1, p_2);
     bindBuff(cyl.generateShape(), cylinder_in);
+
+    Trimesh mesh = Trimesh();
+    mesh.updateParams(p_1,p_2,"../../resources/meshes/stretch obama.obj");
+    bindBuff(mesh.generateShape(), trimesh_in);
 }
 
 void Renderer::setUniforms(RenderObject& sp) {
@@ -565,7 +575,15 @@ void Renderer::setUniforms(RenderObject& sp) {
                 sp.primitive.material.cSpecular.z,
                 sp.primitive.material.cSpecular[3]);
 
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL before 4fv uniform error: " << error << std::endl;
+    }
+
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &(sp.ctm[0][0]));
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL afterf 4fv uniform error: " << error << std::endl;
+    }
 
 
 
@@ -588,12 +606,20 @@ void Renderer::setUniforms(RenderObject& sp) {
 
     glUniform4f(glGetUniformLocation(m_shader, "cam_pos"),
                 cam_pos.x, cam_pos.y, cam_pos.z, cam_pos[3]);
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL before skybox uniform error: " << error << std::endl;
+    }
 
     glUseProgram(m_skybox_shader);
     //pass view and proj to skybox
     glUniformMatrix4fv(glGetUniformLocation(m_skybox_shader, "view"), 1, GL_FALSE, &view_mat[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(m_skybox_shader, "projection"), 1, GL_FALSE, &proj_mat[0][0]);
     glUseProgram(m_shader);
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL after skybox uniform error: " << error << std::endl;
+    }
 }
 
 void Renderer::drawDynamicOb(struct ECS* e, entity_t ent, float delta_seconds) {
@@ -700,6 +726,10 @@ void Renderer::drawScreen() {
 //    glUseProgram(0);
 
     // Enable blending for overlapping objects
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr <<  "OpenGL error before load: " << error << std::endl;
+    }
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -710,9 +740,18 @@ void Renderer::drawScreen() {
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
     glViewport(0, 0, m_screen_width, m_screen_height);
     paintSkybox();
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL draw screen error: " << error << std::endl;
+    }
 
     // Clear the framebuffer
 //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    drawDynamicAndStaticObs();
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL after draw obs error: " << error << std::endl;
+    }
 
     // Draw the FBO texture with full opacity
     paintTexture(m_fbo_texture, true, 0, 1.0f);
@@ -729,19 +768,24 @@ void Renderer::drawScreen() {
     glDisable(GL_DEPTH_TEST);
 
     // Check for OpenGL errors
-    GLenum error = glGetError();
-    if (error != GL_NO_ERROR) {
-        std::cerr << "OpenGL error: " << error << std::endl;
-    }
+
 
     // Reset the shader program
     glUseProgram(0);
 
 
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL end draw screen error: " << error << std::endl;
+    }
 }
 
 void Renderer::drawRenderOb(RenderObject& to_draw) {
 
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL before switch error: " << error << std::endl;
+    }
     int in = 0;
 
     switch (to_draw.primitive.type) {
@@ -757,17 +801,31 @@ void Renderer::drawRenderOb(RenderObject& to_draw) {
     case PrimitiveType::PRIMITIVE_CONE:
         in = cone_in;
         break;
-    default:
-        in = 0;
+    case PrimitiveType::PRIMITIVE_MESH:
+        in = trimesh_in;
         break;
+    }
+
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL before binding error: " << error << std::endl;
     }
 
     // Bind Sphere Vertex Data
     glBindVertexArray(m_vaos[in]);
 
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL after binding error: " << error << std::endl;
+    }
+
     setUniforms(to_draw);
 
 
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL after set uniform error: " << error << std::endl;
+    }
     // NOT PROPERLY INTEGRATED INTO LIGHTING CODE YET
 
     int used = 0;
@@ -834,10 +892,18 @@ void Renderer::drawRenderOb(RenderObject& to_draw) {
         std::cout << "light num err" << std::endl;
     }
 
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL before actually drawing error: " << error << std::endl;
+    }
     // Actually draw geo
     glBindVertexArray(m_vaos[in]);
     glDrawArrays(GL_TRIANGLES, 0, m_data[in].size() / 6);
     glBindVertexArray(0);
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL after actually drawing error: " << error << std::endl;
+    }
 
 }
 
@@ -882,14 +948,26 @@ void Renderer::drawDynamicObs() {//(OBSOLETE)
 }
 
 void Renderer::drawDynamicAndStaticObs() {//USED
-
-    glDepthRange(0.6,1.0);
+    // Render static objects first
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL before start draw func: " << error << std::endl;
+    }
+    glDepthRange(0.7, 1.0);
     for (RenderObject& ob : data->shapes) {
         drawRenderOb(ob);
+        GLenum error = glGetError();
+        if (error != GL_NO_ERROR) {
+            std::cerr << "OpenGL in start draw func: " << error << std::endl;
+        }
     }
 
 
-    glDepthRange(0.1,0.4);
+    glDepthFunc(GL_LESS);
+    // Set a new depth range for dynamic objects
+    glDepthRange(0.0, 0.4);
+
+    // Render dynamic objects
     for (RenderObject& ob : m_dynamics) {
         drawRenderOb(ob);
     }

@@ -136,6 +136,8 @@ private:
     int cone_in = static_cast<int>(PrimitiveType::PRIMITIVE_CONE);
     int cylinder_in = static_cast<int>(PrimitiveType::PRIMITIVE_CYLINDER);
 
+    int trimesh_in = static_cast<int>(PrimitiveType::PRIMITIVE_MESH);
+
     bool init_gen = false;
 
     float skybox_vertices[108] = {
