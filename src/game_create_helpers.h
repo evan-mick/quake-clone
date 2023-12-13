@@ -49,6 +49,7 @@ inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec3 move) {
     if (e->isComponentRegistered(FLN_RENDER)) {
         Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
         rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+        rend->color = 1;
     }
 
     trySetType(e, proj, ET_PROJ);
@@ -74,6 +75,7 @@ inline entity_t createExplosion(ECS* e, glm::vec3 pos) {
     if (e->isComponentRegistered(FLN_RENDER)) {
         Renderable* rend = static_cast<Renderable*>(e->getComponentData(proj, FLN_RENDER));
         rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+        rend->color = 7;
     }
 
     trySetType(e, proj, ET_EXPLOSION);

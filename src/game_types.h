@@ -131,6 +131,7 @@ struct Health {
 
 struct Renderable {
     uint8_t model_id;
+    uint8_t color;
 };
 
 template <typename T>

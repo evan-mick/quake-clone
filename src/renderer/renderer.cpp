@@ -48,6 +48,28 @@ Renderer::Renderer(Camera* cam, bool fullSetup)
 }
 
 
+glm::vec4 Renderer::getColor(int i) {
+    switch (i) {
+    case 1:
+        return glm::vec4(0, 0, 0, 1); // black
+    case 2:
+        return glm::vec4(1, 1, 1, 1); // white
+    case 3:
+        return glm::vec4(0.5, 0.5, 0.5, 1); // gray
+    case 4:
+        return glm::vec4(1, 0, 0, 1); // red
+    case 5:
+        return glm::vec4(0, 1, 0, 1); // green
+    case 6:
+        return glm::vec4(0, 0, 1, 1); // blue
+    case 7:
+        return glm::vec4(1, .65, 0, 1); // orange
+    default:
+        return glm::vec4(0, 0, 0, 1); // default to black in case of unknown index
+    }
+}
+
+
 void Renderer::finish() {
 
 
@@ -640,6 +662,12 @@ void Renderer::queueDynamicModel(struct ECS* e, entity_t ent, float delta_second
     Transform* trans = static_cast<Transform*>(e->getComponentData(ent, FLN_TRANSFORM));
     Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
 
+    glm::vec4 diffuse;
+    if(rend->color!=0) {
+        int colorid = static_cast<int>(rend->color);
+        diffuse = getColor(colorid);
+    }
+
 
     if(rend->model_id==5) {//for player entity
         Player p;
@@ -648,6 +676,9 @@ void Renderer::queueDynamicModel(struct ECS* e, entity_t ent, float delta_second
         for (RenderObject ob : p.getModel().objects) {
             ob.i =i;
             ob.ent = ent;
+            if(rend->color!=0) {
+                ob.primitive.material.cDiffuse = diffuse;
+            }
             auto found = std::find(m_dynamics.begin(),m_dynamics.end(),ob);
             if (found == m_dynamics.end()){
                 m_dynamics.push_back(ob);
@@ -669,6 +700,9 @@ void Renderer::queueDynamicModel(struct ECS* e, entity_t ent, float delta_second
         ob.ctm = glm::scale(ob.ctm, trans->scale);
         ob.i = i;
         ob.ent = ent;
+        if(rend->color!=0) {
+            ob.primitive.material.cDiffuse = diffuse;
+        }
         auto found = std::find(m_dynamics.begin(),m_dynamics.end(),ob);
         if (found == m_dynamics.end()){
             m_dynamics.push_back(ob);
