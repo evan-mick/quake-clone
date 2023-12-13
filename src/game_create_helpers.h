@@ -4,11 +4,14 @@
 #include "game_types.h"
 #include "scene/scenedata.h"
 #include "glm/gtx/transform.hpp"
+#include <random>
 
 const int PLAYERSIZE = sizeof(entity_t) + sizeof(flags_t) + sizeof(Transform) + sizeof(PhysicsData) + sizeof(Test) + sizeof(Renderable) + sizeof(InputData) + sizeof(CollisionData);
 
 const int PROJSIZE = sizeof(entity_t) + sizeof(flags_t) + sizeof(Transform) + sizeof(PhysicsData) + sizeof(CollisionData);
 
+
+inline int cur_player_color = 0;
 
 inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
     entity_t ent = e->createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT, FLN_COLLISION, FLN_TYPE, FLN_HEALTH, FLN_PLAYERINFO });
@@ -16,6 +19,8 @@ inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
     if (e->isComponentRegistered(FLN_RENDER)) {
         Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
         //    rend->model_id = static_cast<uint8_t>(PrimitiveType::PRIMITIVE_SPHERE);
+        rend->color = (cur_player_color % 7) + 1;
+        cur_player_color++;
         rend->model_id = 5;
     }
 
