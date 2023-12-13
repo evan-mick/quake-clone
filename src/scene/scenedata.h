@@ -164,13 +164,13 @@ struct RenderObject {
     glm::mat4 ctm;
     GLuint vbo;
     GLuint vao;
-//    entity_t ent;
-//    int i;
+    entity_t ent;
+    int i;
     int vertCount = -1;
 
-//    bool operator==(const RenderObject& other) const {
-//        return this->ent == other.ent && this->i == other.i;
-//    }
+    bool operator==(const RenderObject& other) const {
+        return this->ent == other.ent && this->i == other.i;
+    }
 };
 
 enum class ModelType {

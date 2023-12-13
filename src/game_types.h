@@ -25,6 +25,8 @@ const uint32_t DSCREEN_WIDTH = 1200;
 const uint32_t DSCREEN_HEIGHT = 900;
 constexpr float RAW_FOV = 90;
 constexpr float FOV = glm::radians(RAW_FOV); //* (float)DSCREEN_HEIGHT/(float)DSCREEN_WIDTH;
+const float NEAR_PLANE = 0.45f;
+const float FAR_PLANE = 200.0f;
 
 // INPUT FLAGS
 const int IN_FORWARD = 0;
@@ -35,7 +37,7 @@ const int IN_SHOOT = 4;
 const int IN_JUMP = 5;
 
 // GAME LOGIC CONSTANTS
-const uint8_t TICKS_PER_SECOND = 60; // 60 normally
+const uint8_t TICKS_PER_SECOND = 90; // 60 normally
 constexpr float TICK_RATE = 1.f/TICKS_PER_SECOND;
 
 

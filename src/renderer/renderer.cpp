@@ -48,10 +48,6 @@ Renderer::Renderer(Camera* cam, bool fullSetup)
 }
 
 
-
-
-
-
 void Renderer::finish() {
 
 
@@ -191,6 +187,7 @@ void Renderer::initializeGL() {
 
     m_shader = ShaderLoader::createShaderProgram("../../resources/shaders/default.vert", "../../resources/shaders/default.frag");
     m_texture_shader = ShaderLoader::createShaderProgram("../../resources/shaders/texture.vert", "../../resources/shaders/texture.frag");
+    m_skybox_shader = ShaderLoader::createShaderProgram("../../resources/shaders/skybox.vert", "../../resources/shaders/skybox.frag");
 
     glUseProgram(m_texture_shader);
     GLint texLoc = glGetUniformLocation(m_texture_shader, "tex");
@@ -245,11 +242,6 @@ void Renderer::initializeGL() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-
-    std::cout << "shader: " << std::to_string(m_shader) << std::endl;
-
-
-
     generateShape();
 
     init_gen = true;
@@ -257,6 +249,9 @@ void Renderer::initializeGL() {
     makeFBO();
 
     sceneChanged();
+}
+
+void Renderer::loadSkyboxShader() {
 
 }
 
@@ -572,18 +567,18 @@ void Renderer::queueDynamicModel(struct ECS* e, entity_t ent, float delta_second
         Player p;
         p.transformPlayer(trans);
         int i=0;
-        for (RenderObject& ob : p.getModel().objects) {
-//            ob.i =i;
-//            ob.ent = ent;
-//            auto found = std::find(m_dynamics.begin(),m_dynamics.end(),ob);
-//            if (found == m_dynamics.end()){
+        for (RenderObject ob : p.getModel().objects) {
+            ob.i =i;
+            ob.ent = ent;
+            auto found = std::find(m_dynamics.begin(),m_dynamics.end(),ob);
+            if (found == m_dynamics.end()){
                 m_dynamics.push_back(ob);
-//            }
-//            else {
-//                *found = ob;
-//            }
-//            i++;
-//        }
+            }
+            else {
+                *found = ob;
+            }
+            i++;
+        }
     } else {//for single-prim models associated
         Model mod = m_models[rend->model_id];
         int i=0;
@@ -594,17 +589,17 @@ void Renderer::queueDynamicModel(struct ECS* e, entity_t ent, float delta_second
         glm::rotate(ob.ctm, trans->rot.y, glm::vec3(0, 1, 0));
         glm::rotate(ob.ctm, trans->rot.z, glm::vec3(0, 0, 1));
         glm::scale(ob.ctm, trans->scale);
-//        ob.i = i;
-//        ob.ent = ent;
-//        auto found = std::find(m_dynamics.begin(),m_dynamics.end(),ob);
-//        if (found == m_dynamics.end()){
+        ob.i = i;
+        ob.ent = ent;
+        auto found = std::find(m_dynamics.begin(),m_dynamics.end(),ob);
+        if (found == m_dynamics.end()){
             m_dynamics.push_back(ob);
-//        }
-//        else {
-//            *found = ob;
-//        }
-//            i++;
-//        }
+        }
+        else {
+            *found = ob;
+        }
+            i++;
+        }
     }
 
 
@@ -772,8 +767,6 @@ void Renderer::drawStaticObs()
 
     for (RenderObject sp : data->shapes) {
         drawRenderOb(sp);
-
-
     }
 
 
@@ -787,12 +780,12 @@ void Renderer::drawDynamicObs() {
 //    glEnable(GL_DEPTH_TEST);
 //    glPolygonOffset(1.f,10.0f);
     std::vector<RenderObject> toRender = m_dynamics;
-    m_dynamics = std::vector<RenderObject>();
-//    toRender.insert(toRender.end(),data->shapes.begin(),data->shapes.end());
+//    m_dynamics = std::vector<RenderObject>();
+    toRender.insert(toRender.end(),data->shapes.begin(),data->shapes.end());
     for (RenderObject& ob : toRender) {
         drawRenderOb(ob);
-    }
 
+    }
     // Remove all rendered dynamic objects from dynamic render queue
 //    m_dynamics.erase(std::remove_if(m_dynamics.begin(), m_dynamics.end(),
 //                                    [&toRender](const RenderObject& value) {
@@ -804,7 +797,14 @@ void Renderer::drawDynamicObs() {
 //    glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
+void Renderer::drawDynamicAndStaticObs() {
+    std::vector<RenderObject> toRender = m_dynamics;
+    toRender.insert(toRender.end(),data->shapes.begin(),data->shapes.end());
+    for (RenderObject& ob : toRender) {
+        drawRenderOb(ob);
 
+    }
+}
 
 
 void Renderer::resizeGL(int w, int h) {
@@ -953,3 +953,4 @@ void Renderer::saveViewportImage(std::string filePath) {
     glDeleteRenderbuffers(1, &rbo);
     glDeleteFramebuffers(1, &fbo);
 }
+
