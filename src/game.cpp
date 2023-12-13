@@ -278,7 +278,7 @@ void Game::registerCollisionResponses(Physics& phys) {
     phys.registerType(ET_EXPLOSION, [](ECS* e, entity_t my_ent, entity_t other_ent, bool world) -> glm::vec3 {
 
         DestroyData* destroyDat = getComponentData<DestroyData>(e, my_ent, FLN_DESTROYTIME);
-        if (!world && 1.f - destroyDat->timer < TICK_RATE * 10.f && getType(e, other_ent) == ET_PLAYER) {
+        if (!world && 1.f - destroyDat->timer < TICK_RATE * 5.f && getType(e, other_ent) == ET_PLAYER) {
             std::cout << "explosion col" << std::endl;
             PhysicsData* dat = getPhys(e, other_ent);
             PlayerInfo* info = getComponentData<PlayerInfo>(e, other_ent, FLN_PLAYERINFO);
@@ -287,6 +287,10 @@ void Game::registerCollisionResponses(Physics& phys) {
 
             Transform* other_trans = getTransform(e, other_ent);
             Transform* trans = getTransform(e, my_ent);
+
+            if (!e->hasAuthority(other_ent))
+                return glm::vec3(0, 0, 0);
+
             if (dat && info) {
                 info->no_control_time = .5f;
 //                std::cout << "explosion col 2" << std::endl;
@@ -295,7 +299,13 @@ void Game::registerCollisionResponses(Physics& phys) {
                 dat->vel += dir * 30.f;
 
                 if (getComponentData<Projectile>(e, my_ent, FLN_PROJECTILE)->shot_from != other_ent) {
-                    getComponentData<Health>(e, other_ent, FLN_HEALTH)->amt -= 5.f;
+
+                    if (info->invul > 0.f)
+                        return glm::vec3(0, 0, 0);
+
+                    info->invul = .2f;
+                    getComponentData<Health>(e, other_ent, FLN_HEALTH)->amt -= PROJ_DMG;
+                    std::cout << "HEALTH " << other_ent << " " << getComponentData<Health>(e, other_ent, FLN_HEALTH)->amt << std::endl;
 
                     if (getComponentData<Health>(e, other_ent, FLN_HEALTH)->amt <= 0) {
                         respawnPlayer(e, other_ent);
@@ -367,8 +377,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
         // What if some desync happens? then we'd want this to run but it won't cause no authority
         // Can't take away though cause then jitter (?)
-//        if (!e->hasAuthority(ent))
-//            return;
+        if (!e->hasAuthority(ent))
+            return;
 
         //        std::cout << "thing" << std::endl;
         PhysicsData* phys = getPhys(e, ent);
@@ -380,9 +390,10 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
         phys->accel = glm::vec3(0, -.98f, 0);
 
+        if (info->invul > 0.f)
+            info->invul -= delta;
 
         trans->rot.y = in->x_look/* - glm::radians(53.f)*/;
-
 
         // Needed the 37 degree offset?? no clue why, it would be consistently slightly off whenever I moved it
         glm::mat4 forwardMatrix = glm::rotate(glm::mat4(1.0f), in->x_look + glm::radians(90.f), glm::vec3(0.0f, 1.0f, 0.0f));

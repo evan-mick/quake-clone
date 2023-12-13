@@ -157,7 +157,7 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
 
             // OF NOTE: collision logic will be used for both entities because everything cycled through
             if (AABBtoAABBIntersect(getTransform(e, my_ent), physDat, getTransform(e, ent), nullptr, (col->col_type > 0 && other_col->col_type > 0))) {
-                std::cout << "dyn intersect " << (int)my_ent << " " << (int)ent << " c type " <<  (int)(col->col_type) << std::endl;
+//                std::cout << "dyn intersect " << (int)my_ent << " " << (int)ent << " c type " <<  (int)(col->col_type) << std::endl;
 //                e->queueDestroyEntity(my_ent);
                 //          IF type registered
                 //              run collision logic on each entity for the registered type,

@@ -67,7 +67,7 @@ inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec3 move) {
 
 //    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(0.0f, 1.0f, 0.0f));
 //    rotationMatrix = glm::rotate(rotationMatrix, rot.y, glm::vec3(0.0f, 0.0f, 1.0f));
-    getPhys(e, proj)->vel = move * 20.f;
+    getPhys(e, proj)->vel = move * 30.f;
     return proj;
 }
 
