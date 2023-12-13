@@ -11,7 +11,7 @@ const int PROJSIZE = sizeof(entity_t) + sizeof(flags_t) + sizeof(Transform) + si
 
 
 inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
-    entity_t ent = e->createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT, FLN_COLLISION, FLN_TYPE, FLN_HEALTH });
+    entity_t ent = e->createEntity({ FLN_TRANSFORM, FLN_PHYSICS, FLN_TEST, FLN_RENDER, FLN_INPUT, FLN_COLLISION, FLN_TYPE, FLN_HEALTH, FLN_PLAYERINFO });
 
     if (e->isComponentRegistered(FLN_RENDER)) {
         Renderable* rend = static_cast<Renderable*>(e->getComponentData(ent, FLN_RENDER));
@@ -30,6 +30,15 @@ inline entity_t createPlayer(ECS* e, glm::vec3 pos) {
     return ent;
 }
 
+
+inline void respawnPlayer(ECS* e, entity_t ent) {
+    getTransform(e, ent)->pos = glm::vec3(0, 20.f, 0);
+    getPhys(e, ent)->vel = glm::vec3(0, 0.f, 0);
+    getPhys(e, ent)->accel = glm::vec3(0, 0.f, 0);
+
+    getComponentData<Health>(e, ent, FLN_HEALTH)->amt = MAX_HEALTH;
+    getComponentData<PlayerInfo>(e, ent, FLN_PLAYERINFO)->shotCooldown = 0.f;
+}
 
 
 inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec3 move) {
