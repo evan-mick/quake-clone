@@ -559,21 +559,21 @@ void Renderer::generateShape() {
     cyl.updateParams(p_1, p_2);
     bindBuff(cyl.generateShape(), cylinder_in);
 
-    Trimesh obama = Trimesh();
-    obama.updateParams(p_1,p_2,"resources/meshes/stretch obama.obj");
-    bindBuff(obama.generateShape(),4);
+//    Trimesh obama = Trimesh();
+//    obama.updateParams(p_1,p_2,"resources/meshes/stretch obama.obj");
+//    bindBuff(obama.generateShape(),4);
 
-    Trimesh jennifer = Trimesh();
-    jennifer.updateParams(p_1,p_2,"resources/meshes/mark.obj");
-    bindBuff(jennifer.generateShape(),5);
+//    Trimesh jennifer = Trimesh();
+//    jennifer.updateParams(p_1,p_2,"resources/meshes/mark.obj");
+//    bindBuff(jennifer.generateShape(),5);
 
-    Trimesh christian = Trimesh();
-    christian.updateParams(p_1,p_2,"resources/meshes/christian.obj");
-    bindBuff(christian.generateShape(),6);
+//    Trimesh christian = Trimesh();
+//    christian.updateParams(p_1,p_2,"resources/meshes/christian.obj");
+//    bindBuff(christian.generateShape(),6);
 
-    Trimesh freddy = Trimesh();
-    freddy.updateParams(p_1,p_2,"resources/meshes/freddy.obj");
-    bindBuff(freddy.generateShape(),7);
+//    Trimesh freddy = Trimesh();
+//    freddy.updateParams(p_1,p_2,"resources/meshes/freddy.obj");
+//    bindBuff(freddy.generateShape(),7);
 }
 
 void Renderer::setUniforms(RenderObject& sp) {
