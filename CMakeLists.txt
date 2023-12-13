@@ -112,6 +112,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
      resources/scenes/empty.json
      resources/scenes/main.json
      resources/shaders/skybox.frag resources/shaders/skybox.vert
+     resources/meshs/mark.mtl
  )
 
 # GLEW: this provides support for Windows (including 64-bit)
