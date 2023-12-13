@@ -151,7 +151,7 @@
               ]
             },
             {
-              "translate": [0.0, 10, -50],
+              "translate": [0.0, 30, -50],
               "scale": [3, 1.0, 1],
               "primitives": [
                 {
@@ -164,7 +164,7 @@
               ]
             },
             {
-              "translate": [0, 10, 50],
+              "translate": [0, 40, 50],
               "scale": [10,10,10],
               "rotate":[0,1,0,180],
               "primitives": [
@@ -178,7 +178,7 @@
               ]
             },
             {
-              "translate": [50, 20, 0],
+              "translate": [50, 40, 0],
               "scale": [10, 10.0, 10],
               "rotate":[0,1,0,-90],
               "primitives": [
