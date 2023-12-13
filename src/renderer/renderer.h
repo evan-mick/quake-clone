@@ -127,9 +127,9 @@ private:
 
     Camera* camera;// = Camera();
 
-    GLuint m_vbos[5] = {};
-    GLuint m_vaos[5] = {};
-    std::vector<float> m_data[5] = {};
+    GLuint m_vbos[8] = {};
+    GLuint m_vaos[8] = {};
+    std::vector<float> m_data[8] = {};
 
     SceneMaterial m_level_mat;
 
@@ -139,6 +139,8 @@ private:
     int cube_in = static_cast<int>(PrimitiveType::PRIMITIVE_CUBE);
     int cone_in = static_cast<int>(PrimitiveType::PRIMITIVE_CONE);
     int cylinder_in = static_cast<int>(PrimitiveType::PRIMITIVE_CYLINDER);
+
+    //obama = 4, = 5, = 6, = 7
 
     bool init_gen = false;
 
