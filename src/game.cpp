@@ -139,17 +139,14 @@ void Game::startGame(bool server, const char* ip) {
                 std::cout << "null input 2" << std::endl;
                 //continue;
             }
-
-
              render.startDraw();
 
+            render.drawDynamicAndStaticObs();
+            render.drawScreen();
             if (ecs.entityHasComponent(ent, FLN_TRANSFORM)) {
                 cam.updateFromEnt(&ecs, ent);
                 cam.setRotation(in->x_look, in->y_look);
             }
-//            render.drawStaticObs();
-            render.drawDynamicAndStaticObs();
-            render.drawScreen();
 
             // std::cout << "3" << std::endl;
             // Swap front and back buffers
@@ -157,6 +154,7 @@ void Game::startGame(bool server, const char* ip) {
 
             // Poll for and process events
             glfwPollEvents();
+
         }
 
 
@@ -264,6 +262,7 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
     if (!m_server)
         ecs.registerSystem([&renderer](ECS* e, entity_t ent, float delta) {
 //            renderer.drawDynamicOb(e, ent, delta);
+
             renderer.queueDynamicModel(e,ent,delta);
         } , {FLN_TRANSFORM, FLN_RENDER});
 
