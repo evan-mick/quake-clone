@@ -172,16 +172,20 @@ int ECS::serializeData(char** buff_ptr, bool ignore_auth, int max_size, int star
     // RN, no matter start position this goes through whole loop
     // could potential remedy by outputting struct with start in bytes and of entity
 
-    size_t ob_ptr = 0;
-    size_t last_ob_ptr = ob_ptr;
+    if (start_pos > 0) {
+        std::cout << "greater start" << std::endl;
+    }
+
+    signed long ob_ptr = 0;
+    signed long last_ob_ptr = ob_ptr;
     // size_t used = 0;
     for (int ent = 0; ent < MAX_ENTITY; ent++) {
 
         if (m_entities[ent] == 0 || (!m_hasAuthority[ent] && !ignore_auth))
             continue;
 
-        if ((ob_ptr - start_pos + sizeof(entity_t) + sizeof(flags_t)) > max_size) {
-            memset(*buff_ptr, 0, ob_ptr - last_ob_ptr);
+        if ((signed long)(ob_ptr - start_pos + sizeof(entity_t) + sizeof(flags_t)) > (signed long)max_size) {
+            memset(*buff_ptr + last_ob_ptr - start_pos, 0, ob_ptr - last_ob_ptr);
             return last_ob_ptr - start_pos;
         }
 
@@ -202,8 +206,8 @@ int ECS::serializeData(char** buff_ptr, bool ignore_auth, int max_size, int star
                 continue;
 
             // Only copy if authority allows for it
-            if (ob_ptr - start_pos + m_component_num_to_size[com] > max_size) {
-                memset(*buff_ptr, 0, ob_ptr - last_ob_ptr );
+            if ((signed long)(ob_ptr - start_pos + m_component_num_to_size[com]) > (signed long)max_size) {
+                memset(*buff_ptr + last_ob_ptr - start_pos, 0, ob_ptr - last_ob_ptr );
                 return last_ob_ptr - start_pos;
             }
 
