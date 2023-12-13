@@ -149,6 +149,61 @@
                     "shininess": 0.2
                 }
               ]
+            },
+            {
+              "translate": [0.0, 10, -50],
+              "scale": [3, 1.0, 1],
+              "primitives": [
+                {
+                    "type": "head1",
+                    "ambient": [0.7, 0.7, 0.7],
+                    "diffuse": [0.5, 0.5, 0.5],
+                    "specular": [0.05, 0.05, 0.05],
+                    "shininess": 0.2
+                }
+              ]
+            },
+            {
+              "translate": [0, 10, 50],
+              "scale": [10,10,10],
+              "rotate":[0,1,0,180],
+              "primitives": [
+                {
+                    "type": "head3",
+                    "ambient": [0.7, 0.7, 0.7],
+                    "diffuse": [0.5, 0.5, 0.5],
+                    "specular": [0.05, 0.05, 0.05],
+                    "shininess": 0.2
+                }
+              ]
+            },
+            {
+              "translate": [50, 20, 0],
+              "scale": [10, 10.0, 10],
+              "rotate":[0,1,0,-90],
+              "primitives": [
+                {
+                    "type": "head3",
+                    "ambient": [0.7, 0.7, 0.7],
+                    "diffuse": [0.5, 0.5, 0.5],
+                    "specular": [0.05, 0.05, 0.05],
+                    "shininess": 0.2
+                }
+              ]
+            },
+            {
+              "translate": [-50.0, 0, 0],
+              "scale": [10, 10.0, 1],
+              "rotate":[0,1,0,90],
+              "primitives": [
+                {
+                    "type": "head4",
+                    "ambient": [0.7, 0.7, 0.7],
+                    "diffuse": [0.5, 0.5, 0.5],
+                    "specular": [0.05, 0.05, 0.05],
+                    "shininess": 0.2
+                }
+              ]
             }
 
         ]

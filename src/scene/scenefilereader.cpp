@@ -848,20 +848,26 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
         primitive->type = PrimitiveType::PRIMITIVE_CYLINDER;
     else if (primType == "cone")
         primitive->type = PrimitiveType::PRIMITIVE_CONE;
-    else if (primType == "mesh") {
-        primitive->type = PrimitiveType::PRIMITIVE_MESH;
-        if (!prim.contains("meshFile")) {
-            std::cout << "primitive type mesh must contain field meshFile" << std::endl;
-            return false;
-        }
-        if (!prim["meshFile"].isString()) {
-            std::cout << "primitive meshFile must be of type string" << std::endl;
-            return false;
-        }
+    else if (primType == "head1")
+        primitive->type = PrimitiveType::PRIMITIVE_HEAD1;
+    else if (primType == "head2")
+        primitive->type = PrimitiveType::PRIMITIVE_HEAD2;
+    else if (primType == "head3")
+        primitive->type = PrimitiveType::PRIMITIVE_HEAD3;
+    else if (primType == "head4")
+        primitive->type = PrimitiveType::PRIMITIVE_HEAD4;
+//        if (!prim.contains("meshFile")) {
+//            std::cout << "primitive type mesh must contain field meshFile" << std::endl;
+//            return false;
+//        }
+//        if (!prim["meshFile"].isString()) {
+//            std::cout << "primitive meshFile must be of type string" << std::endl;
+//            return false;
+//        }
 
-        std::filesystem::path relativePath(prim["meshFile"].toString().toStdString());
-        primitive->meshfile = (basepath / relativePath).string();
-    }
+//        std::filesystem::path relativePath(prim["meshFile"].toString().toStdString());
+//        primitive->meshfile = (basepath / relativePath).string();
+//    }
     else {
         std::cout << "unknown primitive type \"" << primType << "\"" << std::endl;
         return false;
