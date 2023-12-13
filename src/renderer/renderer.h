@@ -44,6 +44,8 @@ public:
 
     void drawScreen();
 
+    float player_health;
+
 //    void drawDynamicObs();
 
     void resizeGL(int width, int height);      // Called when window size changes
