@@ -145,8 +145,8 @@ void Game::startGame(bool server, const char* ip) {
                 cam.updateFromEnt(&ecs, ent);
                 cam.setRotation(in->x_look, in->y_look);
             }
-            render.drawStaticObs();
-//            render.drawDynamicObs();
+//            render.drawStaticObs();
+            render.drawDynamicObs();
 
             render.drawScreen();
 

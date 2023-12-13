@@ -155,6 +155,7 @@ private:
 
     void setUniforms(RenderObject& sp);
 
+    int m_obj_count = 0;
 
 
 
