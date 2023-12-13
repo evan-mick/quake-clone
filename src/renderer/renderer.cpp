@@ -678,6 +678,8 @@ void Renderer::queueDynamicModel(struct ECS* e, entity_t ent, float delta_second
             ob.ent = ent;
             if(rend->color!=0) {
                 ob.primitive.material.cDiffuse = diffuse;
+                ob.primitive.material.cSpecular = diffuse;
+                ob.primitive.material.cAmbient = diffuse;
             }
             auto found = std::find(m_dynamics.begin(),m_dynamics.end(),ob);
             if (found == m_dynamics.end()){
