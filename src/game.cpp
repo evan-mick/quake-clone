@@ -295,9 +295,9 @@ void Game::registerCollisionResponses(Physics& phys) {
                 dat->vel += dir * 30.f;
 
                 if (getComponentData<Projectile>(e, my_ent, FLN_PROJECTILE)->shot_from != other_ent) {
-                    getComponentData<Health>(e, my_ent, FLN_HEALTH)->amt -= 5.f;
+                    getComponentData<Health>(e, other_ent, FLN_HEALTH)->amt -= 5.f;
 
-                    if (getComponentData<Health>(e, my_ent, FLN_HEALTH)->amt <= 0) {
+                    if (getComponentData<Health>(e, other_ent, FLN_HEALTH)->amt <= 0) {
                         respawnPlayer(e, other_ent);
                     }
                 }
