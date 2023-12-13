@@ -17,7 +17,7 @@ constexpr uint32_t FLN_PHYSICS = 4;
 constexpr uint32_t FLN_COLLISION = 5;
 constexpr uint32_t FLN_PROJECTILE = 6;
 constexpr uint32_t FLN_DESTROYTIME = 7;
-constexpr uint32_t FLN_SHOTFROM = 8;
+//constexpr uint32_t FLN_SHOTFROM = 8;
 constexpr uint32_t FLN_HEALTH = 9;
 constexpr uint32_t FLN_PLAYERINFO = 10;
 
@@ -29,8 +29,8 @@ const uint32_t DSCREEN_WIDTH = 1200;
 const uint32_t DSCREEN_HEIGHT = 900;
 constexpr float RAW_FOV = 90;
 constexpr float FOV = glm::radians(RAW_FOV); //* (float)DSCREEN_HEIGHT/(float)DSCREEN_WIDTH;
-const float NEAR_PLANE = 0.45f;
-const float FAR_PLANE = 400.0f;
+const float NEAR_PLANE = 0.001f;
+const float FAR_PLANE = 500.0f;
 
 // INPUT FLAGS
 const int IN_FORWARD = 0;
@@ -121,6 +121,7 @@ struct Projectile {
 
 struct PlayerInfo {
     float shotCooldown = 1.f;
+    float no_control_time = 0.f;
 };
 
 const float MAX_HEALTH = 10;

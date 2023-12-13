@@ -93,7 +93,7 @@ struct Connection {
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastActivityTime);
         return elapsed >= timeoutDuration;
     }
-    // float discon_timer = 5.f;
+     float discon_timer = 5.f;
 };
 
 //bool compare(Gamestate a, Gamestate b) {

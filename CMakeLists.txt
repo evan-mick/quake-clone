@@ -93,10 +93,15 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 # Specifies other files
  qt6_add_resources(${PROJECT_NAME} "Resources"
      PREFIX
-         "/"
+         ""
      FILES
          resources/shaders/default.frag
          resources/shaders/default.vert
+         resources/shaders/texture.frag resources/shaders/texture.vert
+         resources/scenes/phong_total.json
+         resources/scenes/empty.json
+         resources/scenes/main.json
+         resources/shaders/skybox.frag resources/shaders/skybox.vert
  )
 
  target_sources(quake_clone_other_files

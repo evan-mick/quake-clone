@@ -55,7 +55,7 @@ void Game::startGame(bool server, const char* ip) {
     // Parse setup
     SceneParser SCENEparser = SceneParser();
     //    SCENEparser.parse("../../resources/scenes/phong_total.json");
-    SCENEparser.parse("../../resources/scenes/main.json");
+    SCENEparser.parse("resources/scenes/main.json");
     phys.setStaticObs(&SceneParser::getSceneData());
     SceneParser::getSceneData().cameraData.heightAngle = FOV;
 
@@ -239,7 +239,7 @@ void Game::registerECSComponents(ECS& ecs) {
     ecs.registerComponent(FLN_TEST, sizeof(Test));
     ecs.registerComponent(FLN_TYPE, sizeof(TypeData));
 
-    ecs.registerComponent(FLN_SHOTFROM, sizeof(Projectile));
+    ecs.registerComponent(FLN_PROJECTILE, sizeof(Projectile));
     ecs.registerComponent(FLN_HEALTH, sizeof(Health));
     ecs.registerComponent(FLN_PLAYERINFO, sizeof(PlayerInfo));
 }
@@ -263,9 +263,12 @@ void Game::registerCollisionResponses(Physics& phys) {
 
         ent_type_t type = getType(e, other_ent);
 
-        if ((world || (getComponentData<Projectile>(e, my_ent, FLN_SHOTFROM)->shot_from != other_ent && type == ET_PLAYER))){
-            if (e->hasAuthority(my_ent))
-                createExplosion(e, getTransform(e, my_ent)->pos - glm::vec3(0, 1, 0));
+        if ((world || (getComponentData<Projectile>(e, my_ent, FLN_PROJECTILE)->shot_from != other_ent && type == ET_PLAYER))){
+            if (e->hasAuthority(my_ent)) {
+                entity_t explode = createExplosion(e, getTransform(e, my_ent)->pos - glm::vec3(0, 1, 0));
+                entity_t other_shot = getComponentData<Projectile>(e, my_ent, FLN_PROJECTILE)->shot_from;
+                getComponentData<Projectile>(e, explode, FLN_PROJECTILE)->shot_from = other_shot;
+            }
             e->queueDestroyEntity(my_ent);
         }
 
@@ -275,17 +278,29 @@ void Game::registerCollisionResponses(Physics& phys) {
     phys.registerType(ET_EXPLOSION, [](ECS* e, entity_t my_ent, entity_t other_ent, bool world) -> glm::vec3 {
 
         DestroyData* destroyDat = getComponentData<DestroyData>(e, my_ent, FLN_DESTROYTIME);
-        if (!world && 1.f - destroyDat->timer < TICK_RATE * 2.f && getType(e, other_ent) == ET_PLAYER) {
+        if (!world && 1.f - destroyDat->timer < TICK_RATE * 10.f && getType(e, other_ent) == ET_PLAYER) {
             std::cout << "explosion col" << std::endl;
             PhysicsData* dat = getPhys(e, other_ent);
+            PlayerInfo* info = getComponentData<PlayerInfo>(e, other_ent, FLN_PLAYERINFO);
+
+
 
             Transform* other_trans = getTransform(e, other_ent);
             Transform* trans = getTransform(e, my_ent);
-            if (dat) {
+            if (dat && info) {
+                info->no_control_time = .5f;
 //                std::cout << "explosion col 2" << std::endl;
-                glm::vec3 dir = glm::normalize(((other_trans->pos + glm::vec3(0, 2.f, 0)) - (trans->pos)));
+                glm::vec3 dir = glm::normalize(((other_trans->pos + glm::vec3(0, 10.f, 0)) - (trans->pos)));
 
                 dat->vel += dir * 30.f;
+
+                if (getComponentData<Projectile>(e, my_ent, FLN_PROJECTILE)->shot_from != other_ent) {
+                    getComponentData<Health>(e, my_ent, FLN_HEALTH)->amt -= 5.f;
+
+                    if (getComponentData<Health>(e, my_ent, FLN_HEALTH)->amt <= 0) {
+                        respawnPlayer(e, other_ent);
+                    }
+                }
             }
 
         }
@@ -326,7 +341,7 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
                 look_.z = -cos(in->x_look) * cos(in->y_look);
 
                 int proj = createProjectile(e, trans->pos, look_);
-                Projectile* projdat = getComponentData<Projectile>(e, proj, FLN_SHOTFROM);
+                Projectile* projdat = getComponentData<Projectile>(e, proj, FLN_PROJECTILE);
                 projdat->shot_from = ent;
 
                 getComponentData<PlayerInfo>(e, ent, FLN_PLAYERINFO)->shotCooldown = .8f;
@@ -357,6 +372,7 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         Transform* trans = getTransform(e, ent);
         Test* ts = getComponentData<Test>(e, ent, FLN_TEST);
         InputData* in = getComponentData<InputData>(e, ent, FLN_INPUT);
+        PlayerInfo* info = getComponentData<PlayerInfo>(e, ent, FLN_PLAYERINFO);
         //        std::cout << "test " << ent << std::endl;
 
         phys->accel = glm::vec3(0, -.98f, 0);
@@ -393,37 +409,41 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
 
 //        glm::vec3 norm_vel = glm::normalize(vel) * 10.f;
 
-        if (vel != glm::vec3(0, 0, 0) && phys->grounded) {
-//            phys->vel.x = norm_vel.x;
-//            phys->vel.z = norm_vel.z;
+        if (info->no_control_time <= 0.f) {
+            if (vel != glm::vec3(0, 0, 0) && phys->grounded) {
+    //            phys->vel.x = norm_vel.x;
+    //            phys->vel.z = norm_vel.z;
 
-            float current = glm::dot(phys->vel, norm_vel);
-            float wishspeed = 10.f;
-            float addspeed = wishspeed - current;
-            float accelspeed = 9.f * wishspeed;
-            if (addspeed > 0) {
-                if (accelspeed > addspeed) {
-                    accelspeed = addspeed;
+                float current = glm::dot(phys->vel, norm_vel);
+                float wishspeed = 10.f;
+                float addspeed = wishspeed - current;
+                float accelspeed = 9.f * wishspeed;
+                if (addspeed > 0) {
+                    if (accelspeed > addspeed) {
+                        accelspeed = addspeed;
+                    }
+                    phys->accel.x = norm_vel.x * accelspeed;
+                    phys->accel.z = norm_vel.z * accelspeed;
                 }
-                phys->accel.x = norm_vel.x * accelspeed;
-                phys->accel.z = norm_vel.z * accelspeed;
+
+
+            }
+            if (Input::isHeld(in->dat, IN_JUMP) && phys->grounded) {
+                phys->vel.y = 15.f;
+                phys->vel.x *= 1.2f;
+                phys->vel.z *= 1.2f;
+                phys->grounded = false;
+            }
+            if (phys->grounded) {
+                phys->vel.x *= .99f * delta;
+                phys->vel.z *= .99f * delta;
             }
 
-
-        }
-        if (Input::isHeld(in->dat, IN_JUMP) && phys->grounded) {
-            phys->vel.y = 15.f;
-            phys->vel.x *= 1.2f;
-            phys->vel.z *= 1.2f;
-            phys->grounded = false;
-        }
-        if (phys->grounded) {
-            phys->vel.x *= .99f * delta;
-            phys->vel.z *= .99f * delta;
-        }
-
-        if (trans->pos.y < -100.f) {
-            respawnPlayer(e, ent);
+            if (trans->pos.y < -100.f) {
+                respawnPlayer(e, ent);
+            }
+        } else {
+            info->no_control_time -= delta;
         }
 
 //        else

@@ -42,7 +42,7 @@ inline void respawnPlayer(ECS* e, entity_t ent) {
 
 
 inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec3 move) {
-    entity_t proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION, FLN_TYPE, FLN_DESTROYTIME, FLN_SHOTFROM });
+    entity_t proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION, FLN_TYPE, FLN_DESTROYTIME, FLN_PROJECTILE });
     getTransform(e, proj)->pos = pos+glm::vec3(0,2.2,0);
     getTransform(e, proj)->scale = glm::vec3(.5f, .5f, .5f);
 
@@ -67,7 +67,7 @@ inline entity_t createProjectile(ECS* e, glm::vec3 pos, glm::vec3 move) {
 
 
 inline entity_t createExplosion(ECS* e, glm::vec3 pos) {
-    entity_t proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION, FLN_TYPE, FLN_DESTROYTIME });
+    entity_t proj = e->createEntity({FLN_TRANSFORM, FLN_PHYSICS, FLN_RENDER, FLN_COLLISION, FLN_TYPE, FLN_DESTROYTIME, FLN_PROJECTILE });
     getTransform(e, proj)->pos = pos;
     getTransform(e, proj)->scale = glm::vec3(10.f, 10.f, 10.f);
 
