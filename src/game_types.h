@@ -19,6 +19,7 @@ constexpr uint32_t FLN_PROJECTILE = 6;
 constexpr uint32_t FLN_DESTROYTIME = 7;
 constexpr uint32_t FLN_SHOTFROM = 8;
 constexpr uint32_t FLN_HEALTH = 9;
+constexpr uint32_t FLN_PLAYERINFO = 10;
 
 constexpr uint32_t FLN_TESTKILL = 29;
 constexpr uint32_t FLN_TEST = 30;
@@ -113,9 +114,13 @@ inline CollisionData* getCollisionData(ECS* e, entity_t ent) {
     return static_cast<CollisionData*>(e->getComponentData(ent, FLN_COLLISION));
 }
 
-
 struct Projectile {
     entity_t shot_from;
+};
+
+
+struct PlayerInfo {
+    float shotCooldown = 1.f;
 };
 
 const float MAX_HEALTH = 10;
