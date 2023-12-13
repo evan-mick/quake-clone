@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <iostream>
+#include "renderer/objects/trimesh.h"
 #include "shaderloader.h"
 #include "objects/Sphere.h"
 #include "objects/Cube.h"
@@ -557,6 +558,22 @@ void Renderer::generateShape() {
     Cylinder cyl = Cylinder();
     cyl.updateParams(p_1, p_2);
     bindBuff(cyl.generateShape(), cylinder_in);
+
+    Trimesh obama = Trimesh();
+    obama.updateParams(p_1,p_2,"resources/meshes/stretch obama.obj");
+    bindBuff(obama.generateShape(),4);
+
+    Trimesh jennifer = Trimesh();
+    jennifer.updateParams(p_1,p_2,"resources/meshes/mark.obj");
+    bindBuff(jennifer.generateShape(),5);
+
+    Trimesh christian = Trimesh();
+    christian.updateParams(p_1,p_2,"resources/meshes/christian.obj");
+    bindBuff(christian.generateShape(),6);
+
+    Trimesh freddy = Trimesh();
+    freddy.updateParams(p_1,p_2,"resources/meshes/freddy.obj");
+    bindBuff(freddy.generateShape(),7);
 }
 
 void Renderer::setUniforms(RenderObject& sp) {
@@ -595,6 +612,7 @@ void Renderer::setUniforms(RenderObject& sp) {
                 sp.primitive.material.cSpecular.y,
                 sp.primitive.material.cSpecular.z,
                 sp.primitive.material.cSpecular[3]);
+
 
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &(sp.ctm[0][0]));
 
@@ -758,9 +776,9 @@ void Renderer::drawScreen() {
     glViewport(0, 0, m_screen_width, m_screen_height);
     paintSkybox();
 
-     paintTexture(m_fbo_texture, true, 0, 1.0f);
+    paintTexture(m_fbo_texture, true, 0, 1.0f);
     int count = 0;
-//    // Draw other textures with full opacity
+    // Draw other textures with full opacity
     for (auto it = m_texture_map.begin(); it != m_texture_map.end(); ++it) {
         float opacity = 1.f;
         if(count!=0) {
@@ -771,7 +789,7 @@ void Renderer::drawScreen() {
     }
 
     // Disable blending for subsequent rendering
-//    glDisable(GL_BLEND);
+    // glDisable(GL_BLEND);
 
     // Disable depth testing for subsequent rendering
 //    glDisable(GL_DEPTH_TEST);
@@ -807,6 +825,18 @@ void Renderer::drawRenderOb(RenderObject& to_draw) {
         break;
     case PrimitiveType::PRIMITIVE_CONE:
         in = cone_in;
+        break;
+    case PrimitiveType::PRIMITIVE_HEAD1:
+        in= 4;
+        break;
+    case PrimitiveType::PRIMITIVE_HEAD2:
+        in= 5;
+        break;
+    case PrimitiveType::PRIMITIVE_HEAD3:
+        in= 6;
+        break;
+    case PrimitiveType::PRIMITIVE_HEAD4:
+        in= 7;
         break;
     default:
         in = 0;

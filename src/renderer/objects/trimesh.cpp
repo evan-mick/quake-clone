@@ -6,16 +6,13 @@
 #include <glm/gtx/normal.hpp>
 #include "OBJ_Loader.h"
 
-void Trimesh::updateParams(int param1, int param2, RenderObject prim, std::string file) {
+void Trimesh::updateParams(int param1, int param2,std::string file) {
     m_vertexData.clear();
     m_param1 = param1;
     m_param2 = param2;
-    m_prim = prim;
     m_meshfile = file;
     setVertexData();
 }
-
-
 
 void Trimesh::setVertexData() {
     makeMesh();

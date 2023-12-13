@@ -33,7 +33,10 @@ enum class PrimitiveType {
     PRIMITIVE_CONE,
     PRIMITIVE_CYLINDER,
     PRIMITIVE_SPHERE,
-    PRIMITIVE_MESH
+    PRIMITIVE_HEAD1,
+    PRIMITIVE_HEAD2,
+    PRIMITIVE_HEAD3,
+    PRIMITIVE_HEAD4
 };
 
 // Enum of the types of transformations that can be applied

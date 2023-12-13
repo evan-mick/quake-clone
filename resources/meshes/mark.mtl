@@ -1,0 +1,14 @@
+# Blender 3.1.2 MTL File: 'None'
+# www.blender.org
+
+newmtl model:material_1
+Ns 20.000006
+Ka 0.500000 0.500000 0.500000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd  model.png
+map_d  model.png
