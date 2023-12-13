@@ -151,11 +151,14 @@ void Network::serverListen(const char* ip, const char* port) {
             char* send = new char[bytesReceived - sizeof(Packet)];
             memcpy(send, rec_buff + sizeof(Packet), bytesReceived - sizeof(Packet));
 
-            if (next.data != nullptr)
-                delete[] next.data;
-            next.data = send;
-            next.tick = tick;
-            next.data_size = bytesReceived - sizeof(Packet);
+//            if (next.data != nullptr)
+//                delete[] next.data;
+
+            TickData push;
+            push.data = send;
+            push.tick = tick;
+            push.data_size = bytesReceived - sizeof(Packet);
+            buffer.push(push);
             //updateTickBuffer(send, bytesReceived - sizeof(Packet), conn, tick);
         }
     }
@@ -240,25 +243,31 @@ void Network::deserializeAllDataIntoECS() {
     // Iterate through all connections, pop once per tick
    // m_connectionMutex.lock();
     std::lock_guard<std::mutex> lock(m_connectionMutex);
-    if (m_connectionMap.size() > 0 && next.data == nullptr) {
-//        std::cout << "Data is null" << std::endl;
-        return;
+
+    while (!buffer.empty()) {
+
+        TickData& nxt = buffer.front();
+        if (m_connectionMap.size() > 0 && nxt.data == nullptr) {
+    //        std::cout << "Data is null" << std::endl;
+            return;
+        }
+
+    //    TickData& td = next;//conn->buffer.front();
+        char buff[FULL_PACKET];
+
+        // Ignore authority for first established tick
+        if (next.tick < 0) {
+            m_ecs->deserializeIntoData(nxt.data, nxt.data_size, true);
+            next.tick = 0;
+        }
+        else
+            m_ecs->deserializeIntoData(nxt.data, nxt.data_size, false);
+
+
+        delete[] nxt.data;
+        nxt.data = nullptr;
+        buffer.pop();
     }
-
-//    TickData& td = next;//conn->buffer.front();
-    char buff[FULL_PACKET];
-
-    // Ignore authority for first established tick
-    if (next.tick < 0) {
-        m_ecs->deserializeIntoData(next.data, next.data_size, true);
-        next.tick = 0;
-    }
-    else
-        m_ecs->deserializeIntoData(next.data, next.data_size, false);
-
-
-    delete[] next.data;
-    next.data = nullptr;
 
 }
 
@@ -350,13 +359,6 @@ void Network::shutdown() {
 
 void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
 
-
-
-
-
-
-
-
     // Send data to server
     struct sockaddr_in connAddr {};
     socklen_t connAddr_len = sizeof(connAddr);
@@ -392,6 +394,10 @@ void Network::broadcastGS(ECS* ecs, Connection* conn, int tick) {
         delete[] tick_data;
         delete[] data;
         data_written = ecs->serializeData(&tick_data, m_isServer, FULL_PACKET, total_data_written);
+
+        if (data_written <= 0)
+            std::cout << "retransmit is over: " << data_written << std::endl;
+
     }
     delete[] tick_data;
 
@@ -462,13 +468,21 @@ void Network::clientListen() {
 
 //                    TickData td {};
 
-                    if (next.data != nullptr)
-                        delete[] next.data;
+//                    if (next.data != nullptr)
+//                        delete[] next.data;
 
-                    next.data = data;
+//                    next.data = data;
                     if (next.tick >= 0)
                         next.tick = tick;
-                    next.data_size =  bytes - sizeof(Packet);
+//                    next.data_size =  bytes - sizeof(Packet);
+
+                    TickData push;
+                    push.data = data;
+                    push.tick = tick;
+                    if (next.tick >= 0)
+                        next.tick = tick;
+                    push.data_size = bytes - sizeof(Packet);
+                    buffer.push(push);
 
 //                    updateTickBuffer(data, bytes - sizeof(Packet), conn, tick);
                     
