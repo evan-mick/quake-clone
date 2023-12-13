@@ -564,7 +564,7 @@ void Renderer::generateShape() {
     bindBuff(obama.generateShape(),4);
 
     Trimesh jennifer = Trimesh();
-    jennifer.updateParams(p_1,p_2,"resources/meshes/horse1.obj");
+    jennifer.updateParams(p_1,p_2,"resources/meshes/mark.obj");
     bindBuff(jennifer.generateShape(),5);
 
     Trimesh christian = Trimesh();
