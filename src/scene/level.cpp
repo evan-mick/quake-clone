@@ -95,10 +95,10 @@ void Level::insertSimpleModel(glm::mat4 ctm, PrimitiveType type, int index) {
     m_geometry[index] = shape;
 }
 
-void Level::insertSimpleModel(glm::mat4 ctm, std::string meshfile, int index) {
-    RenderObject shape;
-    shape.primitive = {.type=PrimitiveType::PRIMITIVE_MESH,.meshfile=meshfile,.material=m_mat};
-    shape.ctm = ctm;
-    m_geometry[index] = shape;
-}
+//void Level::insertSimpleModel(glm::mat4 ctm, std::string meshfile, int index) {
+//    RenderObject shape;
+//    shape.primitive = {.type=PrimitiveType::PRIMITIVE_MESH,.meshfile=meshfile,.material=m_mat};
+//    shape.ctm = ctm;
+//    m_geometry[index] = shape;
+//}
 

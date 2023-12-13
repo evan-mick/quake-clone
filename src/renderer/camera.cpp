@@ -1,7 +1,7 @@
 #include <stdexcept>
 #include "camera.h"
 #include <iostream>
-#include "glm/gtx/transform.hpp""
+#include "glm/gtx/transform.hpp"
 
 
 Camera::Camera(int width, int height, const SceneCameraData& cameraData) {
