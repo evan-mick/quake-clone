@@ -846,10 +846,14 @@ void Renderer::drawDynamicAndStaticObs() {//USED
     std::vector<RenderObject> toRender = m_dynamics;
     toRender.insert(toRender.end(),data->shapes.begin(),data->shapes.end());
     for (RenderObject& ob : toRender) {
-        drawRenderOb(ob);
 
+    for (RenderObject& ob : m_dynamics) {
+        drawRenderOb(ob);
     }
 
+    for (RenderObject& ob : data->shapes) {
+        drawRenderOb(ob);
+    }
 }
 
 
