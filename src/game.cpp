@@ -414,6 +414,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         }
         if (Input::isHeld(in->dat, IN_JUMP) && phys->grounded) {
             phys->vel.y = 15.f;
+            phys->vel.x *= 1.2f;
+            phys->vel.z *= 1.2f;
             phys->grounded = false;
         }
         if (phys->grounded) {
