@@ -319,6 +319,9 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
         ecs.registerSystem([&renderer](ECS* e, entity_t ent, float delta) {
 //            renderer.drawDynamicOb(e, ent, delta);
 
+            if (e->hasAuthority(ent) && getType(e, ent) == ET_PLAYER)
+                return;
+
             renderer.queueDynamicModel(e,ent,delta);
         } , {FLN_TRANSFORM, FLN_RENDER});
 
