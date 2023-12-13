@@ -176,7 +176,7 @@ void Renderer::initializeGL() {
     m_elapsedTimer.start();
 
 
-
+    player_health = 1.f;
     // Initializing GL.
     // GLEW (GL Extension Wrangler) provides access to OpenGL functions.
     glewExperimental = GL_TRUE;
@@ -319,6 +319,15 @@ std::map<QString,SceneTexture> Renderer::generateTexturesMap() {
     crosshair.height = 1200;
     crosshair.image = QImage(crosshair_path).convertToFormat(QImage::Format_RGBA8888).mirrored();
     res.insert({crosshair_path,crosshair});
+
+
+    QString vignette_path("resources/textures/vignette.png");
+    SceneTexture vignette;
+    vignette.width = 1600;
+    vignette.height = 1200;
+    vignette.image = QImage(vignette_path).convertToFormat(QImage::Format_RGBA8888).mirrored();
+    res.insert({vignette_path,vignette});
+
     return res;
 }
 
@@ -747,15 +756,16 @@ void Renderer::drawScreen() {
     glViewport(0, 0, m_screen_width, m_screen_height);
     paintSkybox();
 
-    // Clear the framebuffer
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // Draw the FBO texture with full opacity
-    paintTexture(m_fbo_texture, true, 0, 1.0f);
-
-    // Draw other textures with full opacity
+     paintTexture(m_fbo_texture, true, 0, 1.0f);
+    int count = 0;
+//    // Draw other textures with full opacity
     for (auto it = m_texture_map.begin(); it != m_texture_map.end(); ++it) {
-        paintTexture(it->second.tex, false, it->second.slot, 1.0f);
+        float opacity = 1.f;
+        if(count!=0) {
+            opacity = 1.f - player_health;
+        }
+        paintTexture(it->second.tex, false, it->second.slot, opacity);
+        count++;
     }
 
     // Disable blending for subsequent rendering
