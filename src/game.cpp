@@ -141,15 +141,17 @@ void Game::startGame(bool server, const char* ip) {
             }
 
 
+             render.startDraw();
+
             if (ecs.entityHasComponent(ent, FLN_TRANSFORM)) {
                 cam.updateFromEnt(&ecs, ent);
                 cam.setRotation(in->x_look, in->y_look);
             }
-            render.drawStaticObs();
-//            render.drawDynamicObs();
-
+//            render.drawStaticObs();
+            render.drawDynamicAndStaticObs();
             render.drawScreen();
 
+            // std::cout << "3" << std::endl;
             // Swap front and back buffers
             glfwSwapBuffers(m_window);
 
@@ -261,8 +263,8 @@ void Game::registerECSSystems(ECS& ecs, Physics& phys, Renderer& renderer) {
     // Rendering system
     if (!m_server)
         ecs.registerSystem([&renderer](ECS* e, entity_t ent, float delta) {
-            renderer.drawDynamicOb(e, ent, delta);
-//            renderer.queueDynamicModel(e,ent,delta);
+//            renderer.drawDynamicOb(e, ent, delta);
+            renderer.queueDynamicModel(e,ent,delta);
         } , {FLN_TRANSFORM, FLN_RENDER});
 
     // Player Fire Rocket input
