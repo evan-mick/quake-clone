@@ -59,7 +59,7 @@ struct Gamestate {
 
 struct Connection {
 //    sockaddr sock_data;
-    long last_rec_tick;
+    long last_rec_tick = 0;
     int socket;
     uint16_t port;
     uint32_t ip;
