@@ -102,10 +102,8 @@ void Game::startGame(bool server, const char* ip) {
 
     while (m_running) {
 
-        if (net) {
-//            std::cout << "Tick buffer ready" << std::endl;
+        if (net)
             net->deserializeAllDataIntoECS();
-        }
 
         if (!m_server) {
             InputData* in = getComponentData<InputData>(&ecs, ent, FLN_INPUT);
