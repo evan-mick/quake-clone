@@ -278,12 +278,10 @@ void Game::registerCollisionResponses(Physics& phys) {
     phys.registerType(ET_EXPLOSION, [](ECS* e, entity_t my_ent, entity_t other_ent, bool world) -> glm::vec3 {
 
         DestroyData* destroyDat = getComponentData<DestroyData>(e, my_ent, FLN_DESTROYTIME);
-        if (!world && 1.f - destroyDat->timer < TICK_RATE * 5.f && getType(e, other_ent) == ET_PLAYER) {
+        if (!world /*&& 1.f - destroyDat->timer < TICK_RATE * 5.f*/ && getType(e, other_ent) == ET_PLAYER) {
             std::cout << "explosion col" << std::endl;
             PhysicsData* dat = getPhys(e, other_ent);
             PlayerInfo* info = getComponentData<PlayerInfo>(e, other_ent, FLN_PLAYERINFO);
-
-
 
             Transform* other_trans = getTransform(e, other_ent);
             Transform* trans = getTransform(e, my_ent);
@@ -291,15 +289,22 @@ void Game::registerCollisionResponses(Physics& phys) {
             if (!e->hasAuthority(other_ent))
                 return glm::vec3(0, 0, 0);
 
+
             if (dat && info) {
                 info->no_control_time = .5f;
 //                std::cout << "explosion col 2" << std::endl;
-                glm::vec3 dir = glm::normalize(((other_trans->pos + glm::vec3(0, 10.f, 0)) - (trans->pos)));
+                glm::vec3 dir = glm::normalize(((other_trans->pos + glm::vec3(0, 4.f, 0)) - (trans->pos)));
+
                 if (info->invul > 0.f)
                     return glm::vec3(0, 0, 0);
-                info->invul = .2f;
+
+//                dat->vel.y += 5.f;
 
                 dat->vel += dir * 40.f;
+
+                dat->grounded = false;
+
+                info->invul = .2f;
 
                 if (getComponentData<Projectile>(e, my_ent, FLN_PROJECTILE)->shot_from != other_ent) {
 

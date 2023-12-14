@@ -826,20 +826,21 @@ void Renderer::drawRenderOb(RenderObject& to_draw) {
     case PrimitiveType::PRIMITIVE_CONE:
         in = cone_in;
         break;
-    case PrimitiveType::PRIMITIVE_HEAD1:
-        in= 4;
-        break;
-    case PrimitiveType::PRIMITIVE_HEAD2:
-        in= 5;
-        break;
-    case PrimitiveType::PRIMITIVE_HEAD3:
-        in= 6;
-        break;
-    case PrimitiveType::PRIMITIVE_HEAD4:
-        in= 7;
-        break;
+//    case PrimitiveType::PRIMITIVE_HEAD1:
+//        in= 4;
+//        break;
+//    case PrimitiveType::PRIMITIVE_HEAD2:
+//        in= 5;
+//        break;
+//    case PrimitiveType::PRIMITIVE_HEAD3:
+//        in= 6;
+//        break;
+//    case PrimitiveType::PRIMITIVE_HEAD4:
+//        in= 7;
+//        break;
     default:
-        in = 0;
+        return;
+//        in = 0;
         break;
     }
 

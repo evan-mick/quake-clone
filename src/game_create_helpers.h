@@ -92,7 +92,7 @@ inline entity_t createExplosion(ECS* e, glm::vec3 pos) {
     col->col_type = -1;
 
     DestroyData* dat = getComponentData<DestroyData>(e, proj, FLN_DESTROYTIME);
-    dat->timer = 1.f;
+    dat->timer = .4f;
 
     getPhys(e, proj)->vel = glm::vec3(0, 0, 0);
     getPhys(e, proj)->accel = glm::vec3(0, 0, 0);
