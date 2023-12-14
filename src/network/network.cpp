@@ -46,6 +46,7 @@ Network::Network(bool server, ECS* ecs, const char* ip)
         next.tick = -1;
         next.data = nullptr;
         next.data_size = 0;
+        next.from_conn = nullptr;
 
         // Open listen thread
         m_listenThread = std::thread([this]() { this->clientListen(); });
@@ -162,6 +163,7 @@ void Network::serverListen(const char* ip, const char* port) {
             push.data = send;
             push.tick = tick;
             push.data_size = bytesReceived - sizeof(Packet);
+            push.from_conn = conn;
             buffer.push(push);
         }
     }
@@ -254,8 +256,12 @@ void Network::deserializeAllDataIntoECS() {
         // Ignore authority for first established tick
         if (next.tick < 0) {
             m_ecs->deserializeIntoData(nxt.data, nxt.data_size, true);
-        } else
+
+        }
+        else if (nxt.tick >= nxt.from_conn->last_rec_tick) {
             m_ecs->deserializeIntoData(nxt.data, nxt.data_size, false);
+            nxt.from_conn->last_rec_tick = nxt.tick;
+        }
 
         delete[] nxt.data;
         nxt.data = nullptr;
@@ -453,6 +459,7 @@ void Network::clientListen() {
                     TickData push;
                     push.data = data;
                     push.tick = tick;
+                    push.from_conn = conn;
                     if (next.tick >= 0)
                         next.tick = tick;
 
@@ -475,6 +482,7 @@ void Network::updateTickBuffer(char* data, size_t data_size, Connection* conn, u
     td.tick = tick;
     td.data = data;
     td.data_size = data_size;
+    td.from_conn = conn;
 
     // Push data into tick buffer
     std::lock_guard<std::mutex> lock(mutex_);

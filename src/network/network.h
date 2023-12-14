@@ -43,11 +43,7 @@ struct Packet {
     // char* data;
 };
 
-struct TickData {
-    long tick;
-    size_t data_size;
-    char* data;
-};
+
 
 
 
@@ -94,6 +90,13 @@ struct Connection {
         return elapsed >= timeoutDuration;
     }
      float discon_timer = 5.f;
+};
+
+struct TickData {
+     long tick;
+     size_t data_size;
+     Connection* from_conn;
+     char* data;
 };
 
 //bool compare(Gamestate a, Gamestate b) {

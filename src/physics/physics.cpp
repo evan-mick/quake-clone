@@ -59,6 +59,7 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
         assert(physDat != nullptr && transform != nullptr);
 
         // I think this ordering is right?
+//        if (e->hasAuthority(my_ent))
         physDat->vel += physDat->accel;
 
         auto damp = [](float vel) -> float {
@@ -122,17 +123,6 @@ void Physics::tryRunStep(struct ECS* e, entity_t my_ent, float delta_seconds) {
                         m_typeToResponse[type](e, my_ent, 0, true);
                     }
                 }
-
-//                if (physDat->grounded == false) {
-//                    Transform groundTest = *getTransform(e, my_ent);
-//                    PhysicsData phys_ = *physDat;
-//                    groundTest.pos.y -= .1f;
-//                    if (AABBtoAABBIntersect(&groundTest, &phys_, &trans, nullptr, false)) {
-//                        if (trans.pos.y < getTransform(e, my_ent)->pos.y)
-//                            physDat->grounded = true;
-//                    }
-
-//                }
 
             }
         }
